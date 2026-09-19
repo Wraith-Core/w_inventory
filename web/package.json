@@ -1,0 +1,71 @@
+{
+  "name": "w_inventory",
+  "version": "1.0.0",
+  "homepage": "web/build",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@floating-ui/react": "^0.26.0",
+    "@reduxjs/toolkit": "^2.11.2",
+    "@types/lodash": "^4.17.1",
+    "@types/node": "^18.19.33",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.0",
+    "@types/react-transition-group": "^4.4.10",
+    "@vitejs/plugin-react": "^3.1.0",
+    "framer-motion": "^12.38.0",
+    "lodash": "^4.17.21",
+    "lucide-react": "^0.476.0",
+    "pnpm": "^10.30.0",
+    "postcss": "^8.5.3",
+    "postcss-prettify": "^0.3.4",
+    "react": "^18.3.1",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^8.0.7",
+    "react-redux": "^9.2.0",
+    "react-transition-group": "^4.4.5",
+    "sass": "^1.77.0"
+  },
+  "scripts": {
+    "start": "vite",
+    "watch": "vite build --watch",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "format": "prettier --write \"./src/**/*.{ts,tsx,css}\""
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.5",
+    "cross-env": "^7.0.3",
+    "csstype": "^2.6.21",
+    "prettier": "^2.8.8",
+    "typescript": "^4.9.5",
+    "vite": "^4.5.3"
+  }
+}

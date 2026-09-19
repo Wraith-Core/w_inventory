@@ -1,0 +1,148 @@
+/* Tajawal font — local files for NUI (no internet in CEF) */
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('./fonts/Tajawal-Light.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/Tajawal-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./fonts/Tajawal-Medium.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/Tajawal-Bold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('./fonts/Tajawal-ExtraBold.ttf') format('truetype');
+}
+
+/* The RDR fonts (the same as w_crafting) - display/text/numbers */
+@font-face { font-family: 'RDR Lino'; font-style: normal; font-weight: 400; font-display: swap; src: url('./fonts/RDRLino-Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Hapna Slab'; font-style: normal; font-weight: 600; font-display: swap; src: url('./fonts/HapnaSlabSerif-DemiBold.woff2') format('woff2'); }
+@font-face { font-family: 'RDR Catalogue'; font-style: normal; font-weight: 700; font-display: swap; src: url('./fonts/RDRCatalogueBold-Bold.woff2') format('woff2'); }
+
+/* ============================================================
+   w_crafting's character: black/white chrome, the red #CB0101 for the negative only.
+   The gauges alone scale: white -> yellow -> red.
+   ============================================================ */
+:root {
+  /* ══════════════════════════════════════════════════════════════════════
+     w_crafting's tokens to the letter - white chrome on black, the red #CB0101 for the negative only.
+     Every visible surface is composed from RDR2's own art (through the --tex-* variables from main.tsx);
+     pure colour exists only as a layout fill and text and a fill behind the masks.
+     ══════════════════════════════════════════════════════════════════════ */
+  --wc-bg: #050505;
+  --wc-panel: #0b0b0b;
+  --wc-panel-2: #111111;
+  --wc-panel-3: #181818;
+  --wc-plate: #1f1f1f;
+  --wc-text: #ffffff;
+  --wc-text-dim: #a9a9a9;
+  --wc-text-faint: #6d6d6d;
+  --wc-line: rgba(255, 255, 255, 0.14);
+  --wc-line-strong: rgba(255, 255, 255, 0.3);
+  --wc-red: #cb0101;
+  --wc-red-deep: #a50101;
+  --wc-red-soft: rgba(203, 1, 1, 0.16);
+  --wc-hover: rgba(255, 255, 255, 0.12);
+  --wc-ok: #d2d2d2;
+  --wc-accent: #ededed;
+  --wc-accent-soft: rgba(255, 255, 255, 0.08);
+  --wc-glow: rgba(255, 255, 255, 0.06);
+
+  /* w_inventory's old names - bound to the crafting's tokens so nothing breaks */
+  --glass: radial-gradient(130% 90% at 50% 0%, rgba(24, 24, 24, 0.93) 0%, rgba(14, 14, 14, 0.96) 42%, rgba(5, 5, 5, 0.97) 100%);
+  --glass-solid: rgba(11, 11, 11, 0.96);
+  --glass-light: rgba(24, 24, 24, 0.94);
+  /* The stacked surfaces (menus/dialogs/tooltips) are drawn opaque so the panel does not show through them */
+  --glass-modal: radial-gradient(130% 90% at 50% 0%, #191919 0%, #0e0e0e 42%, #050505 100%);
+  --border: var(--wc-line);
+  --border-light: rgba(255, 255, 255, 0.08);
+  --accent: var(--wc-accent);
+  --accent-dim: rgba(255, 255, 255, 0.28);
+  --accent-glow: var(--wc-glow);
+  --accent-deep: #c6c6c6;
+  --text: var(--wc-text);
+  --text-dim: var(--wc-text-dim);
+  --text-mute: var(--wc-text-faint);
+  --danger: var(--wc-red);
+  --success: var(--wc-ok);
+  --info: #c6c6c6;
+
+  /* The gauges' gradient: white -> grey -> red (as in w_crafting) */
+  --gauge-full: #ffffff;
+  --gauge-full-deep: #d8d8d8;
+  --gauge-mid: #c6c6c6;
+  --gauge-mid-deep: #a9a9a9;
+  --gauge-low: #cb0101;
+  --gauge-low-deep: #a50101;
+
+  /* The crafting has no rounded corners - the edges are sharp and the decoration comes from the texture */
+  --radius: 0;
+  --shadow: 0 44px 130px -32px rgba(0, 0, 0, 0.92);
+
+  /* The RDR fonts (the same as w_crafting) - Tajawal for the Arabic, RDR for the Latin and the numbers */
+  --font-main: 'Hapna Slab', 'Tajawal', 'Noto Sans Arabic', Georgia, serif;
+  --font-display: 'RDR Lino', 'Tajawal', 'Noto Sans Arabic', Georgia, serif;
+  --font-numeral: 'RDR Catalogue', 'Tajawal', 'Noto Sans Arabic', Georgia, serif;
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* 18.24px at 1920 - bigger than the previous (16px) by about 15% and it scales with every resolution */
+  font-size: 0.95vw;
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: transparent;
+  user-select: none;
+}
+
+/* The direction follows the language the library chose (installLocale sets dir on <html> and <body>) */
+[dir='rtl'] {
+  direction: rtl;
+}
+
+[dir='ltr'] {
+  direction: ltr;
+}
+
+/* The Arabic font (Tajawal) is heavy: a general medium + bold for the headings and the buttons - as in w_crafting */
+[dir='rtl'] body,
+body {
+  font-weight: 500;
+}
+
+#root {
+  height: 100%;
+}
