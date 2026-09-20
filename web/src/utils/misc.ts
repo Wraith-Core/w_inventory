@@ -1,4 +1,5 @@
-export const isEnvBrowser = (): boolean => !(window as any).invokeNative;
+export const isEnvBrowser = (): boolean =>
+  !Boolean((window as any).GetParentResourceName || (window as any).invokeNative);
 export const noop = () => {};
 
 export const isInventoryEmpty = (inventory: { items?: any[] }): boolean => {

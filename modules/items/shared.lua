@@ -6,6 +6,16 @@ end
 
 local ItemList = {}
 local isServer = IsDuplicityVersion()
+local ItemAliases = lib.load('data.item_aliases')
+
+-- Translate only names from the recent catalog migration. Existing saved stacks
+-- keep their quantities/metadata and acquire the canonical name when loaded.
+function shared.resolveItemName(name)
+    if type(name) ~= 'string' then return name end
+    name = name:lower()
+    if name:sub(1, 7) == 'weapon_' then return name:upper() end
+    return ItemAliases[name] or name
+end
 
 -- The language comes from the library (shared.localeKey(): the player's choice on the
 -- client, the server convar on the server); the data files carry ar/en variants.
@@ -158,6 +168,22 @@ local function newItem(data)
 		data.decay = true
 	end
 
+	if clientData?.model then
+		data.model = data.model or clientData.model
+	end
+
+	if clientData?.prop then
+		data.prop = data.prop or clientData.prop
+	end
+
+	if data.model and not data.prop then
+		data.prop = data.model
+	end
+
+	if data.prop and not data.model then
+		data.model = data.prop
+	end
+
 	if isServer then
         ---@cast data WServerItem
         serverData = data.server
@@ -198,6 +224,7 @@ local function newItem(data)
 	ItemList[data.name] = data
 end
 
+local thrownUnits = lib.load('data.thrown_units')
 for type, data in pairs(lib.load(string.format('data.weapons_%s', "RDR3"))) do
 	for k, v in pairs(data) do
 		v.name = k
@@ -207,8 +234,9 @@ for type, data in pairs(lib.load(string.format('data.weapons_%s', "RDR3"))) do
 
 		if type == 'Weapons' then
 			---@cast v WWeapon
-			v.model = v.model or k -- actually weapon type or such? model for compatibility
-			v.hash = joaat(v.model)
+			v.worldModel = v.model -- physical asset; never the weapon type passed to equip natives
+			v.model = k
+			v.hash = joaat(k)
 			v.stack = v.throwable and true or false
 			v.durability = v.durability or 0.05
 			v.weapon = true
@@ -217,6 +245,12 @@ for type, data in pairs(lib.load(string.format('data.weapons_%s', "RDR3"))) do
 		end
 
 		v[type == 'Ammo' and 'ammo' or 'weapon'] = true
+        if type == 'Ammo' and shared.backend == 'wcore' and thrownUnits[k] then
+            v.weaponType, v.throwableUnit = thrownUnits[k], true
+            v.weapon, v.throwable, v.stack = true, true, true
+            v.model, v.hash = v.weaponType, joaat(v.weaponType)
+            v.ammoname = nil -- this stack itself is the quantity, never loaded from a second stack
+        end
 
 		if isServer then v.client = nil else
 			v.count = 0
@@ -281,9 +315,12 @@ do
 					item.ammoFamily = ammoname
 					item.ammoType = entry.ammo
 
-					-- The box is a dozen, and the single item is one round.
+					-- The box uses its catalog rounds_per_item_rp, and the single item is one round.
 					-- The boxes are not loaded; they are opened first with the right button.
-					item.ammocount = isBox and 12 or 1
+					item.ammocount = isBox and (item.ammocount or 20) or 1
+					-- Arrow bundles have no verified physical asset in the supplied catalog.
+					-- Keep a collectible ground marker instead of depicting them as a cartridge box.
+					if isBox and ammoname == 'ammo_arrow' and not item.model then item.noDropModel = true end
 
 					if isBox then boxed = boxed or name else single = single or name end
 				end

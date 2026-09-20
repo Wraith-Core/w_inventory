@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react';
 import { rarity, N, fmtWeight } from '../utils/items';
 import { InventoryItem } from '../typings';
 import { tr } from '../i18n';
+import Frame from './Frame';
 
 interface TooltipProps {
   item: InventoryItem | null;
@@ -15,11 +16,22 @@ export default function Tooltip({ item, anchorRect }: TooltipProps) {
     if (item && ref.current) {
       ref.current.style.opacity = '0';
       ref.current.style.display = 'block';
+      if (anchorRect) {
+        const width = ref.current.offsetWidth;
+        const height = ref.current.offsetHeight;
+        const center = Math.max(width / 2 + 8, Math.min(anchorRect.x + anchorRect.width / 2, window.innerWidth - width / 2 - 8));
+        const above = anchorRect.y - height - 8 >= 8;
+        const top = above ? anchorRect.y - 8 : Math.min(anchorRect.bottom + 8, window.innerHeight - height - 8);
+        ref.current.style.left = `${center}px`;
+        ref.current.style.top = `${Math.max(8, top)}px`;
+        ref.current.style.transform = above ? 'translate(-50%,-100%)' : 'translateX(-50%)';
+        ref.current.dataset.placement = above ? 'above' : 'below';
+      }
       requestAnimationFrame(() => {
         if (ref.current) ref.current.style.opacity = '1';
       });
     }
-  }, [item]);
+  }, [item, anchorRect]);
 
   if (!item || !anchorRect) return <div id="inventory-tooltip" />;
 
@@ -30,6 +42,7 @@ export default function Tooltip({ item, anchorRect }: TooltipProps) {
   return (
     <div
       id="inventory-tooltip"
+      className="wst-panel"
       ref={ref}
       style={{
         display: 'block',
@@ -39,10 +52,11 @@ export default function Tooltip({ item, anchorRect }: TooltipProps) {
         opacity: 0,
       }}
     >
+      <Frame />
       <div className="tt-arrow" />
-      <div className={`tt-name ${r}`}>{item.label || item.name}</div>
+      <div className={`wst-title tt-name ${r}`}>{item.label || item.name}</div>
       <div className={`tt-rarity-dot ${r}`} />
-      {item.desc && <div className="tt-desc">{item.desc}</div>}
+      {item.desc && <div className="wst-sub tt-desc">{item.desc}</div>}
       <div className="tt-stats">
         {item.weight > 0 && (
           <div className="tt-stat">

@@ -34,7 +34,7 @@ function Codec.decode(value)
     local result, occupied = {}, {}
     for key, row in pairs(rows(value)) do
         local native = row.amount ~= nil
-        local slot, count = validRow(row, key, native)
+        local slot, count = validRow(row, key, native, row.name == 'money' or row.name == 'cash' or row.name == 'gold')
         if occupied[slot] then error(('Duplicate RSG inventory slot %s'):format(slot)) end
         occupied[slot] = true
         local info = native and row.info or row.metadata
@@ -94,14 +94,15 @@ function Codec.toNativeCurrency(row)
     return native
 end
 
-function Codec.encode(value, definitions)
+function Codec.encode(value, definitions, includeCurrency)
     local result, occupied = {}, {}
     for key, row in pairs(rows(value)) do
-        if row.name ~= 'money' and row.name ~= 'gold' then
+        if includeCurrency or (row.name ~= 'money' and row.name ~= 'cash' and row.name ~= 'gold') then
         local copy = clone(row)
         copy.slot = tonumber(copy.slot) or tonumber(key)
         local definition = definitions and definitions(copy.name)
-        local native = Codec.toNativeItem(copy, definition)
+        local currency = copy.name == 'money' or copy.name == 'cash' or copy.name == 'gold'
+        local native = toNativeItem(copy, definition, currency)
         if occupied[native.slot] then error(('Duplicate RSG inventory slot %s'):format(native.slot)) end
         occupied[native.slot] = true
         result[#result + 1] = native

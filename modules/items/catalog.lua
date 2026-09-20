@@ -125,7 +125,7 @@ function Catalog.build(framework, definitions, nativeWeapons, fallback, backend)
                     row.deleteOnUse = flag(raw.deleteOnUse, false)
                 else
                     row.weapon = raw.type == 'weapon' or raw.type == 'weapon_thrown' or raw.type == 'equipment'
-                    row.throwable = raw.type == 'weapon_thrown'
+                    row.throwable = raw.type == 'weapon_thrown' or (backend == 'wcore' and row.throwable == true)
                     row.stack = not flag(raw.unique, row.weapon == true)
                     row.close = flag(raw.shouldClose, true)
                     row.usable = flag(raw.useable, flag(raw.usable, row.weapon == true))
@@ -138,8 +138,12 @@ function Catalog.build(framework, definitions, nativeWeapons, fallback, backend)
                         row.ammo, row.ammocount = nil, nil
                     end
                 end
+                if backend == 'wcore' and row.throwableUnit and row.weaponType then
+                    row.weapon, row.throwable, row.stack, row.unique = true, true, true, false
+                end
                 if row.weapon then
-                    row.model = raw.model or row.model or originalName
+                    row.worldModel = row.worldModel or raw.model
+                    row.model = row.weaponType or name
                     row.hash = joaat(row.model)
                 end
                 row.client = { image = raw.image or originalName .. '.png' }

@@ -1,107 +1,155 @@
---[[
-    WEAPON TO RDR2 WORLD MODEL MAPPING
-    Generated from RAGE-StringsDatabase weapon model files.
-
-    Base weapon model names extracted from:
-    - packs_1 (base game)
-    - mp001 through mp009 (DLC)
-    - dlc_content_extra
-    - patchpack002, patchpack003, patchpack004
-
-    Used for weapon drops, inventory display props, etc.
-    Filter: Excludes +hi, _hi, _grip, _barrel, _sight, _clip, _wrap, _mag, _stock
-]]
-
+-- ============================================================
+-- Weapon World Model Mapping (Phase 2 Canonical)
+-- ============================================================
 return {
-    -- REVOLVERS
     ['WEAPON_REVOLVER_CATTLEMAN'] = 'w_revolver_cattleman01',
-    ['WEAPON_REVOLVER_CATTLEMAN_MEXICAN'] = 'w_revolver_cattleman02',
-    ['WEAPON_REVOLVER_DOUBLEACTION_GAMBLER'] = 'w_revolver_doubleaction04',  -- mp001/dlc_content_extra
+    ['weapon_revolver_cattleman'] = 'w_revolver_cattleman01',
     ['WEAPON_REVOLVER_DOUBLEACTION'] = 'w_revolver_doubleaction01',
+    ['weapon_revolver_doubleaction'] = 'w_revolver_doubleaction01',
     ['WEAPON_REVOLVER_SCHOFIELD'] = 'w_revolver_schofield01',
+    ['weapon_revolver_schofield'] = 'w_revolver_schofield01',
     ['WEAPON_REVOLVER_LEMAT'] = 'w_revolver_lemat01',
-    ['WEAPON_REVOLVER_NAVY'] = 'w_revolver_navy01',
-    ['WEAPON_REVOLVER_NAVY_CROSSOVER'] = 'w_revolver_navy02',
-
-    -- PISTOLS
+    ['weapon_revolver_lemat'] = 'w_revolver_lemat01',
+    -- ['WEAPON_REVOLVER_NAVY'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    ['WEAPON_REVOLVER_DOUBLEACTION_GAMBLER'] = 'w_revolver_doubleaction04',
+    ['weapon_revolver_doubleaction_gambler'] = 'w_revolver_doubleaction04',
+    ['WEAPON_REVOLVER_CATTLEMAN_JOHN'] = 'w_revolver_cattleman01',
+    ['weapon_revolver_cattleman_john'] = 'w_revolver_cattleman01',
+    ['WEAPON_REVOLVER_CATTLEMAN_MEXICAN'] = 'w_revolver_cattleman02',
+    ['weapon_revolver_cattleman_mexican'] = 'w_revolver_cattleman02',
+    ['WEAPON_REVOLVER_CATTLEMAN_PIG'] = 'w_revolver_cattleman03',
+    ['weapon_revolver_cattleman_pig'] = 'w_revolver_cattleman03',
+    ['WEAPON_REVOLVER_DOUBLEACTION_EXOTIC'] = 'w_revolver_doubleaction02',
+    ['weapon_revolver_doubleaction_exotic'] = 'w_revolver_doubleaction02',
+    ['WEAPON_REVOLVER_DOUBLEACTION_MICAH'] = 'w_revolver_doubleaction06',
+    ['weapon_revolver_doubleaction_micah'] = 'w_revolver_doubleaction06',
+    ['WEAPON_REVOLVER_SCHOFIELD_CALLOWAY'] = 'w_revolver_schofield04',
+    ['weapon_revolver_schofield_calloway'] = 'w_revolver_schofield04',
+    ['WEAPON_REVOLVER_SCHOFIELD_GOLDEN'] = 'w_revolver_schofield03',
+    ['weapon_revolver_schofield_golden'] = 'w_revolver_schofield03',
+    -- ['WEAPON_REVOLVER_NAVY_CROSSOVER'] has no text model, engine hash lookup via 0xF70825EB340E7D15
     ['WEAPON_PISTOL_VOLCANIC'] = 'w_pistol_volcanic01',
-    ['WEAPON_PISTOL_M1899'] = 'w_pistol_m189902',
-    ['WEAPON_PISTOL_MAUSER'] = 'w_pistol_mauser01',
+    ['weapon_pistol_volcanic'] = 'w_pistol_volcanic01',
     ['WEAPON_PISTOL_SEMIAUTO'] = 'w_pistol_semiauto01',
-
-    -- REPEATERS
+    ['weapon_pistol_semiauto'] = 'w_pistol_semiauto01',
+    ['WEAPON_PISTOL_MAUSER'] = 'w_pistol_mauser01',
+    ['weapon_pistol_mauser'] = 'w_pistol_mauser01',
+    ['WEAPON_PISTOL_M1899'] = 'w_pistol_m189901',
+    ['weapon_pistol_m1899'] = 'w_pistol_m189901',
+    ['WEAPON_PISTOL_MAUSER_DRUNK'] = 'w_pistol_mauser01',
+    ['weapon_pistol_mauser_drunk'] = 'w_pistol_mauser01',
     ['WEAPON_REPEATER_CARBINE'] = 'w_repeater_carbine01',
+    ['weapon_repeater_carbine'] = 'w_repeater_carbine01',
     ['WEAPON_REPEATER_WINCHESTER'] = 'w_repeater_winchester01',
+    ['weapon_repeater_winchester'] = 'w_repeater_winchester01',
     ['WEAPON_REPEATER_HENRY'] = 'w_repeater_henry01',
+    ['weapon_repeater_henry'] = 'w_repeater_henry01',
     ['WEAPON_REPEATER_EVANS'] = 'w_repeater_evans01',
-
-    -- RIFLES
-    ['WEAPON_RIFLE_VARMINT'] = 'rifle_varmint',  -- Base game uses non-w_ prefix
+    ['weapon_repeater_evans'] = 'w_repeater_evans01',
     ['WEAPON_RIFLE_SPRINGFIELD'] = 'w_rifle_springfield01',
+    ['weapon_rifle_springfield'] = 'w_rifle_springfield01',
     ['WEAPON_RIFLE_BOLTACTION'] = 'w_rifle_boltaction01',
+    ['weapon_rifle_boltaction'] = 'w_rifle_boltaction01',
+    ['WEAPON_RIFLE_VARMINT'] = 'w_repeater_pumpaction01',
+    ['weapon_rifle_varmint'] = 'w_repeater_pumpaction01',
     ['WEAPON_RIFLE_ELEPHANT'] = 'w_rifle_elephant01',
-
-    -- SHOTGUNS
-    ['WEAPON_SHOTGUN_DOUBLEBARREL'] = 'w_shotgun_doublebarrel01',
-    ['WEAPON_SHOTGUN_DOUBLEBARREL_EXOTIC'] = 'w_shotgun_doublebarrel02',  -- or w_shotgun_doublebarrel03
-    ['WEAPON_SHOTGUN_SAWEDOFF'] = 'w_shotgun_sawed01',
-    ['WEAPON_SHOTGUN04'] = 'w_shotgun_repeating01',  -- Winchester 1887
-    ['WEAPON_SHOTGUN05'] = 'w_shotgun_pumpaction01',  -- Winchester 1897
-    ['WEAPON_SHOTGUN_SEMIAUTO'] = 'w_shotgun_semiauto01',
-    ['WEAPON_SHOTGUN_PUMP'] = 'w_shotgun_pumpaction01',
-    ['WEAPON_SHOTGUN_REPEATING'] = 'w_shotgun_repeating01',
-
-    -- SNIPERS
+    ['weapon_rifle_elephant'] = 'w_rifle_elephant01',
     ['WEAPON_SNIPERRIFLE_ROLLINGBLOCK'] = 'w_rifle_rollingblock01',
-    ['WEAPON_SNIPERRIFLE_ROLLINGBLOCK_EXOTIC'] = 'w_rifle_rollingblock02',
+    ['weapon_sniperrifle_rollingblock'] = 'w_rifle_rollingblock01',
     ['WEAPON_SNIPERRIFLE_CARCANO'] = 'w_rifle_carcano01',
-
-    -- BOWS
+    ['weapon_sniperrifle_carcano'] = 'w_rifle_carcano01',
+    ['WEAPON_SNIPERRIFLE_ROLLINGBLOCK_EXOTIC'] = 'w_rifle_rollingblock01',
+    ['weapon_sniperrifle_rollingblock_exotic'] = 'w_rifle_rollingblock01',
+    ['WEAPON_SHOTGUN_DOUBLEBARREL'] = 'w_shotgun_doublebarrel01',
+    ['weapon_shotgun_doublebarrel'] = 'w_shotgun_doublebarrel01',
+    ['WEAPON_SHOTGUN_SAWEDOFF'] = 'w_shotgun_sawed01',
+    ['weapon_shotgun_sawedoff'] = 'w_shotgun_sawed01',
+    ['WEAPON_SHOTGUN_PUMP'] = 'w_shotgun_pumpaction01',
+    ['weapon_shotgun_pump'] = 'w_shotgun_pumpaction01',
+    ['WEAPON_SHOTGUN_REPEATING'] = 'w_shotgun_repeating01',
+    ['weapon_shotgun_repeating'] = 'w_shotgun_repeating01',
+    ['WEAPON_SHOTGUN_SEMIAUTO'] = 'w_shotgun_semiauto01',
+    ['weapon_shotgun_semiauto'] = 'w_shotgun_semiauto01',
+    ['WEAPON_SHOTGUN_DOUBLEBARREL_EXOTIC'] = 'w_shotgun_doublebarrel01',
+    ['weapon_shotgun_doublebarrel_exotic'] = 'w_shotgun_doublebarrel01',
     ['WEAPON_BOW'] = 'w_sp_bowarrow',
+    ['weapon_bow'] = 'w_sp_bowarrow',
     ['WEAPON_BOW_IMPROVED'] = 'w_bow_improved01',
-
-    -- LASSO
-    ['WEAPON_LASSO'] = 'w_melee_lasso01',
-    ['WEAPON_LASSO_REINFORCED'] = 'w_melee_lasso02',
-
-    -- MELEE
-    ['WEAPON_MELEE_KNIFE'] = 'w_melee_knife01',
-    ['WEAPON_MELEE_KNIFE_JAWBONE'] = 'w_melee_knife02',
-    ['WEAPON_MELEE_HAMMER'] = 'w_melee_hammer02',  -- mp005; base has no hammer in weapons.txt
-    ['WEAPON_MELEE_CLEAVER'] = 'p_cleaver01x',  -- Prop model, no w_melee_cleaver exists
-    ['WEAPON_MELEE_KNIFE_MINER'] = 'w_melee_knife16',  -- patchpack002
-    ['WEAPON_MELEE_KNIFE_VAMPIRE'] = 'w_melee_knife17',  -- Best match
-    ['WEAPON_MELEE_TORCH'] = 'w_melee_torch01',
-    ['WEAPON_MELEE_HATCHET'] = 'w_melee_hatchet01',
+    ['weapon_bow_improved'] = 'w_bow_improved01',
+    ['WEAPON_MELEE_KNIFE'] = 'w_melee_knife02',
+    ['weapon_melee_knife'] = 'w_melee_knife02',
+    ['WEAPON_MELEE_KNIFE_JAWBONE'] = 'w_melee_knife03',
+    ['weapon_melee_knife_jawbone'] = 'w_melee_knife03',
+    ['WEAPON_MELEE_KNIFE_BEAR'] = 'w_melee_knife17',
+    ['weapon_melee_knife_bear'] = 'w_melee_knife17',
+    ['WEAPON_MELEE_KNIFE_CIVIL_WAR'] = 'w_melee_knife16',
+    ['weapon_melee_knife_civil_war'] = 'w_melee_knife16',
+    ['WEAPON_MELEE_KNIFE_MINER'] = 'w_melee_knife14',
+    ['weapon_melee_knife_miner'] = 'w_melee_knife14',
+    ['WEAPON_MELEE_KNIFE_VAMPIRE'] = 'w_melee_knife18',
+    ['weapon_melee_knife_vampire'] = 'w_melee_knife18',
+    ['WEAPON_MELEE_KNIFE_JOHN'] = 'w_melee_knife01',
+    ['weapon_melee_knife_john'] = 'w_melee_knife01',
+    -- ['WEAPON_MELEE_KNIFE_HORROR'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    -- ['WEAPON_MELEE_KNIFE_RUSTIC'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    -- ['WEAPON_MELEE_KNIFE_TRADER'] has no text model, engine hash lookup via 0xF70825EB340E7D15
     ['WEAPON_MELEE_MACHETE'] = 'w_melee_machete01',
-    ['WEAPON_MELEE_LANTERN'] = 'w_throw_lantern01',  -- Lantern when held
-    ['WEAPON_MELEE_DAVY_LANTERN'] = 'w_throw_lantern01',
-    ['WEAPON_MELEE_LANTERN_ELECTRIC'] = 'w_throw_lantern01',  -- Same base
-    ['WEAPON_MELEE_MACHETE_COLLECTOR'] = 'w_melee_machete03',  -- mp005
-    ['WEAPON_MELEE_KNIFE_TRADER'] = 'w_melee_knife22',  -- mp005
-    ['WEAPON_MELEE_KNIFE_HORROR'] = 'w_melee_knife23',  -- mp009
-    ['WEAPON_MELEE_KNIFE_RUSTIC'] = 'w_melee_knife24',  -- mp009
-    ['WEAPON_MELEE_LANTERN_HALLOWEEN'] = 'w_throw_lantern01',
-    ['WEAPON_MELEE_MACHETE_HORROR'] = 'w_melee_machete04',  -- mp007
-    ['WEAPON_MOONSHINEJUG_MP'] = 'p_masonjarmoonshine01x',  -- Mason jar moonshine
-
-    -- THROWABLES
-    ['WEAPON_THROWN_DYNAMITE'] = 'w_throw_dynamite01',
-    ['WEAPON_THROWN_MOLOTOV'] = 'w_throw_molotov01',
-    ['WEAPON_THROWN_THROWING_KNIVES'] = 'w_melee_knife02',  -- Throwing knife uses knife model
+    ['weapon_melee_machete'] = 'w_melee_machete01',
+    -- ['WEAPON_MELEE_MACHETE_COLLECTOR'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    ['WEAPON_MELEE_MACHETE_HORROR'] = 'w_melee_machete04',
+    ['weapon_melee_machete_horror'] = 'w_melee_machete04',
+    ['WEAPON_MELEE_BROKEN_SWORD'] = 'w_melee_brokenSword01',
+    ['weapon_melee_broken_sword'] = 'w_melee_brokenSword01',
+    -- ['WEAPON_MELEE_HAMMER'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    ['WEAPON_MELEE_HATCHET'] = 'w_melee_hatchet01',
+    ['weapon_melee_hatchet'] = 'w_melee_hatchet01',
+    ['WEAPON_MELEE_CLEAVER'] = 'w_melee_hatchet02',
+    ['weapon_melee_cleaver'] = 'w_melee_hatchet02',
+    ['WEAPON_MELEE_ANCIENT_HATCHET'] = 'w_melee_hatchet03',
+    ['weapon_melee_ancient_hatchet'] = 'w_melee_hatchet03',
+    ['WEAPON_MELEE_HATCHET_VIKING'] = 'w_melee_hatchet04',
+    ['weapon_melee_hatchet_viking'] = 'w_melee_hatchet04',
+    ['WEAPON_MELEE_HATCHET_HEWING'] = 'w_melee_hatchet05',
+    ['weapon_melee_hatchet_hewing'] = 'w_melee_hatchet05',
+    ['WEAPON_MELEE_HATCHET_DOUBLE_BIT'] = 'w_melee_hatchet06',
+    ['weapon_melee_hatchet_double_bit'] = 'w_melee_hatchet06',
+    ['WEAPON_MELEE_HATCHET_DOUBLE_BIT_RUSTED'] = 'w_melee_hatchet06',
+    ['weapon_melee_hatchet_double_bit_rusted'] = 'w_melee_hatchet06',
+    ['WEAPON_MELEE_HATCHET_HUNTER'] = 'w_melee_hatchet07',
+    ['weapon_melee_hatchet_hunter'] = 'w_melee_hatchet07',
+    ['WEAPON_MELEE_HATCHET_HUNTER_RUSTED'] = 'w_melee_hatchet07',
+    ['weapon_melee_hatchet_hunter_rusted'] = 'w_melee_hatchet07',
+    ['WEAPON_THROWN_THROWING_KNIVES'] = 'w_melee_knife05',
+    ['weapon_thrown_throwing_knives'] = 'w_melee_knife05',
     ['WEAPON_THROWN_TOMAHAWK'] = 'w_melee_tomahawk01',
+    ['weapon_thrown_tomahawk'] = 'w_melee_tomahawk01',
     ['WEAPON_THROWN_TOMAHAWK_ANCIENT'] = 'w_melee_tomahawk02',
-    ['WEAPON_THROWN_BOLAS'] = 'mp005_s_melee_bolas01',  -- Bolas DLC model; may need w_ equivalent
-    ['WEAPON_THROWN_POISONBOTTLE'] = 'w_throw_poisonbottle01',
-    ['WEAPON_THROWN_BOLAS_HAWKMOTH'] = 'mp008_s_melee_bolas02',
-    ['WEAPON_THROWN_BOLAS_IRONSPIKED'] = 'mp008_s_melee_bolas03',
-    ['WEAPON_THROWN_BOLAS_INTERTWINED'] = 'mp008_s_melee_bolas04',
-
-    -- KITS
-    ['WEAPON_KIT_BINOCULARS_IMPROVED'] = 'w_binoculars02',  -- mp005
-    ['WEAPON_KIT_BINOCULARS'] = 'w_rifle_binoculars01',
-    ['WEAPON_FISHINGROD'] = 'w_melee_fishingpole01',
-    ['WEAPON_KIT_CAMERA'] = 'w_camerabox01x',
-    ['WEAPON_KIT_CAMERA_ADVANCED'] = 'w_camerabox01x',  -- Same base
-    ['WEAPON_KIT_METAL_DETECTOR'] = 'w_electricfielddetector01',
+    ['weapon_thrown_tomahawk_ancient'] = 'w_melee_tomahawk02',
+    ['WEAPON_THROWN_DYNAMITE'] = 'w_throw_dynamite01',
+    ['weapon_thrown_dynamite'] = 'w_throw_dynamite01',
+    ['WEAPON_THROWN_MOLOTOV'] = 'w_throw_molotov01',
+    ['weapon_thrown_molotov'] = 'w_throw_molotov01',
+    -- ['WEAPON_THROWN_POISONBOTTLE'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    -- ['WEAPON_THROWN_BOLAS'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    -- ['WEAPON_THROWN_BOLAS_HAWKMOTH'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    -- ['WEAPON_THROWN_BOLAS_INTERTWINED'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    -- ['WEAPON_THROWN_BOLAS_IRONSPIKED'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    ['WEAPON_LASSO'] = 'w_melee_lasso01',
+    ['weapon_lasso'] = 'w_melee_lasso01',
+    -- ['WEAPON_LASSO_REINFORCED'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    -- ['WEAPON_MELEE_DAVY_LANTERN'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    ['WEAPON_MELEE_LANTERN_ELECTRIC'] = 's_interact_lantern03x_pickup',
+    ['weapon_melee_lantern_electric'] = 's_interact_lantern03x_pickup',
+    -- ['WEAPON_MELEE_LANTERN_HALLOWEEN'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    ['WEAPON_MELEE_TORCH'] = 's_interact_torch',
+    ['weapon_melee_torch'] = 's_interact_torch',
+    -- ['WEAPON_KIT_BINOCULARS'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    -- ['WEAPON_KIT_BINOCULARS_IMPROVED'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    ['WEAPON_KIT_CAMERA'] = 'p_camerabox01x',
+    ['weapon_kit_camera'] = 'p_camerabox01x',
+    -- ['WEAPON_KIT_CAMERA_ADVANCED'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    -- ['WEAPON_KIT_METAL_DETECTOR'] has no text model, engine hash lookup via 0xF70825EB340E7D15
+    ['WEAPON_FISHINGROD'] = 'w_melee_fishingpole02',
+    ['weapon_fishingrod'] = 'w_melee_fishingpole02',
+    -- ['WEAPON_MOONSHINEJUG_MP'] has no text model, engine hash lookup via 0xF70825EB340E7D15
 }

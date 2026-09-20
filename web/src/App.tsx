@@ -4,6 +4,8 @@ import useInventory from './hooks/useInventory';
 import useNui from './hooks/useNui';
 import useSound from './hooks/useSound';
 import { useToast } from './hooks/useToast';
+import usePanelPosition from './hooks/usePanelPosition';
+import { remPx, CONTAINER_W_REM, DETAIL_W_REM, PANEL_GAP_REM } from './utils/layout';
 import { useHotbar } from './hooks/useHotbar';
 import { fetchNui } from './utils/nui';
 import { N } from './utils/items';
@@ -118,6 +120,8 @@ export default function App() {
   }, []);
 
   const [panelPos, setPanelPos] = useState<{ x: number; y: number } | null>(loadSavedPos);
+  const attachedWidth = (state.containerOpen !== null ? CONTAINER_W_REM + PANEL_GAP_REM : 0) + (state.selected !== null ? DETAIL_W_REM + PANEL_GAP_REM : 0);
+  const fittedPanelPos = usePanelPosition(wrapperRef, panelPos, visible, remPx(attachedWidth));
   const panelDragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
 
   const handlePanelDragStart = useCallback((e: React.MouseEvent) => {
@@ -797,14 +801,14 @@ export default function App() {
     <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div id="inventory" style={{ display: 'block' }}>
         <div
-          id="inventory-wrapper"
+          id="inventory-wrapper" className="wst-panel"
           ref={wrapperRef}
           style={{
             opacity: animating ? 1 : 0,
-            ...(panelPos
+            ...(fittedPanelPos
               ? {
-                  left: `${panelPos.x}px`,
-                  top: `${panelPos.y}px`,
+                  left: `${fittedPanelPos.x}px`,
+                  top: `${fittedPanelPos.y}px`,
                   transform: animating ? 'none' : 'scale(.8)',
                 }
               : {
@@ -813,19 +817,19 @@ export default function App() {
           }}
         >
           <Frame px={13} opacity={0.5} />
-          <div className="top" onMouseDown={handlePanelDragStart} style={{ cursor: 'grab' }}>
+          <div className="wst-header top" onMouseDown={handlePanelDragStart} style={{ cursor: 'grab' }}>
             {/* The bag's badge and the close button at one width, and the title between them in the middle */}
             <div className="inv-badge">{SVG_SATCHEL}</div>
             <div className="inv-titles">
-              <span className="title" id="inv-title">{tr('ui_inventory', 'Inventory')}</span>
+              <span className="wst-title title" id="inv-title">{tr('ui_inventory', 'Inventory')}</span>
             </div>
-            <div id="inv-close-btn" onClick={handleClose}>{SVG_X}</div>
+            <div id="inv-close-btn" className="wst-close" onClick={handleClose}>{SVG_X}</div>
           </div>
           <div className="inv-weight-block">
             <WeightBar grid={state.grid} maxWeight={state.maxWeight} />
             <WeightProgress grid={state.grid} maxWeight={state.maxWeight} />
           </div>
-          <div className="inv-hr" />
+          <div className="wst-rule inv-hr" />
           <div id="inv-currency-row">
             <div className="inv-currency cash">
               <span className="inv-currency-icon">{SVG_CASH}</span>
@@ -840,10 +844,10 @@ export default function App() {
               stays compact at the end. They used to be two stacked rows, which
               wasted a whole line and left the quantity field floating alone. */}
           <div id="inv-search-row">
-            <div className="inv-search">
+            <div className="wst-field inv-search">
               <input
                 type="text"
-                className="search-bar"
+                className="wst-input search-bar"
                 id="inv-search"
                 placeholder={tr('ui_search_items', 'Search items...')}
                 value={state.search}
@@ -868,7 +872,7 @@ export default function App() {
             <div id="inv-amount-row">
               <input
                 type="number"
-                className="inv-amount-input"
+                className="wst-input inv-amount-input"
                 value={state.itemAmount || ''}
                 min={0}
                 onChange={(e) => handleSetItemAmount(parseInt(e.target.value) || 0)}
@@ -904,7 +908,7 @@ export default function App() {
           item={selectedItem}
           panel={state.panel}
           containerOpen={state.containerOpen}
-          panelPos={panelPos}
+          panelPos={fittedPanelPos}
         />
 
         <ContainerPanel
@@ -921,7 +925,7 @@ export default function App() {
           onMouseOver={handleMouseOver}
           onMouseLeave={handleMouseLeave}
           onClose={handleCloseContainer}
-          panelPos={panelPos}
+          panelPos={fittedPanelPos}
         />
 
         <RightInventoryPanel

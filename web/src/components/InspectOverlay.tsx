@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { rarity, N, fmtType, fmtWeight } from '../utils/items';
-import { iconUrl, placeholderUrl } from '../utils/nui';
+import { getItemUrl, itemImageError } from '../utils/nui';
 import { InventoryItem } from '../typings';
 import { tr } from '../i18n';
 
@@ -59,14 +59,14 @@ export default function InspectOverlay({ item, onClose }: InspectOverlayProps) {
       <div className="inspect-body" ref={bodyRef}>
         <img
           className="inspect-img"
-          src={iconUrl(item.name)}
-          onError={(e) => { (e.target as HTMLImageElement).src = placeholderUrl(); }}
+          src={getItemUrl(item)}
+          onError={(e) => { itemImageError(e.currentTarget, item); }}
           alt=""
         />
-        <div className="inspect-label">{item.label || item.name}</div>
+        <div className="wst-title inspect-label">{item.label || item.name}</div>
         <div className={`inspect-rarity detail-rarity ${r}`}>{r}</div>
-        <div className="inspect-sep" />
-        <div className="inspect-desc">{item.desc || tr('ui_no_description', 'No description.')}</div>
+        <div className="wst-rule inspect-sep" />
+        <div className="wst-sub inspect-desc">{item.desc || tr('ui_no_description', 'No description.')}</div>
         <div className="inspect-stats">
           <div className="inspect-s">
             <div className="inspect-sv">{fmtWeight(N(item.weight))}</div>
@@ -87,7 +87,7 @@ export default function InspectOverlay({ item, onClose }: InspectOverlayProps) {
             </div>
           )}
         </div>
-        <div className="inspect-x" onClick={handleClose}>[ {tr('ui_esc_close', 'ESC TO CLOSE')} ]</div>
+        <div className="wst-button inspect-x" onClick={handleClose}>[ {tr('ui_esc_close', 'ESC TO CLOSE')} ]</div>
       </div>
     </div>
   );

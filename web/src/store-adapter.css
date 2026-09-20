@@ -1,0 +1,83 @@
+/* Appearance adapter: layout, imagery and input behavior stay in the original UI. */
+body.wst-root {
+  --font-main: var(--wst-f-body); --font-body: var(--wst-f-body); --font-sans: var(--wst-f-body);
+  --font-display: var(--wst-f-display); --font-number: var(--wst-f-num); --font-numeral: var(--wst-f-num);
+  --wc-font-body: var(--wst-f-body); --wc-font-display: var(--wst-f-display); --wc-font-numeral: var(--wst-f-num);
+  --text: var(--wst-text); --text-dim: var(--wst-text-dim); --text-mute: var(--wst-text-faint);
+  --wc-text: var(--wst-text); --wc-text-dim: var(--wst-text-dim); --wc-text-faint: var(--wst-text-faint);
+  --wc-dim: var(--wst-text-dim); --accent: var(--wst-accent); --radius: 0px; --radius-sm: 0px;
+}
+.wst-root .wst-panel { --wc-accent: var(--wst-accent); --wc-line: var(--wst-line); --wc-line-strong: var(--wst-line-strong); }
+.wst-root .wst-panel::before { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+.wst-root .wst-panel > .wc-atmo { display: none; }
+.wst-root .wst-field > input { background: transparent !important; }
+.wst-root .wst-header::before { opacity: 1; }
+.wst-root :is(.wst-button,.wst-tab,.wst-card,.wst-close) { transition: color .14s, opacity .14s; }
+.wst-root .wst-card:hover:not(:disabled):not(.disabled) { transform: none; }
+.wst-root .wst-card::after { display: none !important; }
+.wst-root .wst-card:is(:hover,.active,.selected,.chosen,.is-selected,[aria-selected=true]) { text-shadow: none !important; }
+.wst-root .wst-card:is(:hover,.active,.selected,.chosen,.is-selected,[aria-selected=true]) :is(.cname,.cprice,.cfoot,.cclock,.nm,.wc-card-name,.wc-card-sub,.gs-row-label,.gs-row-price,.row-label,.row-value,.ammo-picker-option-copy,.count,.bag-icon) { color: inherit !important; text-shadow: none !important; }
+.wst-root .wst-card .wst-button { color: #e5e5e5 !important; }
+.wst-root .wst-card .wst-button.primary { color: #111 !important; }
+.wst-root .wst-card .wst-button.danger { color: #fff !important; }
+.wst-root .wst-card .wst-button :is(span,b,strong) { color: inherit !important; }
+html[dir=rtl] .wst-root { --font-main:var(--wst-f-ar); --font-body:var(--wst-f-ar); --font-display:var(--wst-f-ar); --wc-font-body:var(--wst-f-ar); --wc-font-display:var(--wst-f-ar); }
+/* Inventory quantities, drag zones and gauges retain their geometry. */
+.wst-inventory #inv-close-btn { position:relative; }
+.wst-inventory #inv-close-btn svg { display:block; width:45%; height:45%; }
+.wst-inventory #inv-close-btn::before { width:auto; height:auto; }
+.wst-inventory :is(.cp-close,.trade-close,.ammo-picker-close) { position:relative; }
+.wst-inventory #container-panel .cp-close svg,
+.wst-inventory .trade-close svg { display:block; width:45%; height:45%; }
+.wst-inventory :is(.cp-close,.trade-close,.ammo-picker-close)::before { width:auto; height:auto; }
+.wst-inventory .ammo-picker-close { font-size:1.4rem; }
+.wst-inventory .inv-grid .wst-card .slot-inner::before,
+.wst-inventory .inv-grid .wst-card .slot-inner::after { display:none !important; }
+.wst-inventory .inv-grid .wst-card .count { background:transparent; border:0; }
+.wst-inventory #inventory .wst-tab::after { display:none !important; }
+.wst-inventory .wst-tab.active svg { color:inherit !important; fill:currentColor; }
+.wst-inventory .wst-tab .cat-tooltip { color:#e5e5e5 !important; }
+.wst-inventory .ammo-picker-rail { display:none; }
+.wst-inventory .ammo-picker-heading h2 { font-family:var(--wst-f-display); color:#fff; }
+.wst-inventory :is(.inv-currency-val,.price-cash,.split-stack-num,.trade-slot-count) {font-family:var(--wst-f-num);}
+.wst-inventory .wst-card:is(:hover,.selected) :is(.ammo-picker-radio,.equipped-badge,.hotbar-badge) { color:#111; }
+/* The compact tooltip uses the store panel; retain its anchor and fade behavior. */
+.wst-inventory #inventory-tooltip .tt-arrow { background:var(--wst-ink); }
+.wst-inventory #inventory-tooltip :is(.tt-stats,.tt-hint)::before {
+  background:rgba(255,255,255,.5);
+  -webkit-mask:var(--wst-tex-divider_line) center/100% 100% no-repeat;
+  mask:var(--wst-tex-divider_line) center/100% 100% no-repeat;
+}
+.wst-inventory .wst-toast .toast-text { color:inherit; }
+/* Vertical space determines UI scale, including on 21:9 and 32:9 screens. */
+.wst-inventory :is(#inventory-wrapper,#right-inventory-panel,#container-panel,#inventory-detail) { max-height:calc(100vh - 2rem); }
+.wst-inventory #inventory-detail { max-height:calc(100vh - 2rem); overflow-y:auto; overflow-x:hidden; }
+.wst-inventory :is(#inventory-options,#inv-split-dialog,#inv-ammo-picker) { max-height:calc(100vh - 2rem); overflow:visible !important; }
+.wst-inventory #inventory-tooltip {
+  max-width: min(16.5rem, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  overflow: visible !important;
+  overflow-wrap: anywhere;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.wst-inventory #inventory-tooltip[data-placement=below] .tt-arrow { top:-.28rem; bottom:auto; }
+
+/* Scrollbars hygiene: eliminate horizontal scrollbars and suppress scrollbars on tooltips, dialogs, and slot grids */
+.wst-inventory ::-webkit-scrollbar:horizontal { display: none !important; width: 0 !important; height: 0 !important; }
+.wst-inventory ::-webkit-scrollbar-corner { background: transparent !important; display: none !important; }
+.wst-inventory :is(#inventory-tooltip,#inventory-options,#inv-split-dialog,#inv-ammo-picker,.inv-grid,.tooltip-wrapper) {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.wst-inventory :is(#inventory-tooltip,#inventory-options,#inv-split-dialog,#inv-ammo-picker,.inv-grid,.tooltip-wrapper)::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.wst-inventory :is(.tt-desc,.tt-stat,.tb-btn,.split-btn,.trade-btn,.ammo-picker-option-copy) { font-size:max(.66rem,12px); }
+.wst-inventory :is(.tt-hint,.cp-subtitle,.rp-subtitle,.trade-partner) { font-size:max(.55rem,10px); }
+.wst-inventory #inventory-detail.positioned { animation-name:detailSlidePositioned; }
+@keyframes detailSlidePositioned { from {opacity:0;transform:translateX(-8px)} to {opacity:1;transform:none} }
+

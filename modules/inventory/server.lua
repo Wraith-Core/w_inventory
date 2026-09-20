@@ -60,6 +60,7 @@ end
 ---@param slots updateSlot[]
 ---@param syncOwner? boolean
 function WInventory:syncSlotsWithClients(slots, syncOwner)
+    if Inventory.SyncBearerCash then Inventory.SyncBearerCash(self) end
 	for playerId in pairs(self.openedBy) do
 		if self.id ~= playerId then
             local target = Inventories[playerId]
@@ -401,6 +402,7 @@ function Inventory.SetSlot(inv, item, count, metadata, slot)
 end
 
 local Items = require 'modules.items.server'
+require('modules.inventory.economy')(Inventory, Inventories, Items)
 
 CreateThread(function()
     Inventory.accounts = server.accounts
@@ -581,6 +583,8 @@ function Inventory.Create(id, label, invType, slots, weight, maxWeight, owner, i
 	end
 
 	Inventories[self.id] = setmetatable(self, WInventory)
+    Inventory.SyncBearerCash(self)
+    if self.type ~= 'player' then Inventory.ReflectCash(self) end
 	return Inventories[self.id]
 end
 
@@ -1406,6 +1410,12 @@ function Inventory.AddItem(inv, item, count, metadata, slot, cb)
 
 	if not inv?.slots then return false, 'invalid_inventory' end
     if item.nativeGunbelt and not inv.player then return false, 'gunbelt_is_character_ammo' end
+    if item.name == 'gold' then return false, 'gold_is_account_currency' end
+    if item.name == 'money' or item.name == 'cash' then
+        count = tonumber(count)
+        if not count or count <= 0 then return false, 'invalid_count' end
+        return Inventory.ChangeCash(inv, count)
+    end
 
 	local toSlot, slotMetadata, slotCount
 	local success, response = false
@@ -1590,6 +1600,8 @@ local function cartPlan(inv, lines)
     })
 end
 
+require('modules.inventory.market_claim')(Inventory, Inventories, Items, cartPlan, db)
+
 exports('CanCarryItems', function(inv, lines)
     local plan, reason = cartPlan(Inventory(inv), lines)
     return plan ~= nil, reason
@@ -1635,10 +1647,13 @@ function Inventory.Search(inv, search, items, metadata)
 			metadata = assertMetadata(metadata)
 			local itemCount = #items
 			local returnData = {}
+			local firstKey
 
 			for i = 1, itemCount do
 				local item = string.lower(items[i])
 				if item:sub(0, 7) == 'weapon_' then item = string.upper(item) end
+				local canonicalName = shared.resolveItemName(item)
+				if i == 1 then firstKey = item end
 
 				if search == 1 then
 					returnData[item] = {}
@@ -1647,7 +1662,7 @@ function Inventory.Search(inv, search, items, metadata)
 				end
 
 				for _, v in pairs(inv) do
-					if v.name == item then
+					if v.name == canonicalName then
 						if not v.metadata then v.metadata = {} end
 
 						if not metadata or table.contains(v.metadata, metadata) then
@@ -1661,7 +1676,7 @@ function Inventory.Search(inv, search, items, metadata)
 				end
 			end
 
-			if next(returnData) then return itemCount == 1 and returnData[string.lower(items[1])] or returnData end
+			if next(returnData) then return itemCount == 1 and returnData[firstKey] or returnData end
 		end
 	end
 
@@ -1720,6 +1735,7 @@ function Inventory.RemoveItem(inv, item, count, metadata, slot, ignoreTotal)
 		inv = Inventory(inv) --[[@as WInventory]]
 
 		if not inv?.slots then return false, 'invalid_inventory' end
+        if item.name == 'money' or item.name == 'cash' then return Inventory.ChangeCash(inv, -count) end
 
 		metadata = assertMetadata(metadata)
 		local itemSlots, totalCount = Inventory.GetItemSlots(inv, item, metadata)
@@ -2050,44 +2066,72 @@ local WeaponWorldModels = {
 	['WEAPON_KIT_METAL_DETECTOR']            = 'w_electricfielddetector01',
 }
 
+pcall(function()
+	local mapContent = LoadResourceFile(GetCurrentResourceName(), 'data/weapon_world_models_mapping.lua')
+	if mapContent then
+		local fn = load(mapContent)
+		if fn then
+			local loaded = fn()
+			if type(loaded) == 'table' then
+				for k, v in pairs(loaded) do
+					WeaponWorldModels[k] = v
+				end
+			end
+		end
+	end
+end)
+
 local DropPropFallbacks = {
-	water        = 'p_bottlebeer01x',
-	bandage      = 'p_bandage01x',
-	firstaid     = 'p_bandagebox01x',
-	fieldbandage = 'p_bandage01x',
-	canteen25    = 'p_canteen01x',
-	canteen50    = 'p_canteen01x',
-	canteen75    = 'p_canteen01x',
-	canteen100   = 'p_canteen01x',
-	horse_reviver = 'p_bottleblack01x',
-	horse_brush  = 'p_brush01x',
-	horse_lantern = 'p_oillantern01x',
-	lockpick     = 'p_lockpick01x',
-	sugarcube    = 'p_sugarcube01x',
-	feather      = 'p_feather01x',
-	stew         = 'p_bowl03x',
-	birdpost     = 'p_letter01x',
-	animal_heart = 'p_heartanimal01x',
-	moonshine    = 'p_bottlemoonshine01x',
-	beer         = 'p_bottlebeer01x',
-	whiskey      = 'p_bottlewhiskey01x',
-	cigarette    = 'p_cigarette01x',
-	cigar        = 'p_cigar01x',
-	tobacco      = 'p_tobaccotin01x',
-	dynamite     = 'p_dynamite01x',
-	copper       = 'p_ingot_copper01x',
-	silver       = 'p_ingot_silver01x',
-	gold_bar     = 'p_ingot_gold01x',
-	gold_nugget  = 'p_goldnugget01x',
-	perfect_pelt = 'p_cs_pelt_coyote',
-	good_pelt    = 'p_cs_pelt_coyote',
-	poor_pelt    = 'p_cs_pelt_coyote',
-	rope         = 'p_ropecoil01x',
+	water           = 'p_bottlebeer01x',
+	bandage         = 'p_bandage01x',
+	firstaid        = 'p_bandagebox01x',
+	fieldbandage    = 'p_bandage01x',
+	canteen25       = 'p_canteen01x',
+	canteen50       = 'p_canteen01x',
+	canteen75       = 'p_canteen01x',
+	canteen100      = 'p_canteen01x',
+	horse_reviver   = 'p_bottleblack01x',
+	horse_brush     = 'p_brush01x',
+	horse_lantern   = 'p_oillantern01x',
+	lockpick        = 'p_lockpick01x',
+	handcuffs       = 'p_cs_cuffs01x',
+	kit_gun_oil     = 's_gunoil01x',
+	screwdriver     = 'p_screwdriver01x',
+	paper           = 'p_letter01x',
+	camera          = 'w_camerabox01x',
+	goldbar         = 'p_ingot_gold01x',
+	gold_bar        = 'p_ingot_gold01x',
+	gold_nugget     = 'p_goldnugget01x',
+	money           = 'p_moneystack03x',
+	money_clip      = 'p_moneystack03x',
+	blood_money_clip = 'p_moneystack01x',
+	sugarcube       = 'p_sugarcube01x',
+	feather         = 'p_feather01x',
+	stew            = 'p_bowl03x',
+	birdpost        = 'p_letter01x',
+	animal_heart    = 'p_heartanimal01x',
+	moonshine       = 'p_bottlemoonshine01x',
+	beer            = 'p_bottlebeer01x',
+	whiskey         = 'p_bottlewhiskey01x',
+	cigarette       = 'p_cigarette01x',
+	cigar           = 'p_cigar01x',
+	tobacco         = 'p_tobaccotin01x',
+	dynamite        = 'p_dynamite01x',
+	copper          = 'p_ingot_copper01x',
+	silver          = 'p_ingot_silver01x',
+	perfect_pelt    = 'p_cs_pelt_coyote',
+	good_pelt       = 'p_cs_pelt_coyote',
+	poor_pelt       = 'p_cs_pelt_coyote',
+	rope            = 'p_ropecoil01x',
 }
 
 local DropPropKeywords = {
+	{ 'ammoarrow', 's_interact_arrow01x' },
+	{ 'arrow',     's_interact_arrow01x' },
 	{ 'ammo_box',  'p_ammobox01x' },
-	{ 'ammo_arrow','s_interact_arrow01x' },
+	{ 'ammo',      'p_ammobox01x' },
+	{ 'satchel',   'p_satchel01x' },
+	{ 'scope',     'w_binoculars01x' },
 	{ 'fish',      'p_fish01x' },
 	{ 'pelt',      'p_cs_pelt_coyote' },
 	{ 'bait',      'p_baitcheese01x' },
@@ -2097,13 +2141,20 @@ local DropPropKeywords = {
 }
 
 local function resolveDropProp(itemName, itemData)
-	if itemData?.prop then return itemData.prop end
+	if itemData and itemData.weapon then
+		-- Equip uses a weapon type; the ground asset uses a physical model.
+		return itemData.worldModel or WeaponWorldModels[itemData.weaponType or itemName] or 'p_bag01x'
+	end
+	if itemData?.prop and type(itemData.prop) == 'string' then return itemData.prop end
+	if itemData?.model and type(itemData.model) == 'string' then return itemData.model end
+	if itemData?.client?.model and type(itemData.client.model) == 'string' then return itemData.client.model end
+	if itemData?.client?.prop and type(itemData.client.prop) == 'string' then return itemData.client.prop end
 
 	if WeaponWorldModels[itemName] then return WeaponWorldModels[itemName] end
 
 	if DropPropFallbacks[itemName] then return DropPropFallbacks[itemName] end
 
-	if itemName:match('^p_') or itemName:match('^s_') then
+	if itemName:match('^p_') or itemName:match('^s_') or itemName:match('^w_') then
 		return itemName
 	end
 
@@ -2125,6 +2176,20 @@ local function dropItem(source, playerInventory, fromData, data)
 	-- A second guard: this function deducts from playerInventory exclusively, so it is not run unless
 	-- the row passed is the very row of that slot. Any other source = duping.
 	if playerInventory.items[data.fromSlot] ~= fromData then return end
+
+    if fromData.name == 'gold' then return false end
+    if fromData.name == 'money' or fromData.name == 'cash' then
+        if not TriggerEventHooks('swapItems', {source=source, fromInventory=playerInventory.id, fromSlot=fromData,
+            fromType='player', toInventory='newdrop', toSlot=data.toSlot, toType='drop', count=data.count, action='move'}) then return false end
+        local dropId = generateInvId('drop')
+        local drop = Inventory.Create(dropId, ('ui_drop %s'):format(dropId:gsub('%D','')), 'drop', shared.playerslots, 0, shared.playerweight, false, {})
+        if not drop then return false end
+        if not Inventory.TransferCash(playerInventory, drop, data.count) then Inventory.Remove(drop); return false end
+        drop.coords = data.coords
+        Inventory.Drops[dropId] = {coords=data.coords, instance=data.instance, model=joaat('p_moneystack03x'), createdAt=os.time()}
+        TriggerClientEvent('w_inventory:createDrop', -1, dropId, Inventory.Drops[dropId], playerInventory.open and source, data.fromSlot)
+        return true, {weight=playerInventory.weight, items={}}
+    end
 
 	local toData = table.clone(fromData)
 	local wasUsed = Inventory.IsWeaponUsed(fromData)
@@ -2173,9 +2238,11 @@ local function dropItem(source, playerInventory, fromData, data)
 
 	if not inventory then return end
 	inventory.coords = data.coords
-	local isWeaponDrop = prop:sub(1, 2) == 'w_'
+	local isWeaponDrop = itemData.weapon == true or WeaponWorldModels[toData.name] ~= nil
+	local propHash = type(prop) == 'number' and prop or joaat(prop)
 	-- [w_gunsmith drop-fix] carry the weapon's hash + its customisation (gunComps) to the client so it builds a fully customised weapon on the ground
-	Inventory.Drops[dropId] = {coords = inventory.coords, instance = data.instance, model = joaat(prop), isWeapon = isWeaponDrop or nil, weaponHash = isWeaponDrop and joaat(toData.name) or nil, gunComps = (isWeaponDrop and toData.metadata and toData.metadata.gunComps) or nil, createdAt = os.time()}
+	Inventory.Drops[dropId] = {coords = inventory.coords, instance = data.instance, model = propHash, nativeItemHash = not isWeaponDrop and itemData.nativeHash or nil, isWeapon = isWeaponDrop or nil, weaponHash = isWeaponDrop and (itemData.hash or joaat(toData.name)) or nil, gunComps = (isWeaponDrop and toData.metadata and toData.metadata.gunComps) or nil, createdAt = os.time()}
+	Inventory.Drops[dropId].noProp = itemData.noDropModel or nil
 
 	TriggerClientEvent('w_inventory:createDrop', -1, dropId, Inventory.Drops[dropId], playerInventory.open and source, slot)
 
@@ -2303,6 +2370,17 @@ lib.callback.register('w_inventory:swapItems', function(source, data)
             end
 
             return dropItem(source, playerInventory, fromData, data)
+        end
+
+        if not sameInventory and fromData and (fromData.name == 'money' or fromData.name == 'cash' or fromData.name == 'gold'
+            or toData and (toData.name == 'money' or toData.name == 'cash' or toData.name == 'gold')) then
+            if fromData.name == 'gold' or toData and toData.name ~= fromData.name then return false, 'cannot_perform' end
+            if fromData.name ~= 'money' and fromData.name ~= 'cash' then return false, 'cannot_perform' end
+            if not TriggerEventHooks('swapItems', {source=source, fromInventory=fromInventory.id, fromSlot=fromData,
+                fromType=fromInventory.type, toInventory=toInventory.id, toSlot=toData or data.toSlot,
+                toType=toInventory.type, count=data.count, action='move'}) then return false end
+            local ok, reason = Inventory.TransferCash(fromInventory, toInventory, data.count)
+            return ok, ok and {weight=playerInventory.weight, items={}} or reason
         end
 
 		if fromData then
@@ -2803,6 +2881,7 @@ function Inventory.Clear(inv, keep)
 
 	inv.weight = newWeight
 	inv.changed = true
+    Inventory.ReflectCash(inv)
 
 	inv:syncSlotsWithClients(updateSlots, true)
 
@@ -3111,6 +3190,8 @@ RegisterServerEvent('w_inventory:giveItem', function(slot, target, count)
 			action = 'give',
 			fromSlot = data,
 		}) then
+            if item.name == 'gold' then return end
+            if item.name == 'money' or item.name == 'cash' then Inventory.TransferCash(fromInventory, toInventory, count); return end
 			---@todo manually call swapItems or something?
 			if Inventory.AddItem(toInventory, item, count, data.metadata, toSlot) then
 				if Inventory.RemoveItem(fromInventory, item, count, data.metadata, slot) then
@@ -3305,14 +3386,22 @@ end)
 local RDR_WEAPON_CAPACITY = {
 	[`WEAPON_REVOLVER_CATTLEMAN`] = 6,
 	[`WEAPON_REVOLVER_CATTLEMAN_MEXICAN`] = 6,
+	[`WEAPON_REVOLVER_CATTLEMAN_JOHN`] = 6,
+	[`WEAPON_REVOLVER_CATTLEMAN_PIG`] = 6,
 	[`WEAPON_REVOLVER_DOUBLEACTION`] = 6,
 	[`WEAPON_REVOLVER_DOUBLEACTION_GAMBLER`] = 6,
+	[`WEAPON_REVOLVER_DOUBLEACTION_EXOTIC`] = 6,
+	[`WEAPON_REVOLVER_DOUBLEACTION_MICAH`] = 6,
 	[`WEAPON_REVOLVER_SCHOFIELD`] = 6,
+	[`WEAPON_REVOLVER_SCHOFIELD_CALLOWAY`] = 6,
+	[`WEAPON_REVOLVER_SCHOFIELD_GOLDEN`] = 6,
 	[`WEAPON_REVOLVER_LEMAT`] = 9,
 	[`WEAPON_REVOLVER_NAVY`] = 6,
+	[`WEAPON_REVOLVER_NAVY_CROSSOVER`] = 6,
 	[`WEAPON_PISTOL_VOLCANIC`] = 8,
 	[`WEAPON_PISTOL_M1899`] = 8,
 	[`WEAPON_PISTOL_MAUSER`] = 10,
+	[`WEAPON_PISTOL_MAUSER_DRUNK`] = 10,
 	[`WEAPON_PISTOL_SEMIAUTO`] = 8,
 	[`WEAPON_REPEATER_CARBINE`] = 7,
 	[`WEAPON_REPEATER_WINCHESTER`] = 14,
@@ -3925,69 +4014,38 @@ end)
 ---@param source number
 ---@param slot number
 ---@return boolean success, string? reason, number? amount
-lib.callback.register('w_inventory:packAmmo', function(source, slot)
-    if shared.nativeRsgWeapons then return false, 'native_weapon_engine' end
-	local inventory = Inventory(source)
-
-	if not inventory then return false end
-
-	local slotData = inventory.items[slot]
-
-	if not slotData then return false end
-
-	local item = Items(slotData.name)
-
-	if not item then return false end
-
-	if item.ammoPack then
-		local boxItem = Items(item.ammoPack)
-
-		if not boxItem then return false end
-
-		local packSize = boxItem.ammocount or 12
-
-		if slotData.count < packSize then
-			return false, 'need', packSize
-		end
-
-		local boxes = math.floor(slotData.count / packSize)
-
-		if not Inventory.CanCarryItem(inventory, item.ammoPack, boxes) then
-			return false, 'weight'
-		end
-
-		if not Inventory.RemoveItem(inventory, slotData.name, boxes * packSize, nil, slot) then
-			return false
-		end
-
-		Inventory.AddItem(inventory, item.ammoPack, boxes)
-
-		return true, 'packed', boxes
-	end
-
-	if item.ammoUnpack then
-		local packSize = item.ammocount or 12
-		local boxes = slotData.count
-
-		-- The box is much lighter than its contents, so the weight may not bear opening them all.
-		-- We lower the count until it is accepted, instead of refusing the whole operation.
-		while boxes > 0 and not Inventory.CanCarryItem(inventory, item.ammoUnpack, boxes * packSize) do
-			boxes = boxes - 1
-		end
-
-		if boxes < 1 then return false, 'weight' end
-
-		if not Inventory.RemoveItem(inventory, slotData.name, boxes, nil, slot) then
-			return false
-		end
-
-		Inventory.AddItem(inventory, item.ammoUnpack, boxes * packSize)
-
-		return true, 'unpacked', boxes * packSize
-	end
-
-	return false
+local AmmoExchange = require('modules.inventory.ammo_exchange').new({
+    inventory = Inventory,
+    item = Items,
+    now = GetGameTimer,
+    encode = json.encode,
+    weight = Inventory.SlotWeight,
+    maxStack = GetMaxStack,
+    matches = metadataMatchForStack,
+    metadata = function(inv, item) return (Items.Metadata(inv.id, item, {}, 1)) end,
+    error = function(err) warn('Ammo conversion failed: ' .. tostring(err)) end,
+    publish = function(inv, plan, original, output, operationId)
+        local updates = {}
+        for slot in pairs(plan.changes) do updates[#updates + 1] = { item = inv.items[slot] or { slot = slot }, inventory = inv.id } end
+        inv:syncSlotsWithClients(updates, true)
+        TriggerClientEvent('w_inventory:itemNotify', inv.id, { original, 'ui_removed', plan.removed })
+        TriggerClientEvent('w_inventory:itemNotify', inv.id, { { name = output.name, label = output.label }, 'ui_added', plan.added })
+        if inv.player and server.syncInventory then server.syncInventory(inv) end
+        if server.loglevel > 0 then
+            lib.logger(inv.owner, 'ammoExchange', ('%s %s: %d %s -> %d %s'):format(operationId, plan.kind,
+                plan.removed, original.name, plan.added, output.name))
+        end
+    end,
+})
+lib.callback.register('w_inventory:prepareAmmoPack', function(source, slot)
+    if shared.nativeRsgWeapons then return nil end
+    return AmmoExchange.prepare(source, slot)
 end)
+lib.callback.register('w_inventory:packAmmo', function(source, slot, operationId)
+    if shared.nativeRsgWeapons then return false, 'native_weapon_engine' end
+    return AmmoExchange.execute(source, slot, operationId)
+end)
+AddEventHandler('playerDropped', function() AmmoExchange.clear(source) end)
 
 lib.callback.register('w_inventory:setWeaponUsageState', function(source, state)
 	return Inventory.SetWeaponUsageState(source, state, true, false)
@@ -4201,29 +4259,11 @@ exports('InspectInventory', Inventory.InspectInventory)
 local DROP_EXPIRY_SECONDS = 3600 -- one hour
 local DROP_CHECK_INTERVAL = 300000 -- 5 minutes in milliseconds
 
--- Sending the expired money to the server's safe
-local function sendMoneyToSafe(amount, itemName)
-	if amount <= 0 then return end
-	local desc = ('drop %s expired - transferred %.2f to server safe'):format(itemName, amount)
-	pcall(function()
-		MySQL.update('UPDATE money_safe SET balance = balance + ? WHERE id = 1', { amount })
-	end)
-	lib.print.info(desc)
-end
-
--- A failed native cleanup keeps the drop alive for retry. Credit its cash only
--- after successful removal, otherwise each retry could pay the safe again.
+-- Expiry returns the existing escrow balance; it never credits money from item metadata.
 local function expireDrop(dropId)
-    local inv, money = Inventories[dropId], {}
-    for _, item in pairs(inv and inv.items or {}) do
-        if item and (item.name == 'money' or item.name == 'cash') and (item.count or 0) > 0 then
-            money[item.name] = (money[item.name] or 0) + item.count
-        end
-    end
-    if not Inventory.Remove(dropId) then return false end
-    for name, amount in pairs(money) do sendMoneyToSafe(amount, name) end
-    lib.print.info(('[w_inventory] deleted expired drop: %s'):format(dropId))
-    return true
+    local inv = Inventories[dropId]
+    if not inv or not Inventory.ReclaimCash(inv) then return false end
+    return Inventory.Remove(dropId) == true
 end
 
 -- Clearing every existing drop when the resource starts

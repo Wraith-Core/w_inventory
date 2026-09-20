@@ -1,18 +1,26 @@
 import { isEnvBrowser } from './misc';
 
-let _imagepath = 'images';
+const resourceName = (window as any).GetParentResourceName
+  ? (window as any).GetParentResourceName()
+  : 'w_inventory';
+
+// Currency and early slot messages can arrive before the catalog/init message.
+let _imagepath = isEnvBrowser() ? '/images' : `https://cfx-nui-${resourceName}/web/images`;
+
+function imageUrl(value: string): string {
+  if (value.startsWith('nui://')) return value.replace('nui://', 'https://cfx-nui-');
+  if (/^(https?:|data:|blob:)/i.test(value) || value.startsWith('/')) return value;
+  const filename = /\.(png|webp|jpg|jpeg)(?:[?#]|$)/i.test(value) ? value : `${value}.png`;
+  return `${_imagepath}/${filename}`;
+}
 
 export function setImagePath(path: string) {
-  if (path && path !== '') _imagepath = path;
+  if (path && path !== '') _imagepath = path.replace(/^nui:\/\//, 'https://cfx-nui-').replace(/\/$/, '');
 }
 
 export function getImagePath() {
   return _imagepath;
 }
-
-const resourceName = (window as any).GetParentResourceName
-  ? (window as any).GetParentResourceName()
-  : 'w_inventory';
 
 export async function fetchNui<T = any>(eventName: string, data?: unknown): Promise<T> {
   if (isEnvBrowser()) return undefined as any;
@@ -44,21 +52,33 @@ export async function fetchNui<T = any>(eventName: string, data?: unknown): Prom
 }
 
 export function iconUrl(name: string): string {
-  return `${_imagepath}/${name}.png`;
+  return getItemUrl(name);
 }
 
 export function placeholderUrl(): string {
-  return `${_imagepath}/placeholder.png`;
+  return imageUrl('kit_pouch_kit.png');
 }
 
 export function getItemUrl(item: any): string {
-  if (typeof item === 'object' && item !== null) {
-    if (!item.name) return '';
-    if (item.metadata?.imageurl) return item.metadata.imageurl;
-    if (item.metadata?.image) return `${_imagepath}/${item.metadata.image}.png`;
-    const itemData = (window as any).__oxItems?.[item.name];
-    if (itemData?.image) return itemData.image;
-    return `${_imagepath}/${item.name}.png`;
-  }
-  return `${_imagepath}/${item}.png`;
+  const name = typeof item === 'string' ? item : item?.name;
+  if (typeof name !== 'string' || !name) return placeholderUrl();
+  const lower = name.toLowerCase();
+  const metadata = typeof item === 'object' ? item.metadata : undefined;
+  // Cash is a core account rendered as an item; stale stack metadata cannot hide its icon.
+  if (lower === 'money' || lower === 'cash') return imageUrl('money.png');
+  if (metadata?.imageurl) return imageUrl(String(metadata.imageurl));
+  if (metadata?.image) return imageUrl(String(metadata.image));
+  const items = (window as any).__oxItems || {};
+  const definition = items[name] || items[lower] || items[name.toUpperCase()];
+  const image = definition?.image || definition?.client?.image;
+  return imageUrl(image || `${lower}.png`);
+}
+
+export function itemImageError(target: HTMLImageElement, item: any) {
+    // Try the catalog after a stale custom picture, then one existing native bag icon.
+  if (target.src === new URL(placeholderUrl(), window.location.href).href) return;
+  const canonical = getItemUrl(typeof item === 'string' ? item : item?.name);
+  const fallback = target.src === new URL(canonical, window.location.href).href ? placeholderUrl() : canonical;
+  if (target.src === new URL(fallback, window.location.href).href) { target.onerror = null; return; }
+  target.src = fallback;
 }

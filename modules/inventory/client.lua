@@ -53,13 +53,16 @@ function Inventory.Search(search, item, metadata)
 
 		local items = #item
 		local returnData = {}
+		local firstKey
 		for i = 1, items do
 			local item = string.lower(item[i])
 			if item:sub(0, 7) == 'weapon_' then item = string.upper(item) end
+			local canonicalName = shared.resolveItemName(item)
+			if i == 1 then firstKey = item end
 			if search == 1 then returnData[item] = {}
 			elseif search == 2 then returnData[item] = 0 end
 			for _, v in pairs(PlayerData.inventory) do
-				if v.name == item then
+				if v.name == canonicalName then
 					if not v.metadata then v.metadata = {} end
 					if not metadata or table.contains(v.metadata, metadata) then
 						if search == 1 then returnData[item][#returnData[item]+1] = PlayerData.inventory[v.slot]
@@ -70,7 +73,7 @@ function Inventory.Search(search, item, metadata)
 				end
 			end
 		end
-		if next(returnData) then return items == 1 and returnData[item[1]] or returnData end
+		if next(returnData) then return items == 1 and returnData[firstKey] or returnData end
 	end
 	return false
 end

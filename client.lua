@@ -487,14 +487,22 @@ local BOW_CAPACITY = math.max(1, math.floor(tonumber(Config.Ammo and Config.Ammo
 local RDR_CLIP_CAPACITY = {
 	[`WEAPON_REVOLVER_CATTLEMAN`] = 6,
 	[`WEAPON_REVOLVER_CATTLEMAN_MEXICAN`] = 6,
+	[`WEAPON_REVOLVER_CATTLEMAN_JOHN`] = 6,
+	[`WEAPON_REVOLVER_CATTLEMAN_PIG`] = 6,
 	[`WEAPON_REVOLVER_DOUBLEACTION`] = 6,
 	[`WEAPON_REVOLVER_DOUBLEACTION_GAMBLER`] = 6,
+	[`WEAPON_REVOLVER_DOUBLEACTION_EXOTIC`] = 6,
+	[`WEAPON_REVOLVER_DOUBLEACTION_MICAH`] = 6,
 	[`WEAPON_REVOLVER_SCHOFIELD`] = 6,
+	[`WEAPON_REVOLVER_SCHOFIELD_CALLOWAY`] = 6,
+	[`WEAPON_REVOLVER_SCHOFIELD_GOLDEN`] = 6,
 	[`WEAPON_REVOLVER_LEMAT`] = 9,
 	[`WEAPON_REVOLVER_NAVY`] = 6,
+	[`WEAPON_REVOLVER_NAVY_CROSSOVER`] = 6,
 	[`WEAPON_PISTOL_VOLCANIC`] = 8,
 	[`WEAPON_PISTOL_M1899`] = 8,
 	[`WEAPON_PISTOL_MAUSER`] = 10,
+	[`WEAPON_PISTOL_MAUSER_DRUNK`] = 10,
 	[`WEAPON_PISTOL_SEMIAUTO`] = 8,
 	[`WEAPON_REPEATER_CARBINE`] = 7,
 	[`WEAPON_REPEATER_WINCHESTER`] = 14,
@@ -1357,7 +1365,9 @@ do
 	-- that can suspend. Without CreateThread the call is aborted silently so nothing happens.
 	local function requestPack(slot)
 		CreateThread(function()
-			local success, reason, amount = lib.callback.await('w_inventory:packAmmo', false, slot)
+			local operationId = lib.callback.await('w_inventory:prepareAmmoPack', false, slot)
+            if not operationId then return end
+            local success, reason, amount = lib.callback.await('w_inventory:packAmmo', false, slot, operationId)
 
 			if success then
 				return Utils.Notify({
@@ -2822,6 +2832,7 @@ exports('closeInventory', client.closeInventory)
 ---@param data updateSlot[]
 ---@param weight number
 local function updateInventory(data, weight)
+	if not PlayerData or not PlayerData.inventory then return end
 	local changes = {}
 	---@type table<string, number>
 	local itemCount = {}
@@ -2830,14 +2841,12 @@ local function updateInventory(data, weight)
 		local v = data[i]
 
 		if not v.inventory or v.inventory == cache.serverId then
-			v.inventory = 'player'
-			local item = v.item
+		v.inventory = 'player'
+		local item = v.item
 
-			if currentWeapon?.slot == item?.slot then
+		if item and item.slot then
+			if currentWeapon?.slot == item.slot then
 				if item.metadata then
-					-- While the weapon is actively held/firing, the CLIENT owns the live clip.
-					-- Keep our live ammo/durability so the server echo can't rubber-band ammo upward
-					-- mid-burst (or double-drain durability). All other server fields are taken as-is.
 					local liveAmmo, liveDura
 					if currentWeapon.timer and currentWeapon.metadata then
 						liveAmmo = currentWeapon.metadata.ammo
@@ -2867,10 +2876,11 @@ local function updateInventory(data, weight)
 			PlayerData.inventory[item.slot] = item.name and item or nil
 		end
 	end
+end
 
 	SendNUIMessage({ action = 'refreshSlots', data = { items = data, itemCount = itemCount } })
 
-	if weight ~= PlayerData.weight then client.setPlayerData('weight', weight) end
+	if PlayerData and PlayerData.weight and weight and weight ~= PlayerData.weight then client.setPlayerData('weight', weight) end
 
 	for itemName, count in pairs(itemCount) do
 		local item = Items(itemName)
@@ -2892,7 +2902,9 @@ local function updateInventory(data, weight)
 		end
 	end
 
-	client.setPlayerData('inventory', PlayerData.inventory)
+	if PlayerData and PlayerData.inventory then
+		client.setPlayerData('inventory', PlayerData.inventory)
+	end
 	TriggerEvent('w_inventory:updateInventory', changes)
 end
 
@@ -2928,14 +2940,13 @@ RegisterNetEvent('w_inventory:inventoryConfiscated', function(message)
 
 	local num, items = 0, {}
 
-	for slot in pairs(PlayerData.inventory) do
+	for slot in pairs(PlayerData.inventory or {}) do
 		num += 1
 		items[num] = { item = { slot = slot }, inventory = cache.serverId }
 	end
 
 	updateInventory(items, 0)
 end)
-
 
 ---@param point CPoint
 local function nearbyDrop(point)
@@ -2949,9 +2960,10 @@ end
 ---@param point CPoint
 -- [w_gunsmith drop-fix] switch it to false to build every drop with CreateObject
 local ENABLE_WEAPON_DROP_FIX = true
+local NativeItemAssets = require 'modules.items.native_assets'
 
 local function onEnterDrop(point)
-	if not point.instance or point.instance == currentInstance and not point.entity then
+	if (not point.instance or point.instance == currentInstance) and not point.entity then
 		local px, py, pz = point.coords.x, point.coords.y, point.coords.z
 		local entity
 
@@ -2974,16 +2986,28 @@ local function onEnterDrop(point)
 				end
 			end
 		else
-			local model = point.model or client.dropmodel
+			local model = NativeItemAssets.model(point.nativeItemHash, point.model or client.dropmodel)
 
-			if not IsModelValid(model) then
-				-- an unknown model: the drop stays a marker with no prop
-				return
+			if not IsModelValid(model) and not IsModelInCdimage(model) then
+				model = client.dropmodel or `p_bag01x`
 			end
 
-			lib.requestModel(model)
+			local ok = pcall(lib.requestModel, model, 5000)
+			if not ok or not HasModelLoaded(model) then
+				model = client.dropmodel or `p_bag01x`
+				local fallbackOk = pcall(lib.requestModel, model, 5000)
+				if not fallbackOk or not HasModelLoaded(model) then return end
+			end
+
 			entity = CreateObject(model, px, py, pz, false, true, true)
 			SetModelAsNoLongerNeeded(model)
+		end
+
+		if not entity or entity == 0 or not DoesEntityExist(entity) then return end
+
+		if not point.isWeapon then
+			local yaw = math.random(0, 359) + 0.0
+			SetEntityHeading(entity, yaw)
 		end
 
 		PlaceObjectOnGroundProperly(entity)
@@ -3042,17 +3066,19 @@ end
 local function createDrop(dropId, data)
 	local point = lib.points.new({
 		coords = data.coords,
-		distance = 16,
+		distance = 30,
 		invId = dropId,
 		instance = data.instance,
 		model = data.model,
+		nativeItemHash = data.nativeItemHash,
 		isWeapon = data.isWeapon,
 		weaponHash = data.weaponHash, -- [w_gunsmith drop-fix]
 		gunComps = data.gunComps,     -- [w_gunsmith drop-fix]
 	})
 
-	if point.model or client.dropprops then
+	if not data.noProp and (point.model or client.dropprops) then
 		point.distance = 30
+		point.radius = 30
 		point.onEnter = onEnterDrop
 		point.onExit = onExitDrop
 	else

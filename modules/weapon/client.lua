@@ -154,6 +154,9 @@ end
 ---@param metadata table? the weapon slot's data
 ---@return number
 local function getAmmoTypeHash(data, metadata)
+	-- A thrown inventory unit has one fixed native type; saved weapon metadata
+	-- must never turn an ordinary unit into an improved/poisoned unit.
+	if data.throwableUnit then return type(data.ammoType) == 'string' and GetHashKey(data.ammoType) or 0 end
 	local special = metadata and metadata.specialAmmo
 	local ammoType
 	local family = data.ammoFamily
@@ -1368,7 +1371,12 @@ function Weapon.Equip(item, data, _, options)
 
 			--[[ GiveWeaponToPed ]]
 			if data.throwable then
-				Citizen.InvokeNative(0xB282DC6EBD803C75, playerPed, data.hash, tonumber(item.count), true, 0) -- GIVE_DELAYED_WEAPON_TO_PED
+				Citizen.InvokeNative(0xB282DC6EBD803C75, playerPed, data.hash, data.throwableUnit and 0 or tonumber(item.count), true, 0)
+                if data.throwableUnit then
+                    local nativeAmmo = getAmmoTypeHash(data, item.metadata)
+                    SetAmmoTypeForPedWeapon(playerPed, data.hash, nativeAmmo)
+                    SetPedAmmoByType(playerPed, nativeAmmo, item.count)
+                end
 			else
 				Citizen.InvokeNative(0xB282DC6EBD803C75, playerPed, data.hash, 0, true, 0) -- GIVE_DELAYED_WEAPON_TO_PED
 				-- AddAmmoToPedByType( playerPed, GetHashKey(item.metadata.specialAmmo or item.ammo), item.metadata.ammo )
@@ -1449,8 +1457,11 @@ function Weapon.Equip(item, data, _, options)
 	end
 
 	do
-		local savedAmmo = item.metadata.ammo or 0
+		local savedAmmo = data.throwable and item.count or (item.metadata.ammo or 0)
 		local ammoTypehash = getAmmoTypeHash(data, item.metadata)
+		if data.throwable and ammoTypehash ~= 0 then
+			SetAmmoTypeForPedWeapon(playerPed, data.hash, ammoTypehash)
+		end
 		local pedAlreadyHadWeapon = HasPedGotWeapon(playerPed, data.hash, 0, false)
 		local hasAmmoType = ammoTypehash ~= 0
 
@@ -1791,7 +1802,8 @@ do
 		if not weapon or type(weapon.name) ~= 'string' then return end
 
 		local attachPoint = attachOriginal and 12 or 0
-		Citizen.InvokeNative(0xADF692B254977C0C, cache.ped, joaat(weapon.name), true, attachPoint)
+		local definition = Items[weapon.name]
+		Citizen.InvokeNative(0xADF692B254977C0C, cache.ped, weapon.hash or (definition and definition.hash) or joaat(weapon.name), true, attachPoint)
 		attachOriginal = not attachOriginal
 	end
 

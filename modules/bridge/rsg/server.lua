@@ -48,29 +48,9 @@ end
 
 local function syncCashFromCore(Player)
     local data = Player and Player.PlayerData
-    local source = data and tonumber(data.source)
-    local inventory = source and Inventory(source)
-
-    if not inventory or moneySync[source] then return end
-
-    local cash = moneyAmount(Player, 'cash')
-    if Inventory.GetItemCount(source, 'money') == cash then return end
-
-    moneySync[source] = true
-    local occupied = 0
-    for _ in pairs(inventory.items) do occupied = occupied + 1 end
-    if cash > 0 and occupied >= inventory.slots and Inventory.GetItemCount(source, 'money') == 0 then
-        Inventory.SetSlotCount(inventory, inventory.slots + 1)
-    end
-    local ok, result = pcall(Inventory.SetItem, source, 'money', cash)
-    moneySync[source] = nil
-
-    if not ok then
-        print(('^1[w_inventory/rsg]^7 failed to sync cash into inventory: %s'):format(tostring(result)))
-        return false
-    end
-
-    return result
+    local inventory = data and Inventory(tonumber(data.source))
+    if not inventory then return false end
+    return Inventory.ReflectCash(inventory)
 end
 
 AddEventHandler('RSGCore:Server:OnPlayerUnload', server.playerDropped)
@@ -365,6 +345,7 @@ function server.nativeCashBalance(source)
 end
 
 function server.syncInventory(inv)
+    Inventory.SyncBearerCash(inv)
     local accounts = Inventory.GetAccountItemCounts(inv)
 
     if accounts then
@@ -374,18 +355,8 @@ function server.syncInventory(inv)
         setCoreItems(player, inv.items)
         if player.Functions.UpdatePlayerData then player.Functions.UpdatePlayerData() end
 
-        local observed = inv.nativeCashObserved
-        inv.nativeCashObserved = accounts.money
-        if observed ~= nil and accounts.money ~= observed and not moneySync[inv.id] then
-            moneySync[inv.id] = true
-            local delta = accounts.money - observed
-            local ok, err = pcall(player.Functions.SetMoney, 'cash', math.max(0, moneyAmount(player, 'cash') + delta), 'w_inventory sync')
-            moneySync[inv.id] = nil
-
-            if not ok then
-                print(('^1[w_inventory/rsg]^7 failed to sync inventory cash into core: %s'):format(tostring(err)))
-            end
-        end
+        -- A bag is a projection, never an authority that may overwrite a wallet.
+        if accounts.money ~= moneyAmount(player, 'cash') then Inventory.ReflectCash(inv) end
 
         pushCurrency(player)
     end

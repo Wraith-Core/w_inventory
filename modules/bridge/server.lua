@@ -69,6 +69,7 @@ local function registerBridgeUsable(item, callback)
 		return false
 	end
 
+	item = shared.resolveItemName and shared.resolveItemName(item) or item
 	bridgeUsableItems[item] = callback
 	return true
 end
@@ -78,6 +79,7 @@ exports('CreateUsableItem', registerBridgeUsable)
 exports('RegisterUsableItem', registerBridgeUsable)
 
 exports('UnregisterUsableItem', function(item)
+	item = shared.resolveItemName and shared.resolveItemName(item) or item
 	bridgeUsableItems[item] = nil
 	return true
 end)
@@ -88,6 +90,7 @@ end)
 --   but nobody can verify that the name settled in the registry that server.UseItem
 --   reads - and the two may be different tables if the module is loaded more than once.
 exports('IsUsableItemRegistered', function(item)
+	item = shared.resolveItemName and shared.resolveItemName(item) or item
 	return bridgeUsableItems[item] ~= nil
 end)
 
@@ -128,6 +131,7 @@ end
 local frameworkUseItem = server.UseItem
 
 function bridgeUseItem(source, itemName, data)
+	itemName = shared.resolveItemName and shared.resolveItemName(itemName) or itemName
 	local callback = bridgeUsableItems[itemName]
 
 	if callback then

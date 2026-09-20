@@ -49,7 +49,7 @@ import { isEnvBrowser } from './utils/misc';
     return t && typeof t.closest === 'function' &&
       t.closest(
         'button,[role="button"],[role="menuitem"],[class*="menu" i] li,.context-menu-list li,' +
-        // The interface elements that are not <button> but behave like one - so they give the crafting's own sound
+        // The interface elements that are not <button className="wst-button"> but behave like one - so they give the crafting's own sound
         '.slot.filled,.hb-slot.hb-filled,#inv-close-btn,.inv-toolbar .tb-btn,#inventory .category,' +
         '#inventory-options .option,.split-btn,.split-adj,.trade-btn,.trade-req-btn,' +
         '#container-panel .cp-close,.trade-close,.trade-slot-filled'
@@ -61,13 +61,11 @@ import { isEnvBrowser } from './utils/misc';
 
 const root = document.getElementById('root');
 
-if (isEnvBrowser()) {
-  // a plain dark ground when the page is opened in a browser (no game behind it)
-  root!.style.background = '#1a1a1a';
-}
 
 createRoot(root!).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
 );
+
+import './store-adapter.css';

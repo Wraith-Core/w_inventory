@@ -58,7 +58,7 @@ local function getItem(_, name)
 
 	if type(name) ~= 'string' then return end
 
-    name = name:lower()
+    name = shared.resolveItemName(name)
 
     if name:sub(0, 7) == 'weapon_' then
         name = name:upper()

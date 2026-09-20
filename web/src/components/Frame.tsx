@@ -21,9 +21,9 @@ export default function Frame({
     ...(opacity !== undefined ? { '--fr-o': opacity } : null),
   } as CSSProperties;
   return (
-    <span className="wc-frame" style={style} aria-hidden="true">
+    <span className="wc-frame wst-frame" style={style} aria-hidden="true">
       {PIECES.map((p) => (
-        <span key={p} className={`wc-fr-${p}`} />
+        <span key={p} className={`wc-fr-${p} wst-fr-${p}`} />
       ))}
     </span>
   );

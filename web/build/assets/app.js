@@ -5206,14 +5206,22 @@ function useInventory() {
   return { state, dispatch, getGrid, getItemsList };
 }
 
-const isEnvBrowser = () => !window.invokeNative;
+const isEnvBrowser = () => !Boolean(window.GetParentResourceName || window.invokeNative);
 
-let _imagepath = "images";
+const resourceName = window.GetParentResourceName ? window.GetParentResourceName() : "w_inventory";
+let _imagepath = isEnvBrowser() ? "/images" : `https://cfx-nui-${resourceName}/web/images`;
+function imageUrl(value) {
+  if (value.startsWith("nui://"))
+    return value.replace("nui://", "https://cfx-nui-");
+  if (/^(https?:|data:|blob:)/i.test(value) || value.startsWith("/"))
+    return value;
+  const filename = /\.(png|webp|jpg|jpeg)(?:[?#]|$)/i.test(value) ? value : `${value}.png`;
+  return `${_imagepath}/${filename}`;
+}
 function setImagePath(path) {
   if (path && path !== "")
-    _imagepath = path;
+    _imagepath = path.replace(/^nui:\/\//, "https://cfx-nui-").replace(/\/$/, "");
 }
-const resourceName = window.GetParentResourceName ? window.GetParentResourceName() : "w_inventory";
 async function fetchNui(eventName, data) {
   if (isEnvBrowser())
     return void 0;
@@ -5237,11 +5245,36 @@ async function fetchNui(eventName, data) {
     clearTimeout(timer);
   }
 }
-function iconUrl(name) {
-  return `${_imagepath}/${name}.png`;
-}
 function placeholderUrl() {
-  return `${_imagepath}/placeholder.png`;
+  return imageUrl("kit_pouch_kit.png");
+}
+function getItemUrl(item) {
+  const name = typeof item === "string" ? item : item?.name;
+  if (typeof name !== "string" || !name)
+    return placeholderUrl();
+  const lower = name.toLowerCase();
+  const metadata = typeof item === "object" ? item.metadata : void 0;
+  if (lower === "money" || lower === "cash")
+    return imageUrl("money.png");
+  if (metadata?.imageurl)
+    return imageUrl(String(metadata.imageurl));
+  if (metadata?.image)
+    return imageUrl(String(metadata.image));
+  const items = window.__oxItems || {};
+  const definition = items[name] || items[lower] || items[name.toUpperCase()];
+  const image = definition?.image || definition?.client?.image;
+  return imageUrl(image || `${lower}.png`);
+}
+function itemImageError(target, item) {
+  if (target.src === new URL(placeholderUrl(), window.location.href).href)
+    return;
+  const canonical = getItemUrl(typeof item === "string" ? item : item?.name);
+  const fallback = target.src === new URL(canonical, window.location.href).href ? placeholderUrl() : canonical;
+  if (target.src === new URL(fallback, window.location.href).href) {
+    target.onerror = null;
+    return;
+  }
+  target.src = fallback;
 }
 
 function useNui(dispatch, setVisible, addToast, hotbar, itemsDbRef) {
@@ -5478,6 +5511,42 @@ function useToast() {
   return { toasts, addToast };
 }
 
+function usePanelPosition(ref, preferred, active, extraWidth = 0) {
+  const [size, setSize] = reactExports.useState({ width: 0, height: 0, screenW: window.innerWidth, screenH: window.innerHeight });
+  reactExports.useLayoutEffect(() => {
+    const element = ref.current;
+    if (!active || !element)
+      return;
+    const measure = () => {
+      const next = { width: element.offsetWidth, height: element.offsetHeight, screenW: window.innerWidth, screenH: window.innerHeight };
+      setSize((old) => Object.keys(next).every((key) => old[key] === next[key]) ? old : next);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [active, ref]);
+  if (!preferred)
+    return null;
+  return {
+    x: Math.max(8, Math.min(preferred.x, size.screenW - size.width - extraWidth - 8)),
+    y: Math.max(8, Math.min(preferred.y, size.screenH - size.height - 8))
+  };
+}
+
+const PANEL_W_REM = 24;
+const CONTAINER_W_REM = 19;
+const DETAIL_W_REM = 16;
+const PANEL_GAP_REM = 0.75;
+function remPx(n = 1) {
+  const base = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  return n * (Number.isFinite(base) && base > 0 ? base : 16);
+}
+
 const HOTBAR_SIZE = 5;
 function itemToHotbarSlot(item) {
   return {
@@ -5601,7 +5670,7 @@ function Slot({ item, idx, gridIndex, selected, panel, hotbarIndex, dimmed, onSe
   }
   const r = rarity(item);
   const cls = [
-    "slot filled",
+    "slot filled wst-card",
     r,
     selected ? "selected" : "",
     draggable.isDragging ? "drag-source" : "",
@@ -5644,9 +5713,9 @@ function Slot({ item, idx, gridIndex, selected, panel, hotbarIndex, dimmed, onSe
         /* @__PURE__ */ jsx(
           "img",
           {
-            src: iconUrl(item.name),
+            src: getItemUrl(item),
             onError: (e) => {
-              e.target.src = placeholderUrl();
+              itemImageError(e.currentTarget, item);
             },
             draggable: false,
             alt: ""
@@ -5769,18 +5838,13 @@ function Frame({
     ...px ? { "--fr-px": `${px}px` } : null,
     ...opacity !== void 0 ? { "--fr-o": opacity } : null
   };
-  return /* @__PURE__ */ jsx("span", { className: "wc-frame", style, "aria-hidden": "true", children: PIECES.map((p) => /* @__PURE__ */ jsx("span", { className: `wc-fr-${p}` }, p)) });
-}
-
-const PANEL_W_REM = 24;
-const CONTAINER_W_REM = 19;
-const PANEL_GAP_REM = 0.75;
-function remPx(n = 1) {
-  const base = parseFloat(getComputedStyle(document.documentElement).fontSize);
-  return n * (Number.isFinite(base) && base > 0 ? base : 16);
+  return /* @__PURE__ */ jsx("span", { className: "wc-frame wst-frame", style, "aria-hidden": "true", children: PIECES.map((p) => /* @__PURE__ */ jsx("span", { className: `wc-fr-${p} wst-fr-${p}` }, p)) });
 }
 
 function DetailPanel({ item, panel, containerOpen, panelPos }) {
+  const panelRef = reactExports.useRef(null);
+  const extra = PANEL_W_REM + PANEL_GAP_REM + (containerOpen !== null ? CONTAINER_W_REM + PANEL_GAP_REM : 0);
+  const fitted = usePanelPosition(panelRef, panelPos ? { x: panelPos.x + remPx(extra), y: panelPos.y } : null, !!item);
   if (!item)
     return /* @__PURE__ */ jsx("div", { id: "inventory-detail", style: { display: "none" } });
   const r = rarity(item);
@@ -5789,19 +5853,17 @@ function DetailPanel({ item, panel, containerOpen, panelPos }) {
   const unitWeight = item.count > 1 ? fmtWeight(N(item.weight) / item.count) : fmtWeight(N(item.weight));
   const ammoEntries = item.ammo ? Object.entries(item.ammo).filter(([, v]) => v > 0) : [];
   const pctRound = item.percentage != null ? Math.round(item.percentage) : null;
-  const WRAPPER_W = remPx(PANEL_W_REM);
-  const GAP = remPx(PANEL_GAP_REM);
-  const CONTAINER_W = remPx(CONTAINER_W_REM);
-  const posStyle = panelPos ? {
-    left: shifted ? `${panelPos.x + WRAPPER_W + GAP + CONTAINER_W + GAP}px` : `${panelPos.x + WRAPPER_W + GAP}px`,
-    top: `${panelPos.y}px`,
+  const posStyle = fitted ? {
+    left: `${fitted.x}px`,
+    top: `${fitted.y}px`,
     transform: "none"
   } : {};
   return /* @__PURE__ */ jsxs(
     "div",
     {
       id: "inventory-detail",
-      className: !panelPos && shifted ? "shifted" : "",
+      ref: panelRef,
+      className: "wst-panel " + (fitted ? "positioned" : shifted ? "shifted" : ""),
       style: { display: "flex", ...posStyle },
       children: [
         /* @__PURE__ */ jsx(Frame, { px: 11, opacity: 0.45 }),
@@ -5809,32 +5871,32 @@ function DetailPanel({ item, panel, containerOpen, panelPos }) {
           /* @__PURE__ */ jsx("div", { className: "detail-img-wrap", children: /* @__PURE__ */ jsx(
             "img",
             {
-              src: iconUrl(item.name),
+              src: getItemUrl(item),
               onError: (e) => {
-                e.target.src = placeholderUrl();
+                itemImageError(e.currentTarget, item);
               },
               alt: ""
             }
           ) }),
-          /* @__PURE__ */ jsx("div", { className: "detail-name", children: item.label || item.name }),
+          /* @__PURE__ */ jsx("div", { className: "wst-title detail-name", children: item.label || item.name }),
           /* @__PURE__ */ jsx("div", { className: `detail-rarity ${r}`, children: r })
         ] }),
-        /* @__PURE__ */ jsx("div", { className: "detail-sep" }),
-        item.desc && /* @__PURE__ */ jsx("div", { className: "detail-desc", children: item.desc }),
+        /* @__PURE__ */ jsx("div", { className: "wst-rule detail-sep" }),
+        item.desc && /* @__PURE__ */ jsx("div", { className: "wst-sub detail-desc", children: item.desc }),
         /* @__PURE__ */ jsxs("div", { className: "detail-stats", children: [
-          /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
+          /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
             /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_weight", "Weight") }),
             /* @__PURE__ */ jsx("span", { className: "val", children: unitWeight })
           ] }),
-          /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
+          /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
             /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_quantity", "Quantity") }),
             /* @__PURE__ */ jsx("span", { className: "val", children: item.count })
           ] }),
-          item.count > 1 && /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
+          item.count > 1 && /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
             /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_total_weight", "Total weight") }),
             /* @__PURE__ */ jsx("span", { className: "val", children: totalWeight })
           ] }),
-          item.isContainer && /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
+          item.isContainer && /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
             /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_storage", "Storage") }),
             /* @__PURE__ */ jsxs("span", { className: "val", children: [
               fmtWeight(N(item.containerContentWeight)),
@@ -5842,14 +5904,14 @@ function DetailPanel({ item, panel, containerOpen, panelPos }) {
               fmtWeight(N(item.containerMaxWeight))
             ] })
           ] }),
-          item.isWeapon && /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
+          item.isWeapon && /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
             /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_status", "Status") }),
             /* @__PURE__ */ jsx("span", { className: `val ${item.equipped ? "equipped-text" : ""}`, children: item.equipped ? tr("ui_equipped", "Equipped") : tr("ui_in_bag", "In bag") })
           ] }),
           item.isWeapon && (item.metadata?.serial || item.metadata?.serial_number) && /* @__PURE__ */ jsxs(
             "div",
             {
-              className: "detail-stat",
+              className: "wst-row detail-stat",
               style: { cursor: "pointer" },
               title: tr("ui_click_copy_serial", "Click to copy serial number"),
               onClick: () => setClipboard(String(item.metadata?.serial || item.metadata?.serial_number)),
@@ -5862,11 +5924,11 @@ function DetailPanel({ item, panel, containerOpen, panelPos }) {
               ]
             }
           ),
-          ammoEntries.map(([type, count]) => /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
+          ammoEntries.map(([type, count]) => /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
             /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_ammo", "Ammo") }),
             /* @__PURE__ */ jsx("span", { className: "val", children: count })
           ] }, type)),
-          pctRound != null && /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
+          pctRound != null && /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
             /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_durability", "Durability") }),
             /* @__PURE__ */ jsxs("span", { className: `val dur-${pctRound <= 25 ? "low" : pctRound <= 60 ? "mid" : "high"}`, children: [
               pctRound,
@@ -5874,7 +5936,7 @@ function DetailPanel({ item, panel, containerOpen, panelPos }) {
             ] })
           ] })
         ] }),
-        /* @__PURE__ */ jsx("div", { className: "detail-sep" }),
+        /* @__PURE__ */ jsx("div", { className: "wst-rule detail-sep" }),
         /* @__PURE__ */ jsxs("div", { className: "detail-hint", children: [
           /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "currentColor", style: { width: ".5rem", height: ".5rem", opacity: 0.4 }, children: /* @__PURE__ */ jsx("path", { d: "M2 12C2 6.48 6.48 2 12 2s10 4.48 10 10-4.48 10-10 10S2 17.52 2 12zm11-1v6h-2v-6h2zm0-4v2h-2V7h2z" }) }),
           tr("ui_right_click_options", "Right-click for options")
@@ -5889,6 +5951,8 @@ const SVG_UNLOCK = /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "cur
 const SVG_WEIGHT = /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "currentColor", style: { width: ".55rem", height: ".55rem" }, children: /* @__PURE__ */ jsx("path", { d: "M12 3a4 4 0 0 0-3.46 2H4l1.5 13.5C5.73 20.44 7.41 21 8 21h8c.59 0 2.27-.56 2.5-2.5L20 5h-4.54A4 4 0 0 0 12 3zm0 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" }) });
 function ContainerPanel({ containerOpen, containerGrid, containerLabel, containerMaxWeight, containerSlots, selected, selectedPanel, onSelect, onContextMenu, onDoubleClick, onMouseOver, onMouseLeave, onClose, panelPos }) {
   const [entered, setEntered] = reactExports.useState(false);
+  const panelRef = reactExports.useRef(null);
+  const fitted = usePanelPosition(panelRef, panelPos ? { x: panelPos.x + remPx(PANEL_W_REM + PANEL_GAP_REM), y: panelPos.y } : null, containerOpen !== null);
   reactExports.useEffect(() => {
     if (containerOpen !== null) {
       requestAnimationFrame(() => requestAnimationFrame(() => setEntered(true)));
@@ -5911,24 +5975,22 @@ function ContainerPanel({ containerOpen, containerGrid, containerLabel, containe
   const wp = containerMaxWeight > 0 ? Math.min(100, cw / containerMaxWeight * 100) : 0;
   const weightZone = wp > 90 ? "critical" : wp > 70 ? "warn" : "ok";
   const slotPct = containerSlots > 0 ? Math.min(100, itemCount / containerSlots * 100) : 0;
-  const WRAPPER_W = remPx(PANEL_W_REM);
-  const GAP = remPx(PANEL_GAP_REM);
-  const cpPosStyle = panelPos ? {
-    left: `${panelPos.x + WRAPPER_W + GAP}px`,
-    top: `${panelPos.y}px`,
+  const cpPosStyle = fitted ? {
+    left: `${fitted.x}px`,
+    top: `${fitted.y}px`,
     transform: entered ? "none" : "translateX(-10px) scale(.97)"
   } : {};
-  return /* @__PURE__ */ jsxs("div", { id: "container-panel", className: entered ? "cp-entered" : "", style: { display: "flex", ...cpPosStyle }, children: [
+  return /* @__PURE__ */ jsxs("div", { id: "container-panel", ref: panelRef, className: "wst-panel " + (entered ? "cp-entered" : ""), style: { display: "flex", ...cpPosStyle }, children: [
     /* @__PURE__ */ jsx(Frame, { px: 12, opacity: 0.45 }),
-    /* @__PURE__ */ jsxs("div", { className: "cp-header", children: [
+    /* @__PURE__ */ jsxs("div", { className: "wst-header cp-header", children: [
       /* @__PURE__ */ jsxs("div", { className: "cp-title-area", children: [
         /* @__PURE__ */ jsx("div", { className: "cp-icon", children: SVG_BAG }),
         /* @__PURE__ */ jsxs("div", { className: "cp-title-text", children: [
-          /* @__PURE__ */ jsx("div", { className: "cp-title", children: containerLabel }),
-          /* @__PURE__ */ jsx("div", { className: "cp-subtitle", children: itemCount === 0 ? tr("ui_empty_container", "Empty container") : trf("ui_stored_items", "%s stored item(s)", itemCount) })
+          /* @__PURE__ */ jsx("div", { className: "wst-title cp-title", children: containerLabel }),
+          /* @__PURE__ */ jsx("div", { className: "wst-sub cp-subtitle", children: itemCount === 0 ? tr("ui_empty_container", "Empty container") : trf("ui_stored_items", "%s stored item(s)", itemCount) })
         ] })
       ] }),
-      /* @__PURE__ */ jsx("div", { className: "cp-close", onClick: onClose, children: SVG_X })
+      /* @__PURE__ */ jsx("div", { className: "wst-close cp-close", onClick: onClose, children: SVG_X })
     ] }),
     /* @__PURE__ */ jsxs("div", { className: "cp-metrics", children: [
       /* @__PURE__ */ jsxs("div", { className: `cp-metric ${weightZone}`, children: [
@@ -5960,7 +6022,7 @@ function ContainerPanel({ containerOpen, containerGrid, containerLabel, containe
         /* @__PURE__ */ jsx("div", { className: "cp-bar", children: /* @__PURE__ */ jsx("div", { className: "cp-bar-fill slots", style: { width: `${slotPct}%` } }) })
       ] })
     ] }),
-    /* @__PURE__ */ jsx("div", { className: "cp-divider" }),
+    /* @__PURE__ */ jsx("div", { className: "wst-rule cp-divider" }),
     itemCount === 0 ? /* @__PURE__ */ jsxs("div", { className: "cp-empty", children: [
       /* @__PURE__ */ jsx("div", { className: "cp-empty-icon", children: SVG_UNLOCK }),
       /* @__PURE__ */ jsx("div", { className: "cp-empty-text", children: tr("ui_empty", "Empty") }),
@@ -6025,6 +6087,7 @@ function RightInventoryPanel({
   const rightRef = reactExports.useRef(null);
   const dragRef = reactExports.useRef(null);
   const isOpen = !!(rightInventory && rightInventory.type !== "newdrop");
+  const fittedRightPos = usePanelPosition(rightRef, rightPos, isOpen);
   reactExports.useEffect(() => {
     if (isOpen) {
       setRpAnimating(false);
@@ -6081,10 +6144,10 @@ function RightInventoryPanel({
     return null;
   const isShop = rightInventory.type === "shop";
   const isCrafting = rightInventory.type === "crafting";
-  const posStyle = rightPos ? {
+  const posStyle = fittedRightPos ? {
     position: "fixed",
-    left: `${rightPos.x}px`,
-    top: `${rightPos.y}px`,
+    left: `${fittedRightPos.x}px`,
+    top: `${fittedRightPos.y}px`,
     right: "auto",
     opacity: rpAnimating ? 1 : 0,
     transform: rpAnimating ? "none" : "scale(.8)"
@@ -6092,13 +6155,13 @@ function RightInventoryPanel({
     opacity: rpAnimating ? 1 : 0,
     transform: rpAnimating ? "translateY(-50%)" : "translateY(-50%) scale(.8)"
   };
-  return /* @__PURE__ */ jsxs("div", { id: "right-inventory-panel", ref: rightRef, style: { display: "flex", ...posStyle }, children: [
+  return /* @__PURE__ */ jsxs("div", { id: "right-inventory-panel", className: "wst-panel", ref: rightRef, style: { display: "flex", ...posStyle }, children: [
     /* @__PURE__ */ jsx(Frame, { px: 13, opacity: 0.5 }),
-    /* @__PURE__ */ jsxs("div", { className: "rp-header", onMouseDown: handleDragStart, style: { cursor: "grab" }, children: [
+    /* @__PURE__ */ jsxs("div", { className: "wst-header rp-header", onMouseDown: handleDragStart, style: { cursor: "grab" }, children: [
       /* @__PURE__ */ jsx("div", { className: "inv-badge", children: isShop ? SVG_SHOP : isCrafting ? SVG_CRAFT : SVG_BAG }),
       /* @__PURE__ */ jsxs("div", { className: "rp-title-area", children: [
-        /* @__PURE__ */ jsx("div", { className: "rp-title", children: rightInventory.label || tr(`ui_inv_${rightInventory.type}`, rightInventory.type) }),
-        /* @__PURE__ */ jsx("div", { className: "rp-subtitle", children: isShop ? tr("ui_shop_drag_hint", "Drag items to your inventory to purchase") : isCrafting ? tr("ui_crafting_drag_hint", "Drag items to your inventory to craft") : trf("ui_item_count", "%s item(s)", itemCount) })
+        /* @__PURE__ */ jsx("div", { className: "wst-title rp-title", children: rightInventory.label || tr(`ui_inv_${rightInventory.type}`, rightInventory.type) }),
+        /* @__PURE__ */ jsx("div", { className: "wst-sub rp-subtitle", children: isShop ? tr("ui_shop_drag_hint", "Drag items to your inventory to purchase") : isCrafting ? tr("ui_crafting_drag_hint", "Drag items to your inventory to craft") : trf("ui_item_count", "%s item(s)", itemCount) })
       ] })
     ] }),
     isShop && /* @__PURE__ */ jsxs("div", { className: "rp-shop-controls", children: [
@@ -6107,7 +6170,7 @@ function RightInventoryPanel({
           "button",
           {
             type: "button",
-            className: `rp-currency-btn ${shopPaymentCurrency === "cash" ? "active" : ""}`,
+            className: `wst-tab rp-currency-btn ${shopPaymentCurrency === "cash" ? "active" : ""}`,
             onClick: () => onSetPaymentCurrency("cash"),
             children: [
               /* @__PURE__ */ jsx("span", { className: "rp-currency-icon", children: SVG_CASH }),
@@ -6119,7 +6182,7 @@ function RightInventoryPanel({
           "button",
           {
             type: "button",
-            className: `rp-currency-btn gold ${shopPaymentCurrency === "gold" ? "active" : ""}`,
+            className: `wst-tab rp-currency-btn gold ${shopPaymentCurrency === "gold" ? "active" : ""}`,
             onClick: () => onSetPaymentCurrency("gold"),
             children: [
               /* @__PURE__ */ jsx("span", { className: "rp-currency-icon gold", children: SVG_GOLD }),
@@ -6134,7 +6197,7 @@ function RightInventoryPanel({
           "input",
           {
             type: "number",
-            className: "rp-amount-input",
+            className: "wst-input rp-amount-input",
             value: itemAmount || "",
             min: 0,
             onChange: (e) => onSetItemAmount(parseInt(e.target.value) || 0),
@@ -6149,7 +6212,7 @@ function RightInventoryPanel({
         "input",
         {
           type: "number",
-          className: "rp-amount-input",
+          className: "wst-input rp-amount-input",
           value: itemAmount || "",
           min: 0,
           onChange: (e) => onSetItemAmount(parseInt(e.target.value) || 0),
@@ -6213,6 +6276,8 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
   reactExports.useEffect(() => {
     if (visible && ref.current) {
       ref.current.style.opacity = "0";
+      ref.current.style.left = `${Math.max(8, Math.min(x, window.innerWidth - ref.current.offsetWidth - 8))}px`;
+      ref.current.style.top = `${Math.max(8, Math.min(y, window.innerHeight - ref.current.offsetHeight - 8))}px`;
       requestAnimationFrame(() => {
         if (ref.current)
           ref.current.style.opacity = "1";
@@ -6226,7 +6291,7 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
     const primary = [];
     if (item.isContainer) {
       primary.push(
-        /* @__PURE__ */ jsxs("div", { className: "option", onClick: () => {
+        /* @__PURE__ */ jsxs("div", { className: "wst-card option", onClick: () => {
           onOpenContainer(idx);
           onClose();
         }, children: [
@@ -6239,7 +6304,7 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
       );
     } else {
       primary.push(
-        /* @__PURE__ */ jsxs("div", { className: "option", onClick: () => {
+        /* @__PURE__ */ jsxs("div", { className: "wst-card option", onClick: () => {
           onUse(idx);
           onClose();
         }, children: [
@@ -6252,7 +6317,7 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
       );
     }
     primary.push(
-      /* @__PURE__ */ jsxs("div", { className: "option", onClick: () => {
+      /* @__PURE__ */ jsxs("div", { className: "wst-card option", onClick: () => {
         onInspect(idx, "main");
         onClose();
       }, children: [
@@ -6266,7 +6331,7 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
     const secondary = [];
     if (item.count > 1) {
       secondary.push(
-        /* @__PURE__ */ jsxs("div", { className: "option", onClick: () => {
+        /* @__PURE__ */ jsxs("div", { className: "wst-card option", onClick: () => {
           onSplit(idx, panel);
           onClose();
         }, children: [
@@ -6278,7 +6343,7 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
     }
     if (containerOpen !== null && !item.isContainer) {
       secondary.push(
-        /* @__PURE__ */ jsxs("div", { className: "option", onClick: () => {
+        /* @__PURE__ */ jsxs("div", { className: "wst-card option", onClick: () => {
           onStoreIn(idx);
           onClose();
         }, children: [
@@ -6290,7 +6355,7 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
     }
     if (Number(item.metadata?.ammo || 0) > 0) {
       secondary.push(
-        /* @__PURE__ */ jsxs("div", { className: "option", onClick: () => {
+        /* @__PURE__ */ jsxs("div", { className: "wst-card option", onClick: () => {
           onRemoveAmmo(idx);
           onClose();
         }, children: [
@@ -6303,7 +6368,7 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
     if (customButtons && customButtons.length > 0 && onCustomButton) {
       for (const btn of customButtons) {
         secondary.push(
-          /* @__PURE__ */ jsxs("div", { className: "option", onClick: () => {
+          /* @__PURE__ */ jsxs("div", { className: "wst-card option", onClick: () => {
             onCustomButton(idx, btn.id);
             onClose();
           }, children: [
@@ -6318,7 +6383,7 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
       sections.push(secondary);
     const danger = [];
     danger.push(
-      /* @__PURE__ */ jsxs("div", { className: "option", onClick: () => {
+      /* @__PURE__ */ jsxs("div", { className: "wst-card option", onClick: () => {
         onGive(idx);
         onClose();
       }, children: [
@@ -6328,7 +6393,7 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
       ] }, "give")
     );
     danger.push(
-      /* @__PURE__ */ jsxs("div", { className: "option danger", onClick: () => {
+      /* @__PURE__ */ jsxs("div", { className: "wst-card option danger", onClick: () => {
         onDrop(idx);
         onClose();
       }, children: [
@@ -6340,7 +6405,7 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
     sections.push(danger);
   } else if (panel === "container") {
     sections.push([
-      /* @__PURE__ */ jsxs("div", { className: "option", onClick: () => {
+      /* @__PURE__ */ jsxs("div", { className: "wst-card option", onClick: () => {
         onTakeOut(idx);
         onClose();
       }, children: [
@@ -6348,7 +6413,7 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
         " ",
         /* @__PURE__ */ jsx("span", { children: tr("ui_take_out", "Take out") })
       ] }, "takeout"),
-      /* @__PURE__ */ jsxs("div", { className: "option", onClick: () => {
+      /* @__PURE__ */ jsxs("div", { className: "wst-card option", onClick: () => {
         onInspect(idx, "container");
         onClose();
       }, children: [
@@ -6359,7 +6424,7 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
     ]);
   } else if (panel === "right") {
     sections.push([
-      /* @__PURE__ */ jsxs("div", { className: "option", onClick: () => {
+      /* @__PURE__ */ jsxs("div", { className: "wst-card option", onClick: () => {
         onInspect(idx, "right");
         onClose();
       }, children: [
@@ -6372,7 +6437,7 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
   const elements = [];
   sections.forEach((sec, si) => {
     if (si > 0)
-      elements.push(/* @__PURE__ */ jsx("div", { className: "opt-sep" }, `sep-${si}`));
+      elements.push(/* @__PURE__ */ jsx("div", { className: "wst-rule opt-sep" }, `sep-${si}`));
     sec.forEach((el) => elements.push(el));
   });
   return /* @__PURE__ */ jsxs(
@@ -6380,12 +6445,12 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
     {
       id: "inventory-options",
       ref,
-      className: "show",
+      className: "show wst-panel",
       style: { left: x, top: y, opacity: 0 },
       onMouseDown: (e) => e.stopPropagation(),
       children: [
         /* @__PURE__ */ jsx(Frame, { px: 9, opacity: 0.4 }),
-        /* @__PURE__ */ jsx("div", { className: "opt-header", children: item.label || item.name }),
+        /* @__PURE__ */ jsx("div", { className: "wst-title opt-header", children: item.label || item.name }),
         elements
       ]
     }
@@ -6398,12 +6463,23 @@ function Tooltip({ item, anchorRect }) {
     if (item && ref.current) {
       ref.current.style.opacity = "0";
       ref.current.style.display = "block";
+      if (anchorRect) {
+        const width = ref.current.offsetWidth;
+        const height = ref.current.offsetHeight;
+        const center = Math.max(width / 2 + 8, Math.min(anchorRect.x + anchorRect.width / 2, window.innerWidth - width / 2 - 8));
+        const above = anchorRect.y - height - 8 >= 8;
+        const top = above ? anchorRect.y - 8 : Math.min(anchorRect.bottom + 8, window.innerHeight - height - 8);
+        ref.current.style.left = `${center}px`;
+        ref.current.style.top = `${Math.max(8, top)}px`;
+        ref.current.style.transform = above ? "translate(-50%,-100%)" : "translateX(-50%)";
+        ref.current.dataset.placement = above ? "above" : "below";
+      }
       requestAnimationFrame(() => {
         if (ref.current)
           ref.current.style.opacity = "1";
       });
     }
-  }, [item]);
+  }, [item, anchorRect]);
   if (!item || !anchorRect)
     return /* @__PURE__ */ jsx("div", { id: "inventory-tooltip" });
   const r = rarity(item);
@@ -6413,6 +6489,7 @@ function Tooltip({ item, anchorRect }) {
     "div",
     {
       id: "inventory-tooltip",
+      className: "wst-panel",
       ref,
       style: {
         display: "block",
@@ -6422,10 +6499,11 @@ function Tooltip({ item, anchorRect }) {
         opacity: 0
       },
       children: [
+        /* @__PURE__ */ jsx(Frame, {}),
         /* @__PURE__ */ jsx("div", { className: "tt-arrow" }),
-        /* @__PURE__ */ jsx("div", { className: `tt-name ${r}`, children: item.label || item.name }),
+        /* @__PURE__ */ jsx("div", { className: `wst-title tt-name ${r}`, children: item.label || item.name }),
         /* @__PURE__ */ jsx("div", { className: `tt-rarity-dot ${r}` }),
-        item.desc && /* @__PURE__ */ jsx("div", { className: "tt-desc", children: item.desc }),
+        item.desc && /* @__PURE__ */ jsx("div", { className: "wst-sub tt-desc", children: item.desc }),
         /* @__PURE__ */ jsxs("div", { className: "tt-stats", children: [
           item.weight > 0 && /* @__PURE__ */ jsxs("div", { className: "tt-stat", children: [
             /* @__PURE__ */ jsx("span", { className: "tt-stat-l", children: tr("ui_weight", "Weight") }),
@@ -6514,17 +6592,17 @@ function InspectOverlay({ item, onClose }) {
         "img",
         {
           className: "inspect-img",
-          src: iconUrl(item.name),
+          src: getItemUrl(item),
           onError: (e) => {
-            e.target.src = placeholderUrl();
+            itemImageError(e.currentTarget, item);
           },
           alt: ""
         }
       ),
-      /* @__PURE__ */ jsx("div", { className: "inspect-label", children: item.label || item.name }),
+      /* @__PURE__ */ jsx("div", { className: "wst-title inspect-label", children: item.label || item.name }),
       /* @__PURE__ */ jsx("div", { className: `inspect-rarity detail-rarity ${r}`, children: r }),
-      /* @__PURE__ */ jsx("div", { className: "inspect-sep" }),
-      /* @__PURE__ */ jsx("div", { className: "inspect-desc", children: item.desc || tr("ui_no_description", "No description.") }),
+      /* @__PURE__ */ jsx("div", { className: "wst-rule inspect-sep" }),
+      /* @__PURE__ */ jsx("div", { className: "wst-sub inspect-desc", children: item.desc || tr("ui_no_description", "No description.") }),
       /* @__PURE__ */ jsxs("div", { className: "inspect-stats", children: [
         /* @__PURE__ */ jsxs("div", { className: "inspect-s", children: [
           /* @__PURE__ */ jsx("div", { className: "inspect-sv", children: fmtWeight(N(item.weight)) }),
@@ -6543,7 +6621,7 @@ function InspectOverlay({ item, onClose }) {
           /* @__PURE__ */ jsx("div", { className: "inspect-sl", children: tr("ui_capacity", "Capacity") })
         ] })
       ] }),
-      /* @__PURE__ */ jsxs("div", { className: "inspect-x", onClick: handleClose, children: [
+      /* @__PURE__ */ jsxs("div", { className: "wst-button inspect-x", onClick: handleClose, children: [
         "[ ",
         tr("ui_esc_close", "ESC TO CLOSE"),
         " ]"
@@ -6573,7 +6651,7 @@ function CategoryBar({ active, onChange, grid }) {
     return /* @__PURE__ */ jsxs(
       "div",
       {
-        className: `category${c.id === active ? " active" : ""}${c.id !== "all" && count === 0 ? " dim" : ""}`,
+        className: `wst-tab category${c.id === active ? " active" : ""}${c.id !== "all" && count === 0 ? " dim" : ""}`,
         onClick: () => onChange(c.id),
         onMouseEnter: () => setHovered(c.id),
         onMouseLeave: () => setHovered(null),
@@ -6640,7 +6718,7 @@ function WeightProgress({ grid, maxWeight }) {
 }
 
 function ToastContainer({ toasts }) {
-  return /* @__PURE__ */ jsx("div", { id: "inv-toasts", children: toasts.map((t) => /* @__PURE__ */ jsx("div", { className: `inv-toast ${t.type} ${t.phase === "show" ? "show" : ""} ${t.phase === "fade-out" ? "fade-out" : ""}`, children: /* @__PURE__ */ jsx("span", { className: "toast-text", children: t.message }) }, t.id)) });
+  return /* @__PURE__ */ jsx("div", { id: "inv-toasts", children: toasts.map((t) => /* @__PURE__ */ jsx("div", { className: `inv-toast wst-toast ${t.type} ${t.phase === "show" ? "show" : ""} ${t.phase === "fade-out" ? "fade-out" : ""}`, children: /* @__PURE__ */ jsx("span", { className: "toast-text", children: t.message }) }, t.id)) });
 }
 
 function DragGhost({ item }) {
@@ -6651,9 +6729,9 @@ function DragGhost({ item }) {
     /* @__PURE__ */ jsx(
       "img",
       {
-        src: iconUrl(item.name),
+        src: getItemUrl(item),
         onError: (e) => {
-          e.target.src = placeholderUrl();
+          itemImageError(e.currentTarget, item);
         },
         alt: ""
       }
@@ -6683,12 +6761,12 @@ function DropZone({ active }) {
 
 function Toolbar({ onSort, onQuickStack, containerOpen }) {
   return /* @__PURE__ */ jsxs("div", { className: "inv-toolbar", children: [
-    /* @__PURE__ */ jsxs("div", { className: "tb-btn", onClick: onSort, title: tr("ui_sort_title", "Sort by type and rarity (S)"), children: [
+    /* @__PURE__ */ jsxs("div", { className: "wst-button tb-btn", onClick: onSort, title: tr("ui_sort_title", "Sort by type and rarity (S)"), children: [
       /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "currentColor", children: /* @__PURE__ */ jsx("path", { d: "M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z" }) }),
       tr("ui_sort", "Sort"),
       /* @__PURE__ */ jsx("kbd", { className: "tb-key", children: "S" })
     ] }),
-    containerOpen !== null && onQuickStack && /* @__PURE__ */ jsxs("div", { className: "tb-btn", onClick: onQuickStack, title: tr("ui_quick_stack_title", "Move matching items to the container"), children: [
+    containerOpen !== null && onQuickStack && /* @__PURE__ */ jsxs("div", { className: "wst-button tb-btn", onClick: onQuickStack, title: tr("ui_quick_stack_title", "Move matching items to the container"), children: [
       /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "currentColor", children: /* @__PURE__ */ jsx("path", { d: "M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z" }) }),
       tr("ui_quick_stack", "Quick stack")
     ] })
@@ -6715,21 +6793,21 @@ function SplitDialog({ item, visible, onConfirm, onCancel }) {
   const keepAmount = item.count - amount;
   return /* @__PURE__ */ jsxs(Fragment, { children: [
     /* @__PURE__ */ jsx("div", { className: "split-backdrop", onClick: onCancel }),
-    /* @__PURE__ */ jsxs("div", { id: "inv-split-dialog", style: { display: "flex" }, children: [
+    /* @__PURE__ */ jsxs("div", { id: "inv-split-dialog", className: "wst-panel", style: { display: "flex" }, children: [
       /* @__PURE__ */ jsx(Frame, { px: 11, opacity: 0.5 }),
-      /* @__PURE__ */ jsxs("div", { className: "split-header", children: [
+      /* @__PURE__ */ jsxs("div", { className: "wst-header split-header", children: [
         /* @__PURE__ */ jsx(
           "img",
           {
-            src: iconUrl(item.name),
+            src: getItemUrl(item),
             onError: (e) => {
-              e.target.src = placeholderUrl();
+              itemImageError(e.currentTarget, item);
             },
             alt: "",
             className: "split-icon"
           }
         ),
-        /* @__PURE__ */ jsx("div", { className: "split-title", children: trf("ui_split_title", "Split %s", item.label || item.name) })
+        /* @__PURE__ */ jsx("div", { className: "wst-title split-title", children: trf("ui_split_title", "Split %s", item.label || item.name) })
       ] }),
       /* @__PURE__ */ jsxs("div", { className: "split-preview", children: [
         /* @__PURE__ */ jsxs("div", { className: "split-stack", children: [
@@ -6743,7 +6821,7 @@ function SplitDialog({ item, visible, onConfirm, onCancel }) {
         ] })
       ] }),
       /* @__PURE__ */ jsxs("div", { className: "split-slider-wrap", children: [
-        /* @__PURE__ */ jsx("span", { className: "split-adj", onClick: () => setAmount((a) => Math.max(1, a - 1)), children: "−" }),
+        /* @__PURE__ */ jsx("span", { className: "wst-button split-adj", onClick: () => setAmount((a) => Math.max(1, a - 1)), children: "−" }),
         /* @__PURE__ */ jsx(
           "input",
           {
@@ -6755,11 +6833,11 @@ function SplitDialog({ item, visible, onConfirm, onCancel }) {
             onChange: (e) => setAmount(parseInt(e.target.value) || 1)
           }
         ),
-        /* @__PURE__ */ jsx("span", { className: "split-adj", onClick: () => setAmount((a) => Math.min(max, a + 1)), children: "+" })
+        /* @__PURE__ */ jsx("span", { className: "wst-button split-adj", onClick: () => setAmount((a) => Math.min(max, a + 1)), children: "+" })
       ] }),
       /* @__PURE__ */ jsxs("div", { className: "split-actions", children: [
-        /* @__PURE__ */ jsx("div", { className: "split-btn", onClick: onCancel, children: tr("ui_cancel", "Cancel") }),
-        /* @__PURE__ */ jsx("div", { className: "split-btn confirm", onClick: handleConfirm, children: tr("ui_split", "Split") })
+        /* @__PURE__ */ jsx("div", { className: "wst-button split-btn", onClick: onCancel, children: tr("ui_cancel", "Cancel") }),
+        /* @__PURE__ */ jsx("div", { className: "wst-button primary split-btn confirm", onClick: handleConfirm, children: tr("ui_split", "Split") })
       ] })
     ] })
   ] });
@@ -6772,7 +6850,7 @@ function HotBar({ slots, visible, onUseSlot }) {
     return /* @__PURE__ */ jsxs(
       "div",
       {
-        className: `hb-slot${slot ? " hb-filled" : ""}${slot?.equipped ? " hb-equipped" : ""} ${r}`,
+        className: `wst-plate hb-slot${slot ? " hb-filled" : ""}${slot?.equipped ? " hb-equipped" : ""} ${r}`,
         onClick: () => slot && onUseSlot(i),
         onMouseEnter: () => slot && setHoveredSlot(i),
         onMouseLeave: () => setHoveredSlot(null),
@@ -6782,9 +6860,9 @@ function HotBar({ slots, visible, onUseSlot }) {
             /* @__PURE__ */ jsx(
               "img",
               {
-                src: iconUrl(slot.name),
+                src: getItemUrl(slot),
                 onError: (e) => {
-                  e.target.src = placeholderUrl();
+                  itemImageError(e.currentTarget, slot);
                 },
                 draggable: false,
                 alt: ""
@@ -6813,9 +6891,9 @@ function TradeSlot({ item, onClick, removable }) {
   if (!item)
     return /* @__PURE__ */ jsx("div", { className: "trade-slot trade-slot-empty" });
   const r = rarity(item);
-  return /* @__PURE__ */ jsxs("div", { className: `trade-slot trade-slot-filled ${r}`, onClick, children: [
-    /* @__PURE__ */ jsx("img", { src: iconUrl(item.name), onError: (e) => {
-      e.target.src = placeholderUrl();
+  return /* @__PURE__ */ jsxs("div", { className: `wst-card trade-slot trade-slot-filled ${r}`, onClick, children: [
+    /* @__PURE__ */ jsx("img", { src: getItemUrl(item), onError: (e) => {
+      itemImageError(e.currentTarget, item);
     }, draggable: false, alt: "" }),
     item.count > 1 && /* @__PURE__ */ jsx("div", { className: "trade-slot-count", children: item.count }),
     removable && /* @__PURE__ */ jsx("div", { className: "trade-slot-remove", children: SVG_X })
@@ -6832,15 +6910,15 @@ function TradeDropZone({ children, myConfirmed }) {
 function TradeRequest({ request, onAccept, onDecline }) {
   if (!request)
     return null;
-  return /* @__PURE__ */ jsx("div", { className: "trade-request-overlay", children: /* @__PURE__ */ jsxs("div", { className: "trade-request-card", children: [
+  return /* @__PURE__ */ jsx("div", { className: "trade-request-overlay", children: /* @__PURE__ */ jsxs("div", { className: "wst-panel trade-request-card", children: [
     /* @__PURE__ */ jsx(Frame, { px: 11, opacity: 0.5 }),
     /* @__PURE__ */ jsx("div", { className: "trade-request-icon", children: SVG_HANDSHAKE }),
-    /* @__PURE__ */ jsx("div", { className: "trade-request-title", children: tr("ui_trade_request", "Trade request") }),
+    /* @__PURE__ */ jsx("div", { className: "wst-title trade-request-title", children: tr("ui_trade_request", "Trade request") }),
     /* @__PURE__ */ jsx("div", { className: "trade-request-name", children: request.fromName }),
     /* @__PURE__ */ jsx("div", { className: "trade-request-sub", children: tr("ui_trade_wants", "wants to trade with you") }),
     /* @__PURE__ */ jsxs("div", { className: "trade-request-actions", children: [
-      /* @__PURE__ */ jsx("button", { className: "trade-req-btn decline", onClick: onDecline, children: tr("ui_decline", "Decline") }),
-      /* @__PURE__ */ jsx("button", { className: "trade-req-btn accept", onClick: onAccept, children: tr("ui_accept", "Accept") })
+      /* @__PURE__ */ jsx("button", { className: "wst-button danger trade-req-btn decline", onClick: onDecline, children: tr("ui_decline", "Decline") }),
+      /* @__PURE__ */ jsx("button", { className: "wst-button primary trade-req-btn accept", onClick: onAccept, children: tr("ui_accept", "Accept") })
     ] })
   ] }) });
 }
@@ -6885,20 +6963,20 @@ function TradePanel({ tradeOpen, tradePartner, myOffer, theirOffer, myConfirmed,
   }
   const useCustomPos = pos.x !== 0 || pos.y !== 0;
   const style = useCustomPos ? { position: "fixed", left: pos.x, top: pos.y, transform: "none", right: "auto" } : {};
-  return /* @__PURE__ */ jsxs("div", { id: "trade-panel", style, onMouseDown, children: [
+  return /* @__PURE__ */ jsxs("div", { id: "trade-panel", className: "wst-panel", style, onMouseDown, children: [
     /* @__PURE__ */ jsx(Frame, { px: 13, opacity: 0.5 }),
-    /* @__PURE__ */ jsxs("div", { className: "trade-header trade-drag-handle", children: [
+    /* @__PURE__ */ jsxs("div", { className: "wst-header trade-header trade-drag-handle", children: [
       /* @__PURE__ */ jsx("div", { className: "trade-header-icon", children: SVG_HANDSHAKE }),
       /* @__PURE__ */ jsxs("div", { className: "trade-header-text", children: [
-        /* @__PURE__ */ jsx("div", { className: "trade-title", children: tr("ui_trade", "Trade") }),
-        /* @__PURE__ */ jsx("div", { className: "trade-partner", children: trf("ui_trade_with", "With %s", tradePartner) })
+        /* @__PURE__ */ jsx("div", { className: "wst-title trade-title", children: tr("ui_trade", "Trade") }),
+        /* @__PURE__ */ jsx("div", { className: "wst-sub trade-partner", children: trf("ui_trade_with", "With %s", tradePartner) })
       ] }),
       /* @__PURE__ */ jsx("div", { className: "trade-drag-hint", children: /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "currentColor", children: /* @__PURE__ */ jsx("path", { d: "M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" }) }) }),
-      /* @__PURE__ */ jsx("div", { className: "trade-close", onClick: onCancel, children: SVG_X })
+      /* @__PURE__ */ jsx("div", { className: "wst-close trade-close", onClick: onCancel, children: SVG_X })
     ] }),
     /* @__PURE__ */ jsxs("div", { className: "trade-columns", children: [
       /* @__PURE__ */ jsxs("div", { className: `trade-col${myConfirmed ? " trade-confirmed" : ""}`, children: [
-        /* @__PURE__ */ jsx("div", { className: "trade-col-label", children: tr("ui_your_offer", "Your offer") }),
+        /* @__PURE__ */ jsx("div", { className: "wst-title trade-col-label", children: tr("ui_your_offer", "Your offer") }),
         /* @__PURE__ */ jsxs(TradeDropZone, { myConfirmed, children: [
           /* @__PURE__ */ jsx("div", { className: "trade-col-grid", children: mySlots }),
           !myConfirmed && myOffer.length === 0 && /* @__PURE__ */ jsx("div", { className: "trade-drop-hint", children: tr("ui_drag_items_here", "Drag items here") })
@@ -6906,13 +6984,13 @@ function TradePanel({ tradeOpen, tradePartner, myOffer, theirOffer, myConfirmed,
       ] }),
       /* @__PURE__ */ jsx("div", { className: "trade-divider", children: /* @__PURE__ */ jsx("div", { className: "trade-arrows", children: SVG_HANDSHAKE }) }),
       /* @__PURE__ */ jsxs("div", { className: `trade-col${theirConfirmed ? " trade-confirmed" : ""}`, children: [
-        /* @__PURE__ */ jsx("div", { className: "trade-col-label", children: tr("ui_their_offer", "Their offer") }),
+        /* @__PURE__ */ jsx("div", { className: "wst-title trade-col-label", children: tr("ui_their_offer", "Their offer") }),
         /* @__PURE__ */ jsx("div", { className: "trade-col-grid", children: theirSlots })
       ] })
     ] }),
     !tradeCompleting && /* @__PURE__ */ jsxs("div", { className: "trade-footer", children: [
-      /* @__PURE__ */ jsx("button", { className: "trade-btn cancel", onClick: onCancel, children: tr("ui_cancel", "Cancel") }),
-      /* @__PURE__ */ jsx("button", { className: `trade-btn confirm${myConfirmed ? " confirmed" : ""}`, onClick: onConfirm, disabled: myConfirmed, children: myConfirmed ? /* @__PURE__ */ jsxs(Fragment, { children: [
+      /* @__PURE__ */ jsx("button", { className: "wst-button trade-btn cancel", onClick: onCancel, children: tr("ui_cancel", "Cancel") }),
+      /* @__PURE__ */ jsx("button", { className: `wst-button primary trade-btn confirm${myConfirmed ? " confirmed" : ""}`, onClick: onConfirm, disabled: myConfirmed, children: myConfirmed ? /* @__PURE__ */ jsxs(Fragment, { children: [
         SVG_CHECK,
         " ",
         tr("ui_confirmed", "Confirmed")
@@ -6974,6 +7052,7 @@ function AmmoPicker({ data, busy, onSelect, onUnload, onSetPreferred, onClose })
         "section",
         {
           id: "inv-ammo-picker",
+          className: "wst-panel",
           role: "dialog",
           "aria-modal": "true",
           "aria-labelledby": "ammo-picker-title",
@@ -6981,16 +7060,16 @@ function AmmoPicker({ data, busy, onSelect, onUnload, onSetPreferred, onClose })
           children: [
             /* @__PURE__ */ jsx(Frame, { px: 12, opacity: 0.5 }),
             /* @__PURE__ */ jsx("div", { className: "ammo-picker-rail" }),
-            /* @__PURE__ */ jsxs("header", { className: "ammo-picker-header", children: [
+            /* @__PURE__ */ jsxs("header", { className: "wst-header ammo-picker-header", children: [
               /* @__PURE__ */ jsx("div", { className: "ammo-picker-emblem", children: /* @__PURE__ */ jsx(Cartridge, {}) }),
               /* @__PURE__ */ jsxs("div", { className: "ammo-picker-heading", children: [
-                /* @__PURE__ */ jsx("span", { className: "ammo-picker-kicker", children: data.weaponLabel }),
+                /* @__PURE__ */ jsx("span", { className: "wst-sub ammo-picker-kicker", children: data.weaponLabel }),
                 /* @__PURE__ */ jsx("h2", { id: "ammo-picker-title", children: tr("ui_ammo_select_title", "Choose ammunition") }),
                 /* @__PURE__ */ jsx("p", { children: tr("ui_ammo_select_subtitle", "Select the rounds to load into this weapon") })
               ] }),
-              /* @__PURE__ */ jsx("button", { className: "ammo-picker-close", type: "button", onClick: onClose, disabled: busy, "aria-label": tr("ui_cancel", "Cancel"), children: "×" })
+              /* @__PURE__ */ jsx("button", { className: "wst-close ammo-picker-close", type: "button", onClick: onClose, disabled: busy, "aria-label": tr("ui_cancel", "Cancel"), children: "×" })
             ] }),
-            /* @__PURE__ */ jsxs("div", { className: "ammo-picker-load", children: [
+            /* @__PURE__ */ jsxs("div", { className: "wst-plate ammo-picker-load", children: [
               /* @__PURE__ */ jsxs("div", { className: "ammo-picker-load-copy", children: [
                 /* @__PURE__ */ jsx("span", { children: tr("ui_ammo_loaded", "Loaded") }),
                 /* @__PURE__ */ jsxs("strong", { children: [
@@ -7012,7 +7091,7 @@ function AmmoPicker({ data, busy, onSelect, onUnload, onSetPreferred, onClose })
                   type: "button",
                   role: "radio",
                   "aria-checked": chosen,
-                  className: `ammo-picker-option${chosen ? " selected" : ""}${locked ? " locked" : ""}`,
+                  className: `wst-card ammo-picker-option${chosen ? " selected" : ""}${locked ? " locked" : ""}`,
                   onClick: () => setSelectedSlot(option.slot),
                   onContextMenu: (event) => {
                     event.preventDefault();
@@ -7045,16 +7124,16 @@ function AmmoPicker({ data, busy, onSelect, onUnload, onSetPreferred, onClose })
             }) }),
             selectedLocked && /* @__PURE__ */ jsxs("div", { className: "ammo-picker-warning", children: [
               /* @__PURE__ */ jsx("span", { children: tr("ammo_switch_loaded", "Unload the current rounds before switching ammo type") }),
-              /* @__PURE__ */ jsx("button", { type: "button", onClick: () => onUnload(data.weaponSlot), disabled: busy, children: tr("ui_ammo_unload", "Unload current rounds") })
+              /* @__PURE__ */ jsx("button", { className: "wst-button", type: "button", onClick: () => onUnload(data.weaponSlot), disabled: busy, children: tr("ui_ammo_unload", "Unload current rounds") })
             ] }),
             /* @__PURE__ */ jsx("p", { className: "ammo-picker-hint", children: tr("ui_ammo_preferred_hint", "Select a type, then Load rounds · Right-click to mark a favorite") }),
             /* @__PURE__ */ jsxs("footer", { className: "ammo-picker-actions", children: [
-              /* @__PURE__ */ jsx("button", { type: "button", className: "ammo-picker-cancel", onClick: onClose, disabled: busy, children: tr("ui_cancel", "Cancel") }),
+              /* @__PURE__ */ jsx("button", { type: "button", className: "wst-button ammo-picker-cancel", onClick: onClose, disabled: busy, children: tr("ui_cancel", "Cancel") }),
               /* @__PURE__ */ jsxs(
                 "button",
                 {
                   type: "button",
-                  className: "ammo-picker-confirm",
+                  className: "wst-button primary ammo-picker-confirm",
                   onClick: () => selectedSlot !== null && onSelect(data.weaponSlot, selectedSlot),
                   disabled: busy || selectedSlot === null || !!selectedLocked,
                   children: [
@@ -7158,6 +7237,8 @@ function App() {
     return null;
   }, []);
   const [panelPos, setPanelPos] = reactExports.useState(loadSavedPos);
+  const attachedWidth = (state.containerOpen !== null ? CONTAINER_W_REM + PANEL_GAP_REM : 0) + (state.selected !== null ? DETAIL_W_REM + PANEL_GAP_REM : 0);
+  const fittedPanelPos = usePanelPosition(wrapperRef, panelPos, visible, remPx(attachedWidth));
   const panelDragRef = reactExports.useRef(null);
   const handlePanelDragStart = reactExports.useCallback((e) => {
     if (e.target.closest("#inv-close-btn"))
@@ -7828,12 +7909,13 @@ function App() {
         "div",
         {
           id: "inventory-wrapper",
+          className: "wst-panel",
           ref: wrapperRef,
           style: {
             opacity: animating ? 1 : 0,
-            ...panelPos ? {
-              left: `${panelPos.x}px`,
-              top: `${panelPos.y}px`,
+            ...fittedPanelPos ? {
+              left: `${fittedPanelPos.x}px`,
+              top: `${fittedPanelPos.y}px`,
               transform: animating ? "none" : "scale(.8)"
             } : {
               transform: animating ? "translateY(-50%)" : "translateY(-50%) scale(.8)"
@@ -7841,16 +7923,16 @@ function App() {
           },
           children: [
             /* @__PURE__ */ jsx(Frame, { px: 13, opacity: 0.5 }),
-            /* @__PURE__ */ jsxs("div", { className: "top", onMouseDown: handlePanelDragStart, style: { cursor: "grab" }, children: [
+            /* @__PURE__ */ jsxs("div", { className: "wst-header top", onMouseDown: handlePanelDragStart, style: { cursor: "grab" }, children: [
               /* @__PURE__ */ jsx("div", { className: "inv-badge", children: SVG_SATCHEL }),
-              /* @__PURE__ */ jsx("div", { className: "inv-titles", children: /* @__PURE__ */ jsx("span", { className: "title", id: "inv-title", children: tr("ui_inventory", "Inventory") }) }),
-              /* @__PURE__ */ jsx("div", { id: "inv-close-btn", onClick: handleClose, children: SVG_X })
+              /* @__PURE__ */ jsx("div", { className: "inv-titles", children: /* @__PURE__ */ jsx("span", { className: "wst-title title", id: "inv-title", children: tr("ui_inventory", "Inventory") }) }),
+              /* @__PURE__ */ jsx("div", { id: "inv-close-btn", className: "wst-close", onClick: handleClose, children: SVG_X })
             ] }),
             /* @__PURE__ */ jsxs("div", { className: "inv-weight-block", children: [
               /* @__PURE__ */ jsx(WeightBar, { grid: state.grid, maxWeight: state.maxWeight }),
               /* @__PURE__ */ jsx(WeightProgress, { grid: state.grid, maxWeight: state.maxWeight })
             ] }),
-            /* @__PURE__ */ jsx("div", { className: "inv-hr" }),
+            /* @__PURE__ */ jsx("div", { className: "wst-rule inv-hr" }),
             /* @__PURE__ */ jsxs("div", { id: "inv-currency-row", children: [
               /* @__PURE__ */ jsxs("div", { className: "inv-currency cash", children: [
                 /* @__PURE__ */ jsx("span", { className: "inv-currency-icon", children: SVG_CASH }),
@@ -7862,12 +7944,12 @@ function App() {
               ] })
             ] }),
             /* @__PURE__ */ jsxs("div", { id: "inv-search-row", children: [
-              /* @__PURE__ */ jsxs("div", { className: "inv-search", children: [
+              /* @__PURE__ */ jsxs("div", { className: "wst-field inv-search", children: [
                 /* @__PURE__ */ jsx(
                   "input",
                   {
                     type: "text",
-                    className: "search-bar",
+                    className: "wst-input search-bar",
                     id: "inv-search",
                     placeholder: tr("ui_search_items", "Search items..."),
                     value: state.search,
@@ -7891,7 +7973,7 @@ function App() {
                 "input",
                 {
                   type: "number",
-                  className: "inv-amount-input",
+                  className: "wst-input inv-amount-input",
                   value: state.itemAmount || "",
                   min: 0,
                   onChange: (e) => handleSetItemAmount(parseInt(e.target.value) || 0),
@@ -7936,7 +8018,7 @@ function App() {
           item: selectedItem,
           panel: state.panel,
           containerOpen: state.containerOpen,
-          panelPos
+          panelPos: fittedPanelPos
         }
       ),
       /* @__PURE__ */ jsx(
@@ -7955,7 +8037,7 @@ function App() {
           onMouseOver: handleMouseOver,
           onMouseLeave: handleMouseLeave,
           onClose: handleCloseContainer,
-          panelPos
+          panelPos: fittedPanelPos
         }
       ),
       /* @__PURE__ */ jsx(
@@ -8059,6 +8141,8 @@ const index = '';
 
 const global = '';
 
+const storeAdapter = '';
+
 (() => {
   const BASE = {"BASE_URL":"./","MODE":"production","DEV":false,"PROD":true,"SSR":false}?.BASE_URL ;
   const ABS_BASE = new URL(BASE, document.baseURI).href;
@@ -8141,9 +8225,6 @@ const global = '';
   }, true);
 })();
 const root = document.getElementById("root");
-if (isEnvBrowser()) {
-  root.style.background = "#1a1a1a";
-}
 createRoot(root).render(
   /* @__PURE__ */ jsx(React.StrictMode, { children: /* @__PURE__ */ jsx(App, {}) })
 );

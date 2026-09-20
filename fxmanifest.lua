@@ -41,7 +41,8 @@ w_lib {
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
-    'init.lua'
+    'init.lua',
+    'server_debt.lua'
 }
 
 client_script 'init.lua'
@@ -68,6 +69,7 @@ files {
     'web/build/sounds/*.mp3',
     'web/images/*.png',
     'modules/items/catalog.lua',
+    'modules/items/native_assets.lua',
     'modules/mysql/rsg.lua',
     'modules/weapon/rsg.lua',
     'modules/bridge/rsg/native_client.lua',

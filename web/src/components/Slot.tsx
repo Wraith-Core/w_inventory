@@ -1,6 +1,6 @@
 import { useDraggable, useDroppable, useDndContext } from '@dnd-kit/core';
 import { rarity } from '../utils/items';
-import { iconUrl, placeholderUrl } from '../utils/nui';
+import { getItemUrl, itemImageError } from '../utils/nui';
 import { SVG_BAG } from '../utils/items';
 import { InventoryItem } from '../typings';
 import { formatCompact } from '../utils/formatNumber';
@@ -52,7 +52,7 @@ function Slot({ item, idx, gridIndex, selected, panel, hotbarIndex, dimmed, onSe
 
   const r = rarity(item);
   const cls = [
-    'slot filled', r,
+    'slot filled wst-card', r,
     selected ? 'selected' : '',
     draggable.isDragging ? 'drag-source' : '',
     droppable.isOver ? 'drag-over' : '',
@@ -95,8 +95,8 @@ function Slot({ item, idx, gridIndex, selected, panel, hotbarIndex, dimmed, onSe
           </div>
         )}
         <img
-          src={iconUrl(item.name)}
-          onError={(e) => { (e.target as HTMLImageElement).src = placeholderUrl(); }}
+          src={getItemUrl(item)}
+          onError={(e) => { itemImageError(e.currentTarget, item); }}
           draggable={false}
           alt=""
         />

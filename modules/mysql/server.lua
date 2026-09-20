@@ -211,7 +211,7 @@ function db.saveStash(owner, dbId, inventory, liveItems)
     awaitDatabase()
     if nativeRsg then
         local key = owner and owner ~= '' and (tostring(dbId) .. ':' .. tostring(owner)) or tostring(dbId)
-        local encoded = nativeRsg.encode(inventory)
+        local encoded = nativeRsg.encode(inventory, nil, true)
         return successful(MySQL.prepare.await('INSERT INTO inventories (identifier, items) VALUES (?, ?) ON DUPLICATE KEY UPDATE items = VALUES(items)', { key, encoded }))
     end
     if nativeVorp and nativeVorp.isNativeStash(owner, dbId) then

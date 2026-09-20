@@ -1,9 +1,10 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import InventoryGrid from './InventoryGrid';
 import { N, SVG_BAG, SVG_X, fmtWeight } from '../utils/items';
 import { InventoryItem } from '../typings';
 import { tr, trf } from '../i18n';
 import Frame from './Frame';
+import usePanelPosition from '../hooks/usePanelPosition';
 import { PANEL_W_REM, PANEL_GAP_REM, remPx } from '../utils/layout';
 
 const SVG_LOCK = <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"/></svg>;
@@ -29,6 +30,8 @@ interface ContainerPanelProps {
 
 export default function ContainerPanel({ containerOpen, containerGrid, containerLabel, containerMaxWeight, containerSlots, selected, selectedPanel, onSelect, onContextMenu, onDoubleClick, onMouseOver, onMouseLeave, onClose, panelPos }: ContainerPanelProps) {
   const [entered, setEntered] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const fitted = usePanelPosition(panelRef, panelPos ? { x:panelPos.x + remPx(PANEL_W_REM + PANEL_GAP_REM), y:panelPos.y } : null, containerOpen !== null);
 
   useEffect(() => {
     if (containerOpen !== null) {
@@ -54,28 +57,26 @@ export default function ContainerPanel({ containerOpen, containerGrid, container
   const weightZone = wp > 90 ? 'critical' : wp > 70 ? 'warn' : 'ok';
   const slotPct = containerSlots > 0 ? Math.min(100, (itemCount / containerSlots) * 100) : 0;
 
-  const WRAPPER_W = remPx(PANEL_W_REM);
-  const GAP = remPx(PANEL_GAP_REM);
-  const cpPosStyle: React.CSSProperties = panelPos
+  const cpPosStyle: React.CSSProperties = fitted
     ? {
-        left: `${panelPos.x + WRAPPER_W + GAP}px`,
-        top: `${panelPos.y}px`,
+        left: `${fitted.x}px`,
+        top: `${fitted.y}px`,
         transform: entered ? 'none' : 'translateX(-10px) scale(.97)',
       }
     : {};
 
   return (
-    <div id="container-panel" className={entered ? 'cp-entered' : ''} style={{ display: 'flex', ...cpPosStyle }}>
+    <div id="container-panel" ref={panelRef} className={'wst-panel ' + (entered ? 'cp-entered' : '')} style={{ display: 'flex', ...cpPosStyle }}>
       <Frame px={12} opacity={0.45} />
-      <div className="cp-header">
+      <div className="wst-header cp-header">
         <div className="cp-title-area">
           <div className="cp-icon">{SVG_BAG}</div>
           <div className="cp-title-text">
-            <div className="cp-title">{containerLabel}</div>
-            <div className="cp-subtitle">{itemCount === 0 ? tr('ui_empty_container', 'Empty container') : trf('ui_stored_items', '%s stored item(s)', itemCount)}</div>
+            <div className="wst-title cp-title">{containerLabel}</div>
+            <div className="wst-sub cp-subtitle">{itemCount === 0 ? tr('ui_empty_container', 'Empty container') : trf('ui_stored_items', '%s stored item(s)', itemCount)}</div>
           </div>
         </div>
-        <div className="cp-close" onClick={onClose}>{SVG_X}</div>
+        <div className="wst-close cp-close" onClick={onClose}>{SVG_X}</div>
       </div>
 
       <div className="cp-metrics">
@@ -103,7 +104,7 @@ export default function ContainerPanel({ containerOpen, containerGrid, container
         </div>
       </div>
 
-      <div className="cp-divider" />
+      <div className="wst-rule cp-divider" />
 
       {itemCount === 0 ? (
         <div className="cp-empty">
