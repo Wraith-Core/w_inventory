@@ -132,7 +132,7 @@ export default function AmmoPicker({ data, busy, onSelect, onUnload, onSetPrefer
                   <strong>{option.label || option.item}</strong>
                   <small>{tr('ui_ammo_available', 'Available')} · {option.count}</small>
                 </span>
-                {option.preferred && <span className="ammo-picker-preferred">★ {tr('ui_ammo_preferred', 'Preferred')}</span>}
+                {option.preferred && <span className="ammo-picker-preferred">{tr('ui_ammo_preferred', 'Preferred')}</span>}
                 {option.active && <span className="ammo-picker-current">{tr('ui_ammo_current', 'Current')}</span>}
                 <span className="ammo-picker-radio"><i /></span>
               </button>

@@ -593,6 +593,9 @@ function Inventory.Remove(inv)
 	inv = Inventory(inv) --[[@as WInventory]]
 
 	if inv then
+        -- already dropped by Inventory.Forget (a character purge): an old reference must not
+        -- unindex a new inventory loaded under the same id since
+        if inv.purged then return true end
         if shared.framework == 'vorp' and (inv.type == 'drop' or inv.type == 'temp') then
             if inv.nativeTransfer or Inventory.HasForeignSlotTransfer and Inventory.HasForeignSlotTransfer(inv) then return false end
             inv.nativeTransfer = coroutine.running()
@@ -631,6 +634,74 @@ end
 
 exports('RemoveInventory', Inventory.Remove)
 
+--- Drop a loaded inventory WITHOUT saving it (PurgeCharacter, server_purge.lua): its rows are
+--- being deleted, so a save here, or a later one through a reference someone still holds, would
+--- bring them back (`purged` makes Inventory.Save refuse). Viewers are closed while it is still
+--- indexed: closing looks the inventory up by id, and a missing id would load it again from SQL.
+--- Refuses (false) while a transfer runs on it: that thread still owns the rows.
+function Inventory.Forget(inv)
+    if type(inv) ~= 'table' or Inventories[inv.id] ~= inv then return false end
+    if type(inv.nativeTransfer) == 'thread' then return false end
+    -- a recovery token (a lost market / custody reply) belongs to the character being purged
+    inv.nativeTransfer, inv.purged, inv.changed = nil, true, false
+    if inv.player and inv.open then
+        -- detached by hand: closeInventory would wait on the other inventory's own transfer
+        local other = Inventories[inv.open]
+        if other and other.openedBy then other.openedBy[inv.id] = nil end
+        inv.open = false
+    end
+    for playerId in pairs(inv.openedBy) do
+        local viewer = Inventories[playerId]
+        if viewer and viewer ~= inv then viewer:closeInventory() end
+    end
+    if inv.player and activeIdentifiers[inv.owner] == inv.id then activeIdentifiers[inv.owner] = nil end
+    Inventories[inv.id] = nil
+    return true
+end
+
+--- A loaded inventory follows its character to another citizen id (w_core Reassign /
+--- TransferNumber, server_purge.lua): the rows were renamed in the database, so this copy is
+--- indexed and saved under the new key (`id`, `owner`, `dbId`), or its next save would write the
+--- character's items back under the old number, over whoever holds it next. A bag keeps its id
+--- (the server id) and changes its owner. Never yields: the two moves of a transfer fire back to
+--- back, and the second must find the first done. The viewers of a stash are detached by hand
+--- (their client holds the old id, and closeInventory would wait on a transfer running on it).
+--- A copy left at the new key (the number was clean: nothing of it saved) is dropped first.
+function Inventory.Rekey(inv, id, owner, dbId)
+    if type(inv) ~= 'table' or Inventories[inv.id] ~= inv then return false end
+    -- counted: a save on its way tells a move from any other change of its owner (Inventory.Save)
+    inv.moves = (inv.moves or 0) + 1
+    if inv.player then
+        if activeIdentifiers[inv.owner] == inv.id then
+            activeIdentifiers[inv.owner] = nil
+            activeIdentifiers[owner] = inv.id
+        end
+        inv.owner = owner
+        return true
+    end
+    local occupant = Inventories[id]
+    if occupant and occupant ~= inv and not Inventory.Forget(occupant) then return false end
+    for playerId in pairs(inv.openedBy) do
+        local viewer = Inventories[playerId]
+        if viewer and viewer ~= inv and viewer.open == inv.id then
+            viewer.open, viewer.currentShop, viewer.containerSlot = false, nil, nil
+            TriggerClientEvent('w_inventory:closeInventory', playerId, true)
+            TriggerEvent('w_inventory:closedInventory', playerId, inv.id)
+        end
+    end
+    inv.openedBy, inv.open = {}, false
+    -- its last save may have landed just after the rename (a new row under the old key, the next
+    -- holder's to inherit): taken back if it is still exactly that, and the content is written
+    -- again under the new key
+    local staleKey, staleValue = inv.savedKey, inv.savedValue
+    if staleKey then CreateThread(function() pcall(db.dropStaleStash, staleKey, staleValue) end) end
+    inv.savedKey, inv.savedValue, inv.changed = nil, nil, true
+    Inventories[inv.id] = nil
+    inv.id, inv.owner, inv.dbId = id, owner, dbId
+    Inventories[id] = inv
+    return true
+end
+
 function Inventory.GetPersistenceInventories()
     return Inventories
 end
@@ -648,11 +719,18 @@ end
 
 function Inventory.Save(inv)
     inv = Inventory(inv)
-    if not inv or inv.datastore then return false end
+    -- purged: its character was deleted (Inventory.Forget); saving would recreate its rows
+    if not inv or inv.datastore or inv.purged then return false end
     local data = persistentRows(inv)
+    -- the key this save is sent under: the character may move to another number while it is on
+    -- its way (w_core Reassign / TransferNumber; server_purge.lua re-keys the copy)
+    local sentId, sentOwner, sentMoves = inv.id, inv.owner, inv.moves
     -- A save can yield; compare the final snapshot before clearing dirty state.
-    local ok, result = pcall(function()
-        if inv.player then return db.savePlayer(inv.owner, data, inv.items)
+    -- (a stash save on RSG also answers the key and the value it wrote)
+    local ok, result, sentKey, sentValue = pcall(function()
+        -- the bag names its players row (ownerRow): a save still in flight when the character
+        -- moved can then never land on the next holder of the number
+        if inv.player then return db.savePlayer(inv.owner, data, inv.items, inv.ownerRow)
         elseif inv.type == 'trunk' then return db.saveTrunk(inv.dbId, data)
         elseif inv.type == 'glovebox' then return db.saveGlovebox(inv.dbId, data)
         else return db.saveStash(inv.owner, inv.dbId, data, inv.items) end
@@ -662,6 +740,19 @@ function Inventory.Save(inv)
         warn(('Inventory save failed for %s: %s'):format(tostring(inv.id), tostring(result)))
         return false
     end
+    -- only a move (Rekey) to another key counts: registerStash may also reset a loaded stash's
+    -- owner, and taking back what this save wrote would then delete the row it just saved
+    if inv.moves ~= sentMoves and (inv.id ~= sentId or inv.owner ~= sentOwner) then
+        -- moved while this save was on its way: it may have reached the old key after the rename
+        -- (a bag's row guard wrote nothing; a stash's upsert made a new row there, taken back
+        -- here), so the content is written again under the new one
+        if sentKey then pcall(db.dropStaleStash, sentKey, sentValue) end
+        inv.changed = true
+        return true
+    end
+    -- what this copy last wrote, and where: Rekey takes it back from the old key if it landed
+    -- after the rename (the save returned before the move was announced)
+    inv.savedKey, inv.savedValue = sentKey, sentValue
     -- Native storage may attach allocated IDs during commit, so comparing the
     -- exact original JSON would mark a successful first save dirty indefinitely.
     -- A second save is safe; never clear mutations which happened while yielding.
@@ -3196,7 +3287,9 @@ RegisterServerEvent('w_inventory:giveItem', function(slot, target, count)
 			if Inventory.AddItem(toInventory, item, count, data.metadata, toSlot) then
 				if Inventory.RemoveItem(fromInventory, item, count, data.metadata, slot) then
 					if server.loglevel > 0 then
-						lib.logger(fromInventory.owner, 'giveItem', ('"%s" gave %sx %s to "%s"'):format(fromInventory.label, count, data.name, toInventory.label))
+						-- the receiver is picked by proximity (his server id); the log names him by his
+						-- citizen id (the bag's owner), which still means him after he reconnects
+						lib.logger(fromInventory.owner, 'giveItem', ('"%s" gave %sx %s to "%s" (%s)'):format(fromInventory.label, count, data.name, toInventory.label, toInventory.owner))
 					end
 
 					return
@@ -4221,6 +4314,60 @@ exports('GetRegisteredStashes', function()
 
 	return stashes
 end)
+
+--- Drop the registrations `match(name)` picks: a deleted character's own stashes, whose name
+--- carries its id ('policestash_<id>', 'stable_<key>_<id>'; PurgeCharacter, server_purge.lua).
+--- Left here, a reader of GetRegisteredStashes would load the purged stash again and its next
+--- save would bring the row back under the number. A per-player definition (owner = true, such as
+--- 'policelocker') is shared by everyone and is never dropped. Opening the stash registers it
+--- again (the RSG bridge's OpenInventory). Returns how many were dropped.
+---@param match fun(name: string): boolean
+---@return integer
+function Inventory.ForgetRegisteredStashes(match)
+	local dropped = 0
+
+	for name, stash in pairs(RegisteredStashes) do
+		-- assigning nil to a visited key is allowed while traversing
+		if stash.owner ~= true and match(name) then
+			RegisteredStashes[name] = nil
+			dropped = dropped + 1
+		end
+	end
+
+	return dropped
+end
+
+--- The registrations of a character that moved to another citizen id (w_core Reassign /
+--- TransferNumber, server_purge.lua): `rename(name)` gives the new name of one named after the
+--- old number ('policestash_<id>', 'stable_<key>_<id>'; nil = not its own), and one owned by the
+--- old number (owner = '<id>') is owned by the new one. The rows moved the same way: left here, a
+--- reader of GetRegisteredStashes would open the old name, which is the next holder's by then.
+--- A per-player definition (owner = true) is shared by everyone and never renamed.
+---@param rename fun(name: string): string?
+---@return integer moved
+function Inventory.MoveRegisteredStashes(rename, old, new)
+	local renames, moved = {}, 0
+
+	for name, stash in pairs(RegisteredStashes) do
+		if stash.owner ~= nil and stash.owner ~= true and stash.owner ~= false and tostring(stash.owner) == old then
+			stash.owner = new
+			moved = moved + 1
+		end
+		local to = stash.owner ~= true and rename(name)
+		if to and to ~= name then renames[name] = to end
+	end
+
+	-- applied after the traversal: adding keys while traversing is not allowed
+	for name, to in pairs(renames) do
+		local stash = RegisteredStashes[name]
+		RegisteredStashes[name] = nil
+		stash.name = to
+		RegisteredStashes[to] = stash
+		moved = moved + 1
+	end
+
+	return moved
+end
 
 ---@param properties TemporaryStashProperties
 function Inventory.CreateTemporaryStash(properties)

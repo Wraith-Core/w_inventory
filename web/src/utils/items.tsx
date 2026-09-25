@@ -1,6 +1,5 @@
 import React from 'react';
 import { tr } from '../i18n';
-import { VORP_CURRENCY_ICONS } from '../vorpCurrencyIcons';
 
 export function N(v: any): number {
   const n = parseFloat(v);
@@ -82,23 +81,18 @@ export const SVG_SATCHEL = (
 export const SVG_X = <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>;
 
 /**
- * Cash and gold use VORP Core's own currency artwork, the same images w_hud
- * shows, so both interfaces read as one system instead of two styles.
- *
- * Shipped as data URIs (web/src/vorpCurrencyIcons.ts, copied from w_hud) so the
- * inventory stays self-contained and does not depend on vorp_core's files being
- * present or on a particular resource name.
- *
- * The export names stay SVG_* on purpose: both call sites keep working
- * unchanged. They are images now, so CSS `color` no longer tints them — the
- * artwork carries its own colours.
+ * Cash and gold in the Wraith theme: no coloured artwork (the pause menu's money
+ * bar is figures only). Cash is a $ in the figures' face, gold a small bar drawn
+ * in currentColor, so both follow the text they sit in (paper at rest, ink on the
+ * paper band). The export names stay SVG_* so both call sites keep working.
+ * The old VORP artwork is still in vorpCurrencyIcons.ts, unused.
  */
-export const SVG_CASH = (
-  <img src={VORP_CURRENCY_ICONS.money} alt="" draggable={false} />
-);
+export const SVG_CASH = <span className="cur-glyph cur-cash" aria-hidden="true">$</span>;
 
 export const SVG_GOLD = (
-  <img src={VORP_CURRENCY_ICONS.gold} alt="" draggable={false} />
+  <svg className="cur-glyph cur-gold" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path fillRule="evenodd" d="M7.1 6.5h9.8L21 17.5H3zM8.2 9.6l-.5 1.3h8.6l-.5-1.3z" />
+  </svg>
 );
 export const SVG_EYE = <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>;
 

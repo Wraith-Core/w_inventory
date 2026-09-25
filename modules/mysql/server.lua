@@ -18,8 +18,62 @@ local Query = {
     UPDATE_GLOVEBOX = 'UPDATE `{vehicle_table}` SET glovebox = ? WHERE `{vehicle_column}` = ?',
 
     UPDATE_PLAYER = 'UPDATE `{user_table}` SET inventory = ? WHERE `{user_column}` = ?',
+    -- the same, only while that number still belongs to the players row the bag was loaded from
+    -- (players.id): w_core moves a character to another number and may hand the old one to
+    -- someone else at once (TransferNumber), and a save still on its way must not land on him
+    UPDATE_PLAYER_ROW = 'UPDATE `{user_table}` SET inventory = ? WHERE `{user_column}` = ? AND id = ?',
     SELECT_PLAYER = 'SELECT inventory FROM `{user_table}` WHERE `{user_column}` = ?',
 }
+
+-- ── one collation for the ids (utf8mb4_general_ci) ──────────────────────────
+-- players.citizenid and the tables that store an id are utf8mb4_general_ci. MySQL refuses "="
+-- between two columns of different implicit collations ("Illegal mix of collations"), so a table
+-- left in another one breaks every JOIN or IN (SELECT ...) that meets players: w_admin's list of
+-- blocked characters failed that way. The CREATE statements name the collation now; this converts
+-- a table created before them, once (information_schema shows nothing left to do on the next
+-- start). keep = { [table] = { [column] = 'its definition' } }: a column binary on purpose (JSON)
+-- is put back after the conversion. A table is left as it is, with the reason printed, when a
+-- unique key would merge two of its values under the new collation (the ALTER would stop on a
+-- duplicate key, or two ids would become one) or when it holds a binary column nobody named.
+local ID_COLLATION = 'utf8mb4_general_ci'
+local function alignCollation(db, tag, tables, keep)
+    keep = keep or {}
+    for _, t in ipairs(tables) do
+        local ok, err = pcall(function()
+            local current = db.scalar.await('SELECT TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?', { t })
+            if not current then return end
+            local kept, todo, binary, needed = keep[t] or {}, {}, nil, current ~= ID_COLLATION
+            for _, c in ipairs(db.query.await('SELECT COLUMN_NAME AS n, COLLATION_NAME AS k FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLLATION_NAME IS NOT NULL', { t }) or {}) do
+                if c.k ~= ID_COLLATION and not kept[c.n] then
+                    todo[c.n], needed = true, true
+                    if c.k:sub(-4) == '_bin' then binary = c.n end
+                end
+            end
+            if not needed then return end
+            if binary then error(('column %s is binary and nobody said to keep it'):format(binary), 0) end
+            -- every unique key holding a converted column, grouped the way the new collation compares
+            local keys = {}
+            for _, s in ipairs(db.query.await('SELECT INDEX_NAME AS i, COLUMN_NAME AS n, SUB_PART AS p FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND NON_UNIQUE = 0 ORDER BY INDEX_NAME, SEQ_IN_INDEX', { t }) or {}) do
+                local key = keys[s.i] or { by = {}, set = {} }
+                keys[s.i] = key
+                local e = ('`%s`'):format(s.n)
+                if todo[s.n] then e, key.text = ('CONVERT(`%s` USING utf8mb4) COLLATE %s'):format(s.n, ID_COLLATION), true end
+                if tonumber(s.p) then e = ('LEFT(%s, %d)'):format(e, tonumber(s.p)) end
+                key.by[#key.by + 1], key.set[#key.set + 1] = e, ('`%s` IS NOT NULL'):format(s.n)
+            end
+            for name, key in pairs(keys) do
+                if key.text and (tonumber(db.scalar.await(('SELECT COUNT(*) FROM (SELECT 1 FROM `%s` WHERE %s GROUP BY %s HAVING COUNT(*) > 1) d')
+                    :format(t, table.concat(key.set, ' AND '), table.concat(key.by, ', ')))) or 0) > 0 then
+                    error(('unique key %s would merge two of its values'):format(name), 0)
+                end
+            end
+            db.query.await(('ALTER TABLE `%s` CONVERT TO CHARACTER SET utf8mb4 COLLATE %s'):format(t, ID_COLLATION))
+            for _, def in pairs(kept) do db.query.await(('ALTER TABLE `%s` MODIFY %s'):format(t, def)) end
+            print(('^3[%s] %s converted to %s^0'):format(tag, t, ID_COLLATION))
+        end)
+        if not ok then print(('^1[%s] %s keeps its collation: %s^0'):format(tag, t, tostring(err))) end
+    end
+end
 
 local databaseReady = promise.new()
 local databaseReadyState
@@ -74,13 +128,15 @@ Citizen.CreateThreadNow(function()
     local success, result = pcall(MySQL.scalar.await, 'SELECT 1 FROM w_inventory')
 
     if not success then
+		-- the collation is named: without it the table took the database's default (utf8_general_ci
+		-- here, 3-byte), unlike players.citizenid which `owner` holds
 		MySQL.query.await([[CREATE TABLE IF NOT EXISTS `w_inventory` (
 			`owner` varchar(60) DEFAULT NULL,
 			`name` varchar(100) NOT NULL,
 			`data` longtext DEFAULT NULL,
 			`lastupdated` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
 			UNIQUE KEY `owner` (`owner`,`name`)
-		)]])
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci]])
     else
         -- Shouldn't be needed anymore; was used for some data conversion for v2.5.0 (back in March 2022)
         -- result = MySQL.query.await("SELECT owner, name FROM w_inventory WHERE NOT owner = ''")
@@ -107,6 +163,10 @@ Citizen.CreateThreadNow(function()
         -- end
     end
 
+    -- a table created before the CREATE above named its collation is utf8_general_ci (3-byte):
+    -- brought to utf8mb4_general_ci like players, once
+    alignCollation(MySQL, 'w_inventory', { 'w_inventory' })
+
     -- rsg mode persists stashes in rsg-inventory's `inventories` table, which no core ships;
     -- created here so the first stash does not fail. UNIQUE on identifier backs the upserts.
     if nativeRsg then
@@ -116,7 +176,7 @@ Citizen.CreateThreadNow(function()
             `items` LONGTEXT DEFAULT NULL,
             PRIMARY KEY (`id`),
             UNIQUE KEY `identifier` (`identifier`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4]])
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci]])
     end
 
     -- The stables table may not exist at all (a server with no stables, say). The error here
@@ -200,11 +260,25 @@ function db.loadPlayer(identifier)
     return inventory and json.decode(inventory)
 end
 
-function db.savePlayer(owner, inventory, liveItems)
+--- `rowId` (players.id, optional): the row the bag was loaded from; a row that no longer holds
+--- the number (the character moved) is left alone, the answer stays true (nothing to retry: the
+--- moved copy is re-keyed and saves again under its new number).
+function db.savePlayer(owner, inventory, liveItems, rowId)
     awaitDatabase()
     if nativeVorp then return nativeVorp.savePlayer(owner, inventory, liveItems) end
     if nativeRsg then inventory = nativeRsg.encode(inventory) end
+    rowId = tonumber(rowId)
+    if rowId then return successful(MySQL.prepare.await(Query.UPDATE_PLAYER_ROW, { inventory, owner, math.floor(rowId) })) end
     return successful(MySQL.prepare.await(Query.UPDATE_PLAYER, { inventory, owner }))
+end
+
+--- players.id of a character (nil when unknown or on VORP, whose bag is not a players column):
+--- an offline edit names the row it read, so its write cannot land on a later holder of the number.
+function db.playerRowId(identifier)
+    awaitDatabase()
+    if nativeVorp then return nil end
+    local ok, id = pcall(MySQL.scalar.await, 'SELECT id FROM players WHERE citizenid = ?', { identifier })
+    return ok and tonumber(id) or nil
 end
 
 function db.saveStash(owner, dbId, inventory, liveItems)
@@ -212,12 +286,25 @@ function db.saveStash(owner, dbId, inventory, liveItems)
     if nativeRsg then
         local key = owner and owner ~= '' and (tostring(dbId) .. ':' .. tostring(owner)) or tostring(dbId)
         local encoded = nativeRsg.encode(inventory, nil, true)
-        return successful(MySQL.prepare.await('INSERT INTO inventories (identifier, items) VALUES (?, ?) ON DUPLICATE KEY UPDATE items = VALUES(items)', { key, encoded }))
+        -- also the key and the value written: a save that crossed a move of its character takes
+        -- back what it may have left under the old number (db.dropStaleStash)
+        return successful(MySQL.prepare.await('INSERT INTO inventories (identifier, items) VALUES (?, ?) ON DUPLICATE KEY UPDATE items = VALUES(items)', { key, encoded })), key, encoded
     end
     if nativeVorp and nativeVorp.isNativeStash(owner, dbId) then
         return nativeVorp.saveStash(owner, dbId, inventory, liveItems)
     end
     return successful(MySQL.prepare.await(Query.UPSERT_STASH, { inventory, owner and tostring(owner) or '', dbId }))
+end
+
+--- A stash save that was on its way while its character moved to another number (w_core; the
+--- copy is re-keyed by server_purge.lua) may have landed after the rename: then it made a new row
+--- under the old key, which the number's next holder would inherit. That row goes, only while it
+--- still holds exactly what the save wrote (landed before the rename, the row moved with the
+--- character and nothing is left under the old key).
+function db.dropStaleStash(key, encoded)
+    awaitDatabase()
+    if not nativeRsg or type(key) ~= 'string' or type(encoded) ~= 'string' then return false end
+    return successful(MySQL.prepare.await('DELETE FROM inventories WHERE identifier = ? AND items = ?', { key, encoded }))
 end
 
 function db.loadStash(owner, name)

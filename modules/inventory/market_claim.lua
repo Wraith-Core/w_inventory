@@ -16,7 +16,7 @@ return function(Inventory, Inventories, Items, cartPlan, db)
         MySQL.query.await([[CREATE TABLE IF NOT EXISTS w_inventory_market_receipts (
             claim_id VARCHAR(96) NOT NULL PRIMARY KEY, citizenid VARCHAR(64) NOT NULL,
             request LONGTEXT NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4]])
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci]])
         ready = true
     end)
     local function publish(inv, rows)
@@ -111,6 +111,8 @@ return function(Inventory, Inventories, Items, cartPlan, db)
             unknown[owner], inv.nativeTransfer, server.nativeOfflineLocks[owner] = nil, nil, nil
         end
         working[owner] = nil
+        -- the character moved to another number while this ran: what it holds follows now
+        Inventory.FollowMarketMove(owner)
         if not ok then print('[w_inventory] Market delivery held: ' .. tostring(result)); return false, 'delivery_unknown' end
         return result, reason
     end
@@ -174,6 +176,7 @@ return function(Inventory, Inventories, Items, cartPlan, db)
         if uncertain then listingUnknown[owner]={id=id,source=source};inv.nativeTransfer='market_listing_unknown:'..id
         else listingUnknown[owner],inv.nativeTransfer,server.nativeOfflineLocks[owner]=nil,nil,nil end
         working[owner] = nil
+        Inventory.FollowMarketMove(owner) -- as in deliverClaim
         if not ok then print('[w_inventory] Listing held for recovery: '..tostring(result));return false,'listing_unknown' end
         return result,reason
     end
@@ -190,10 +193,70 @@ return function(Inventory, Inventories, Items, cartPlan, db)
     CreateThread(function()
         while true do
             Wait(10000)
-            for owner,p in pairs(unknown) do
-                pcall(deliverClaim,p.source,p.claim,owner,p.name,p.count,p.metadata)
+            -- over a snapshot: a retry yields, and meanwhile a recovery may move to another number
+            -- (MoveMarketOwner adds its key), which a live pairs() must not meet
+            local claims, listings = {}, {}
+            for owner,p in pairs(unknown) do claims[#claims+1] = {owner,p} end
+            for owner,p in pairs(listingUnknown) do listings[#listings+1] = {owner,p} end
+            for _,e in ipairs(claims) do
+                local owner,p = e[1],e[2]
+                if unknown[owner] == p then pcall(deliverClaim,p.source,p.claim,owner,p.name,p.count,p.metadata) end
             end
-            for owner,p in pairs(listingUnknown) do pcall(escrowListing,p.source,p.id,owner) end
+            for _,e in ipairs(listings) do
+                if listingUnknown[e[1]] == e[2] then pcall(escrowListing,e[2].source,e[2].id,e[1]) end
+            end
         end
     end)
+    -- PurgeCharacter (server_purge.lua): a delivery or a listing running for this character must
+    -- finish before its data goes (working); a recovery held after a lost reply (held) can go
+    -- with it, since the purge's own transaction locks the same players row and so waits out
+    -- whatever that write did. Its lock is released by the purge, not here.
+    function Inventory.MarketPurgeState(owner)
+        owner = tostring(owner)
+        return working[owner] == true, unknown[owner] ~= nil or listingUnknown[owner] ~= nil
+    end
+    function Inventory.ForgetMarketOwner(owner)
+        owner = tostring(owner)
+        unknown[owner], listingUnknown[owner] = nil, nil
+    end
+    -- w_core moved the character to another number (server_purge.lua): a recovery held after a
+    -- lost reply retries under the number its rows carry now (the receipt, the listing intent and
+    -- the bag were renamed with it), and so does the owner lock it holds. Left under the old
+    -- number, that lock would keep its next holder's bag from ever loading. The request names the
+    -- owner, so it is rebuilt for the new one. A delivery running right now keeps its number to
+    -- the end, and its recovery follows once it returns (movedWhileWorking).
+    local movedWhileWorking = {}
+    function Inventory.MoveMarketOwner(old, new)
+        old, new = tostring(old), tostring(new)
+        -- an operation still running on the destination is its previous holder's (TransferNumber):
+        -- its end would overwrite or release what lands there now, so this move waits for it too
+        if working[old] or working[new] then movedWhileWorking[old] = new return false end
+        local p, listing = unknown[old], listingUnknown[old]
+        if not p and not listing then return false end
+        if p then
+            -- w_core rewrote EVERY '"owner":"<old>"' of the receipt's request, an item's metadata
+            -- included: the retry's request (rebuilt from p.metadata) must read the same, or the
+            -- recovery conflicts forever and keeps the owner lock
+            local function follow(t, depth)
+                if type(t) ~= 'table' or depth > 16 then return end
+                for k, v in pairs(t) do
+                    if k == 'owner' and v == old then t[k] = new else follow(v, depth + 1) end
+                end
+            end
+            follow(p.metadata, 1)
+            p.request = canonical({owner=new,name=p.name,count=p.count,metadata=p.metadata})
+            unknown[old], unknown[new] = nil, p
+        end
+        if listing then listingUnknown[old], listingUnknown[new] = nil, listing end
+        if server.nativeOfflineLocks[old] then server.nativeOfflineLocks[old], server.nativeOfflineLocks[new] = nil, true end
+        return true
+    end
+    function Inventory.FollowMarketMove(owner)
+        local new = movedWhileWorking[owner]
+        if new then movedWhileWorking[owner] = nil Inventory.MoveMarketOwner(owner, new) end
+        -- then the move ONTO this number that waited for this operation (the target's recovery)
+        for from, to in pairs(movedWhileWorking) do
+            if to == owner and not working[from] then movedWhileWorking[from] = nil Inventory.MoveMarketOwner(from, to) break end
+        end
+    end
 end

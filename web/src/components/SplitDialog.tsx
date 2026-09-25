@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import type { CSSProperties } from 'react';
 import { getItemUrl, itemImageError } from '../utils/nui';
 import { InventoryItem } from '../typings';
 import { tr, trf } from '../i18n';
@@ -31,6 +32,7 @@ export default function SplitDialog({ item, visible, onConfirm, onCancel }: Spli
 
   const max = item.count - 1;
   const keepAmount = item.count - amount;
+  const fill = max > 1 ? ((amount - 1) / (max - 1)) * 100 : 100;
 
   return (
     <>
@@ -64,7 +66,8 @@ export default function SplitDialog({ item, visible, onConfirm, onCancel }: Spli
           <span className="wst-button split-adj" onClick={() => setAmount((a) => Math.max(1, a - 1))}>−</span>
           <input
             type="range"
-            className="split-slider"
+            className="w-range split-slider"
+            style={{ '--w-fill': `${fill}%` } as CSSProperties}
             min={1} max={max} value={amount}
             onChange={(e) => setAmount(parseInt(e.target.value) || 1)}
           />

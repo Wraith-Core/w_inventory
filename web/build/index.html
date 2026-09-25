@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Tajawal and store artwork load from the shared local w_lib stylesheet. -->
+    <!-- The Wraith theme loads at runtime from w_lib, never through the bundle (Vite would rewrite the URLs):
+         base.css = the w-* primitives (the trade note, the split slider); store-theme.css @imports the tokens
+         and every face (Lalezar, Amiri, Tajawal, EB Garamond, the RDR faces) and must stay the last sheet. -->
     <title>Inventory</title>
     <script type="module" crossorigin src="./assets/app.js"></script>
     <link rel="stylesheet" href="./app.css">
@@ -11,6 +13,7 @@
   <body class="wst-root wst-inventory" style="background: transparent !important; background-color: transparent !important;">
     <div id="root"></div>
     
+    <link rel="stylesheet" href="https://cfx-nui-w_lib/nui/theme/base.css" />
     <link rel="stylesheet" href="https://cfx-nui-w_lib/nui/assets/store-theme.css" />
   </body>
 </html>

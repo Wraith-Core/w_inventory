@@ -5,6 +5,9 @@ local Items = require 'modules.items.server'
 local db = require 'modules.mysql.server'
 local Codec = shared.framework == 'rsg' and require 'modules.mysql.rsg' or nil
 local central, ready, vehicleLocks, unknownCustody = 'w_centralbank', false, {}, {}
+-- [owner] = true while a seizure runs; [owner] = new number when the character moved meanwhile
+-- (server.MoveDebtCustody): the running seizure settles its own number first
+local seizing, movedWhileSeizing = {}, {}
 local function allowed() return GetInvokingResource() == central end
 local function finite(value) return type(value) == 'number' and value == value and value ~= math.huge and value ~= -math.huge end
 local function clone(value) return json.decode(json.encode(value)) end
@@ -78,7 +81,7 @@ CreateThread(function()
         escrow_owner VARCHAR(64) NOT NULL, snapshot LONGTEXT NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (case_id, citizenid, asset_id, quantity)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4]])
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci]])
     ready = true
 end)
 exports('ListDebtAssets', function(citizenid, appraisal)
@@ -118,6 +121,7 @@ exports('SeizeDebtAsset', function(citizenid, request, caseId)
     local inv = live(owner)
     if inv and ((inv.nativeTransfer and not recovery) or Inventory.HasForeignSlotTransfer(inv)) then return false, 'inventory_busy' end
     server.nativeOfflineLocks[owner] = true
+    seizing[owner] = true
     if inv then
         inv.nativeTransfer = coroutine.running()
         Inventory.CloseAll(inv)
@@ -140,6 +144,10 @@ exports('SeizeDebtAsset', function(citizenid, request, caseId)
         end
         if inv and not Inventory.Save(inv) then return false, 'save_failed' end
         if not inv and (live(owner) or server.nativeLoadingOwners[owner]) then return false, 'inventory_busy' end
+        -- the players row (players.id) these rows belong to, named by the write below: the bank's
+        -- collection seizes from offline borrowers without waiting for w_core, which may move the
+        -- character meanwhile and hand its number on at once (TransferNumber)
+        local rowId = inv and inv.ownerRow or db.playerRowId(owner)
         local rows = clone(inv and inv.items or db.loadPlayer(owner) or {})
         local target, index
         for key, row in pairs(rows) do if tonumber(row.slot) == slot then target, index = row, key; break end end
@@ -155,7 +163,14 @@ exports('SeizeDebtAsset', function(citizenid, request, caseId)
         local encoded = Codec.encode(rows)
         uncertain = true
         pcall(MySQL.startTransaction, function(query)
-            local player = query('SELECT citizenid FROM players WHERE citizenid = ? FOR UPDATE', { owner })
+            -- locked by that row: once the number belongs to another row, nothing is written (the
+            -- seizure answers custody_commit_failed and the bank retries under the new number)
+            local player
+            if rowId then
+                player = query('SELECT citizenid FROM players WHERE citizenid = ? AND id = ? FOR UPDATE', { owner, rowId })
+            else
+                player = query('SELECT citizenid FROM players WHERE citizenid = ? FOR UPDATE', { owner })
+            end
             assert(player and player[1], 'Character missing')
             local existing = query('SELECT items FROM inventories WHERE identifier = ? FOR UPDATE', { stashKey })
             local stash = Codec.decode(existing and existing[1] and existing[1].items or nil)
@@ -186,9 +201,39 @@ exports('SeizeDebtAsset', function(citizenid, request, caseId)
         if inv then inv.nativeTransfer = nil end
         server.nativeOfflineLocks[owner] = nil
     end
+    seizing[owner] = nil
+    -- the character moved to another number while this ran: a state it left held follows now
+    local movedTo = movedWhileSeizing[owner]
+    if movedTo then movedWhileSeizing[owner] = nil server.MoveDebtCustody(owner, movedTo) end
+    -- then the move ONTO this number that waited for this seizure (TransferNumber: the target's
+    -- held state), now that this number's own state and lock are settled or gone
+    for from, to in pairs(movedWhileSeizing) do
+        if to == owner and not seizing[from] then movedWhileSeizing[from] = nil server.MoveDebtCustody(from, to) break end
+    end
     if not ok then print('[w_inventory] debt custody: ' .. tostring(result)); return false, 'custody_failed' end
     return result, reason
 end)
+-- PurgeCharacter (server_purge.lua): a seizure held after a lost reply keeps the owner's lock
+-- until the bank retries it, which it never does for a deleted character. The purge's own
+-- transaction locks the same players row (so the seizure's write has settled) and then moves
+-- whatever custody it finds to the tombstone; the held state goes with it.
+function server.DebtCustodyHeld(owner) return unknownCustody[tostring(owner)] ~= nil end
+function server.ForgetDebtCustody(owner) unknownCustody[tostring(owner)] = nil end
+-- w_core moved the character to another number (server_purge.lua): the bank retries a held
+-- seizure under the number its case carries now (cb_cases.borrower and the custody receipt were
+-- renamed with it), so the held state and its owner lock follow. Left under the old number, the
+-- lock would keep its next holder's bag from ever loading.
+function server.MoveDebtCustody(old, new)
+    old, new = tostring(old), tostring(new)
+    -- a seizure still running on the destination is its previous holder's (TransferNumber): its
+    -- end would overwrite or release what lands there now, so this move waits for it too
+    if seizing[old] or seizing[new] then movedWhileSeizing[old] = new return false end
+    local held = unknownCustody[old]
+    if not held then return false end
+    unknownCustody[old], unknownCustody[new] = nil, held
+    if server.nativeOfflineLocks[old] then server.nativeOfflineLocks[old], server.nativeOfflineLocks[new] = nil, true end
+    return true
+end
 
 -- The horse row retains its containers. Freeze loaded storage across an owner
 -- transfer so a previous owner cannot move goods or overwrite the saved row.

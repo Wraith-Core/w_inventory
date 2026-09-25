@@ -107,6 +107,10 @@ local function initializePlayerInventory(player, data)
     local inv = Inventory.Create(player.source, player.name, 'player', slots, totalWeight, maxWeight, player.identifier, inventory)
 
 	if inv then
+		-- RSG: the players row (players.id) the bag belongs to. w_core may move the character to
+		-- another number and hand the old one to someone else; the bag's saves name this row, so one
+		-- still on its way never lands on the next holder (db.savePlayer)
+		inv.ownerRow = shared.framework == 'rsg' and tonumber(player.id) or nil
 		inv.player = server.setPlayerData(player)
 		inv.player.ped = GetPlayerPed(player.source)
         inv.player.slots, inv.player.maxWeight = inv.slots, inv.maxWeight
@@ -554,11 +558,129 @@ lib.callback.register('w_inventory:useItem', function(source, itemName, slot, me
 	end
 end)
 
+-- ── admin commands on a player: the citizen id ──────────────────────────────
+-- Staff name a player by his citizen id (players.citizenid: '12', a vanity '777', an old
+-- 'OMG95204'), the one id that never changes; '#5' still names server id 5 on purpose and 'me'
+-- the admin himself. A server id changes on every connection and, since the citizen id is plain
+-- digits, the two collided: "/giveitem 12 bread" fed whoever held server id 12, or nobody.
+-- w.citizen says who the id is and whether he is in play: in play, his live bag (as before);
+-- offline, his saved bag through the library's offline inventory API (w_admin's path too).
+-- The target argument carries no `type`: lib.addCommand's 'playerId' answers only a player in the
+-- game (it refuses an offline citizen before the handler runs), and its 'string' refuses anything
+-- tonumber() accepts, which is every citizen id.
+
+--- A message for the admin who ran the command (already in his language), or the console.
+---@param source integer
+---@param text string
+---@param kind? 'error' | 'success' | 'inform'
+local function reply(source, text, kind)
+	if source and source > 0 then
+		TriggerClientEvent('w_inventory:notify', source, { type = kind or 'inform', description = text })
+	else
+		print(('[w_inventory] %s'):format(text))
+	end
+end
+
+--- A dictionary message: the admin's client translates it, the console reads the server language.
+---@param source integer
+---@param kind 'error' | 'success' | 'inform'
+---@param key string
+local function say(source, kind, key, ...)
+	if source and source > 0 then
+		TriggerClientEvent('w_inventory:notify', source, { type = kind, key = key, args = { ... } })
+	else
+		print(('[w_inventory] %s'):format(locale(key, ...)))
+	end
+end
+
+--- The player a command names, or nil after telling the admin why not.
+---@param source integer
+---@param value string the id as typed
+---@param inPlay? boolean the command needs him in the game
+---@return table|nil target (w.citizen target: citizenid, source when online, online, name)
+local function commandTarget(source, value, inPlay)
+	local target, reason, offline
+	if inPlay then
+		target, reason, offline = w.citizen.requireOnline(value, { self = source })
+	else
+		target, reason = w.citizen.resolve(value, { self = source })
+	end
+	if target then return target end
+	local text = w.citizen.reasonText(reason, source > 0 and source or nil)
+	if offline then text = ('%s: %s'):format(w.citizen.label(offline), text) end
+	reply(source, text, 'error')
+end
+
+--- The live bag of a player in play (nil, after telling the admin, while it is not loaded yet).
+---@param source integer
+---@param target table
+---@return WInventory|nil
+local function liveInventory(source, target)
+	local inventory = Inventory(target.source)
+	if inventory and inventory.player then return inventory --[[@as WInventory]] end
+	reply(source, w.citizen.reasonText('not_found', source > 0 and source or nil), 'error')
+end
+
+--- Who ran the command, for the log.
+local function adminOf(source)
+	return Inventory(source) or { label = 'console', owner = 'console' }
+end
+
+--- How many of an item an offline character holds, from his saved bag; nil when the bag could not
+--- be read. A failed read is not 0: /setitem would then add the whole count on top of what he has.
+---@param citizenid string
+---@param item table
+---@return integer|nil
+---@return string|nil why
+local function offlineCount(citizenid, item)
+	local ok, items, weapons = pcall(function() return exports.w_lib:FwGetOfflineInventory(citizenid) end)
+	if not ok then return nil, tostring(items) end
+	if type(items) ~= 'table' then return nil, 'failed' end
+	-- the rows carry the framework's own name (nativeName) where it differs from ours
+	local names = { [item.name:lower()] = true }
+	if type(item.nativeName) == 'string' then names[item.nativeName:lower()] = true end
+	local total = 0
+	for _, list in ipairs({ items or {}, weapons or {} }) do
+		for _, row in pairs(list) do
+			if type(row) == 'table' and type(row.name) == 'string' and names[row.name:lower()] then
+				total += tonumber(row.count) or 0
+			end
+		end
+	end
+	return math.floor(total)
+end
+
+--- Change an offline character's saved bag: count > 0 adds, count < 0 removes. Tells the admin
+--- and writes the log line; true when the bag was changed.
+---@param source integer
+---@param target table
+---@param item table
+---@param count integer
+---@return boolean
+local function changeOfflineBag(source, target, item, count)
+	if count == 0 then return true end
+	local fn = count > 0 and 'FwAddItemOffline' or 'FwRemoveItemOffline'
+	local called, ok, err = pcall(function() return exports.w_lib[fn](exports.w_lib, target.citizenid, item.name, math.abs(count)) end)
+	if not called or not ok then
+		-- the bridge's own reason ('Item not found', 'Character is online', ...) or the error
+		local why = called and (err or 'failed') or ok
+		say(source, 'error', 'cmd_offline_failed', w.citizen.label(target), tostring(why))
+		return false
+	end
+	say(source, 'success', 'cmd_offline_done', w.citizen.label(target))
+	if server.loglevel > 0 then
+		local admin = adminOf(source)
+		lib.logger(admin.owner, 'admin', ('"%s" %s %sx %s %s "%s" (offline)'):format(admin.label,
+			count > 0 and 'gave' or 'removed', math.abs(count), item.name, count > 0 and 'to' or 'from', w.citizen.label(target)))
+	end
+	return true
+end
+
 -- command help comes from the dictionary (server language = the w_lib:locale convar)
 lib.addCommand({'additem', 'giveitem'}, {
 	help = locale('cmd_additem'),
 	params = {
-		{ name = 'target', type = 'playerId', help = locale('cmd_arg_target_receive') },
+		{ name = 'target', help = locale('cmd_arg_target_receive') },
 		{ name = 'item', type = 'string', help = locale('cmd_arg_item') },
 		{ name = 'count', type = 'number', help = locale('cmd_arg_count_give'), optional = true },
 		{ name = 'type', help = locale('cmd_arg_type_set'), optional = true },
@@ -568,18 +690,32 @@ lib.addCommand({'additem', 'giveitem'}, {
 	local item = Items(args.item)
 
 	if item then
-		local inventory = Inventory(args.target) --[[@as WInventory]]
+		local target = commandTarget(source, args.target)
+		if not target then return end
 		local count = args.count or 1
+
+		if not target.online then
+			-- a saved bag has no metadata filter: the "type" is set on a live item only
+			if args.type then return say(source, 'error', 'cmd_offline_type') end
+			-- rounded as the live AddItem does. A count below 1 is refused: the signed change below
+			-- would turn "/giveitem 777 bread -5" into taking five away
+			local amount = math.floor(count + 0.5)
+			if amount < 1 then return say(source, 'error', 'ui_invalid_amount') end
+			return changeOfflineBag(source, target, item, amount)
+		end
+
+		local inventory = liveInventory(source, target)
+		if not inventory then return end
 		local success, response = Inventory.AddItem(inventory, item.name, count, args.type and { type = tonumber(args.type) or args.type })
 
 		if not success then
-			return Citizen.Trace(('Failed to give %sx %s to player %s (%s)'):format(count, item.name, args.target, response))
+			return Citizen.Trace(('Failed to give %sx %s to player %s (%s)'):format(count, item.name, w.citizen.label(target), response))
 		end
 
-		source = Inventory(source) or { label = 'console', owner = 'console' }
+		source = adminOf(source)
 
 		if server.loglevel > 0 then
-			lib.logger(source.owner, 'admin', ('"%s" gave %sx %s to "%s"'):format(source.label, count, item.name, inventory.label))
+			lib.logger(source.owner, 'admin', ('"%s" gave %sx %s to "%s"'):format(source.label, count, item.name, w.citizen.label(target)))
 		end
 	end
 end)
@@ -587,7 +723,7 @@ end)
 lib.addCommand('removeitem', {
 	help = locale('cmd_removeitem'),
 	params = {
-		{ name = 'target', type = 'playerId', help = locale('cmd_arg_target_remove') },
+		{ name = 'target', help = locale('cmd_arg_target_remove') },
 		{ name = 'item', type = 'string', help = locale('cmd_arg_item') },
 		{ name = 'count', type = 'number', help = locale('cmd_arg_count_take') },
 		{ name = 'type', help = locale('cmd_arg_type_match'), optional = true },
@@ -597,17 +733,29 @@ lib.addCommand('removeitem', {
 	local item = Items(args.item)
 
 	if item and args.count > 0 then
-		local inventory = Inventory(args.target) --[[@as WInventory]]
+		local target = commandTarget(source, args.target)
+		if not target then return end
+
+		if not target.online then
+			if args.type then return say(source, 'error', 'cmd_offline_type') end
+			-- a fraction that rounds to nothing is told, not "done" with nothing taken
+			local amount = math.floor(args.count + 0.5)
+			if amount < 1 then return say(source, 'error', 'ui_invalid_amount') end
+			return changeOfflineBag(source, target, item, -amount)
+		end
+
+		local inventory = liveInventory(source, target)
+		if not inventory then return end
 		local success, response = Inventory.RemoveItem(inventory, item.name, args.count, args.type and { type = tonumber(args.type) or args.type }, nil, true)
 
 		if not success then
-			return Citizen.Trace(('Failed to remove %sx %s from player %s (%s)'):format(args.count, item.name, args.target, response))
+			return Citizen.Trace(('Failed to remove %sx %s from player %s (%s)'):format(args.count, item.name, w.citizen.label(target), response))
 		end
 
-		source = Inventory(source) or {label = 'console', owner = 'console'}
+		source = adminOf(source)
 
 		if server.loglevel > 0 then
-			lib.logger(source.owner, 'admin', ('"%s" removed %sx %s from "%s"'):format(source.label, args.count, item.name, inventory.label))
+			lib.logger(source.owner, 'admin', ('"%s" removed %sx %s from "%s"'):format(source.label, args.count, item.name, w.citizen.label(target)))
 		end
 	end
 end)
@@ -615,7 +763,7 @@ end)
 lib.addCommand('setitem', {
 	help = locale('cmd_setitem'),
 	params = {
-		{ name = 'target', type = 'playerId', help = locale('cmd_arg_target_set') },
+		{ name = 'target', help = locale('cmd_arg_target_set') },
 		{ name = 'item', type = 'string', help = locale('cmd_arg_item') },
 		{ name = 'count', type = 'number', help = locale('cmd_arg_count_set'), optional = true },
 		{ name = 'type', help = locale('cmd_arg_type_setitem'), optional = true },
@@ -625,17 +773,31 @@ lib.addCommand('setitem', {
 	local item = Items(args.item)
 
 	if item then
-		local inventory = Inventory(args.target) --[[@as WInventory]]
+		local target = commandTarget(source, args.target)
+		if not target then return end
+
+		if not target.online then
+			if args.type then return say(source, 'error', 'cmd_offline_type') end
+			local want = math.max(0, math.floor(args.count or 0))
+			local have, why = offlineCount(target.citizenid, item)
+			if not have then
+				return say(source, 'error', 'cmd_offline_unreadable', w.citizen.label(target), tostring(why))
+			end
+			return changeOfflineBag(source, target, item, want - have)
+		end
+
+		local inventory = liveInventory(source, target)
+		if not inventory then return end
 		local success, response = Inventory.SetItem(inventory, item.name, args.count or 0, args.type and { type = tonumber(args.type) or args.type })
 
 		if not success then
-			return Citizen.Trace(('Failed to set %s count to %sx for player %s (%s)'):format(item.name, args.count, args.target, response))
+			return Citizen.Trace(('Failed to set %s count to %sx for player %s (%s)'):format(item.name, args.count, w.citizen.label(target), response))
 		end
 
-		source = Inventory(source) or {label = 'console', owner = 'console'}
+		source = adminOf(source)
 
 		if server.loglevel > 0 then
-			lib.logger(source.owner, 'admin', ('"%s" set "%s" %s count to %sx'):format(source.label, inventory.label, item.name, args.count))
+			lib.logger(source.owner, 'admin', ('"%s" set "%s" %s count to %sx'):format(source.label, w.citizen.label(target), item.name, args.count))
 		end
 	end
 end)
@@ -664,25 +826,47 @@ lib.addCommand('clearevidence', {
     end
 end)
 
+-- Confiscation moves the live bag into custody and back, and the player's client closes and
+-- redraws it: he has to be in play. An offline character is refused by name.
 lib.addCommand('takeinv', {
 	help = locale('cmd_takeinv'),
 	params = {
-		{ name = 'target', type = 'playerId', help = locale('cmd_arg_target_confiscate') },
+		{ name = 'target', help = locale('cmd_arg_target_confiscate') },
 	},
 	restricted = 'group.admin',
 }, function(source, args)
-	Inventory.Confiscate(args.target)
+	local target = commandTarget(source, args.target, true)
+	if target then Inventory.Confiscate(target.source) end
 end)
 
 lib.addCommand({'restoreinv', 'returninv'}, {
 	help = locale('cmd_restoreinv'),
 	params = {
-		{ name = 'target', type = 'playerId', help = locale('cmd_arg_target_restore') },
+		{ name = 'target', help = locale('cmd_arg_target_restore') },
 	},
 	restricted = 'group.admin',
 }, function(source, args)
-	Inventory.Return(args.target)
+	local target = commandTarget(source, args.target, true)
+	if target then Inventory.Return(target.source) end
 end)
+
+--- /clearinv and /viewinv take a player or any other inventory (a stash, 'glove12', 'evidence-3').
+--- A citizen id, '#5' and 'me' name a player; any other text is an inventory id. A stash whose
+--- name also reads as a citizen id ('12', 'ABC12345') is still found by that name when no
+--- character holds it. Before, any number was a server id: a citizen id hit another player.
+---@param source integer
+---@param value string
+---@return table|nil target a player (w.citizen target)
+---@return string|nil inventoryId any other inventory
+local function inventoryArg(source, value)
+	value = tostring(value or '')
+	local kind = w.citizen.parse(value)
+	if not kind then return nil, value end
+	local target, reason = w.citizen.resolve(value, { self = source })
+	if target then return target end
+	if kind == 'citizen' and reason == 'not_found' and Inventory(value) then return nil, value end
+	reply(source, w.citizen.reasonText(reason, source > 0 and source or nil), 'error')
+end
 
 lib.addCommand('clearinv', {
 	help = locale('cmd_clearinv'),
@@ -691,7 +875,24 @@ lib.addCommand('clearinv', {
 	},
 	restricted = 'group.admin',
 }, function(source, args)
-	Inventory.Clear(tonumber(args.invId) or args.invId == 'me' and source or args.invId)
+	local target, invId = inventoryArg(source, args.invId)
+	if invId then return Inventory.Clear(invId) end
+	if not target then return end
+	if target.online then return Inventory.Clear(target.source) end
+
+	-- offline: his saved bag is emptied in one write (native_offline.lua, action 'clear')
+	local called, ok, err = pcall(function()
+		return exports.w_inventory:MutateNativeOfflineInventory(target.citizenid, 'clear')
+	end)
+	if not called or not ok then
+		local why = called and (err or 'failed') or ok
+		return say(source, 'error', 'cmd_offline_failed', w.citizen.label(target), tostring(why))
+	end
+	say(source, 'success', 'cmd_offline_done', w.citizen.label(target))
+	if server.loglevel > 0 then
+		local admin = adminOf(source)
+		lib.logger(admin.owner, 'admin', ('"%s" cleared the bag of "%s" (offline)'):format(admin.label, w.citizen.label(target)))
+	end
 end)
 
 lib.addCommand('saveinv', {
@@ -711,5 +912,41 @@ lib.addCommand('viewinv', {
 	},
 	restricted = 'group.admin',
 }, function(source, args)
-	Inventory.InspectInventory(source, tonumber(args.invId) or args.invId)
+	local target, invId = inventoryArg(source, args.invId)
+	if invId then return Inventory.InspectInventory(source, invId) end
+	if not target then return end
+	if target.online then return Inventory.InspectInventory(source, target.source) end
+
+	-- offline: a read-only copy of his saved bag. Nothing is opened on the server, so the view
+	-- cannot move an item (a swap needs an inventory the server has open for this admin).
+	local viewer = Inventory(source)
+	if not viewer or not viewer.player then return end
+	-- a saved bag the codec refuses (a malformed row) raises: the admin is told, not left waiting
+	local loaded, rows = pcall(db.loadPlayer, target.citizenid)
+	if not loaded then
+		return say(source, 'error', 'cmd_offline_unreadable', w.citizen.label(target), tostring(rows))
+	end
+	local items, weight = {}, 0
+	for _, row in pairs(rows or {}) do
+		local item = type(row) == 'table' and tonumber(row.slot) and Items(row.name)
+		if item then
+			local slotWeight = Inventory.SlotWeight(item, row)
+			weight += slotWeight
+			items[row.slot] = {
+				name = item.name, label = item.label, weight = slotWeight, slot = row.slot, count = row.count,
+				description = item.description, metadata = row.metadata or {}, stack = item.stack, close = item.close,
+			}
+		end
+	end
+	viewer:closeInventory(true)
+	say(source, 'inform', 'cmd_offline_view', w.citizen.label(target))
+	TriggerClientEvent('w_inventory:viewInventory', source, viewer, {
+		id = ('offline:%s'):format(target.citizenid),
+		label = w.citizen.label(target),
+		type = 'inspect',
+		slots = shared.playerslots,
+		weight = weight,
+		maxWeight = shared.playerweight,
+		items = items,
+	})
 end)

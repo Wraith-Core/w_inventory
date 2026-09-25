@@ -662,6 +662,10 @@ end)
 AddEventHandler('w_inventory:item', useItem)
 exports('useItem', useItem)
 
+--- Puts the equipped weapons away before a satchel item is used. Assigned below, next to the
+--- weapon-wheel loadout bridge that owns the holster transaction (dual wield included).
+local holsterForItem
+
 ---@param slot number
 ---@return boolean?
 local function useSlot(slot, noAnim)
@@ -804,9 +808,13 @@ local function useSlot(slot, noAnim)
 				description = locale('use_weapon_reload')
 			})
 		elseif currentWeapon then
-			if data.allowArmed then
-				useItem(data)
-			end
+			-- ! RDR keeps an equipped weapon as currentWeapon while it rests in its holster (see the
+			--   watchdog: being holstered is not being unequipped), so this branch used to drop, with
+			--   no word, every item of a player wearing a gun belt - food, drink, medicine and horse
+			--   care simply did nothing. Put the guns away first, as the game does before any satchel
+			--   item, then use it; an allowArmed item keeps the weapon in hand.
+			if not data.allowArmed and holsterForItem then holsterForItem() end
+			useItem(data)
 		elseif not data.ammo then
 			useItem(data)
 		end
@@ -1018,7 +1026,8 @@ local function wheelWeaponDrawn(slot, hash, hand)
 	local called, found, currentHash = pcall(GetCurrentPedWeapon, PlayerPedId(), true, hand or 0, true)
 	if not called or not (found == true or found == 1) or currentHash ~= hash then return false end
 	local ok, object = pcall(GetCurrentPedWeaponEntityIndex, PlayerPedId(), hand or 0)
-	return ok and object ~= nil and object ~= 0 and DoesEntityExist(object) == true
+	-- the native answers 1 on this client, never true: `== true` read every drawn gun as holstered
+	return ok and object ~= nil and object ~= 0 and DoesEntityExist(object) and true or false
 end
 
 local function runWheelLoadoutAction(action)
@@ -1101,6 +1110,7 @@ local function drawWeaponWheelLoadout(slots)
 end
 
 exports('holsterWeaponWheelLoadout', holsterWeaponWheelLoadout)
+holsterForItem = holsterWeaponWheelLoadout
 exports('drawWeaponWheelLoadout', drawWeaponWheelLoadout)
 -- End weapon-wheel visual loadout bridge.
 
@@ -1661,22 +1671,39 @@ local function ownedAmmoOptions(family, counts)
 	local english = shared.localeKey() == 'en'
 
 	for _, entry in ipairs(entries) do
-		-- The first item name that is really defined (the VORP name first, then the boxed one) - as pickItem does.
-		local itemName
+		-- * The name sent back to switchWeaponAmmo must be one the player can load. The registry
+		--   now lists the box first (ammo_box_*), so 'the first defined name' offered a box: its
+		--   count ignored the loose rounds (greyed out) and switching to it was refused.
+		--   Order: the loose stack held most of, else a held box (the reload opens it), else the
+		--   first defined loose name (greyed out). The count is every round of the kind, boxes included.
+		local itemName, held, boxName, fallback, rounds = nil, 0, nil, nil, 0
 
 		for i = 1, #entry.items do
-			if Items[entry.items[i]] then
-				itemName = entry.items[i]
-				break
+			local name = entry.items[i]
+			local def = Items[name]
+
+			if def then
+				local count = counts[name] or 0
+
+				if def.ammoUnpack then
+					rounds = rounds + count * math.max(1, math.floor(tonumber(def.ammocount) or 1))
+					if count > 0 and not boxName then boxName = name end
+				else
+					rounds = rounds + count
+					fallback = fallback or name
+					if count > held then itemName, held = name, count end
+				end
 			end
 		end
+
+		itemName = itemName or boxName or fallback
 
 		if itemName then
 			out[#out + 1] = {
 				item  = itemName,
 				ammo  = entry.ammo,
 				label = (english and entry.label_en) or entry.label or itemName,
-				count = counts[itemName] or 0,
+				count = rounds,
 			}
 		end
 	end
@@ -2031,7 +2058,8 @@ end, false)
 
 
 --- The ammunition types the player actually owns for this weapon (for the refill selection list).
---- It returns a list of { label, item, slot, count, ammo } for every existing unboxed type.
+--- It returns a list of { label, item, slot, count, ammo } for every owned type; a type held only
+--- as a box points at the box's slot and names the loose round it opens into.
 local function ownedAmmoTypes(weaponItem)
 	local baseAmmo = weaponItem and weaponItem.ammoname and Items[weaponItem.ammoname]
 	local family = baseAmmo and baseAmmo.ammoFamily
@@ -2047,20 +2075,35 @@ local function ownedAmmoTypes(weaponItem)
 	-- name the type showed as unowned, and the arrows disappeared from the reload list.
 	for _, entry in ipairs(AmmoTypes.GetAll(family)) do
 		local bestItem, bestSlot, bestCount
+		local boxItem, boxSlot, boxRounds
 
 		for i = 1, #entry.items do
 			local name = entry.items[i]
 			local def = Items[name]
 
-			if def and not def.ammoUnpack then
+			if def then
 				local slotId = Inventory.GetSlotIdWithItem(name, nil, false)
 				local sd = slotId and PlayerData.inventory[slotId]
 				local count = sd and (sd.count or 0) or 0
 
-				if count > 0 and (not bestCount or count > bestCount) then
+				if def.ammoUnpack then
+					-- * A box is not loaded as such, but it is this type's ammunition all the same: the
+					--   shops sell boxes only, so skipping them told a player holding nothing else
+					--   'no suitable ammo' for every weapon. It is offered under the loose round it opens
+					--   into (the picker's 'current'/'preferred' compare that name); reloadWeapon opens it.
+					if count > 0 and not boxSlot then
+						boxItem, boxSlot = def.ammoUnpack, slotId
+						boxRounds = count * math.max(1, math.floor(tonumber(def.ammocount) or 1))
+					end
+				elseif count > 0 and (not bestCount or count > bestCount) then
 					bestItem, bestSlot, bestCount = name, slotId, count
 				end
 			end
+		end
+
+		-- Loose rounds first: a box is opened only when none of its type is left loose.
+		if not bestItem and boxSlot then
+			bestItem, bestSlot, bestCount = boxItem, boxSlot, boxRounds
 		end
 
 		if bestItem then
@@ -2204,6 +2247,35 @@ local function rtrace(fmt, ...)
 	print('^3[reload]^0 ' .. (select('#', ...) > 0 and fmt:format(...) or fmt))
 end
 
+--- Opens a box of rounds (ammo_box_*) through the server's pack/unpack transaction - the very one
+--- behind the box's right-click option - and returns the slot of the loose rounds it produced.
+--- The server still loads loose rounds only (one item = one round), so unloading can never mint a box.
+---@param boxSlot number
+---@return number? slot
+---@return string? reason
+local function openAmmoBox(boxSlot)
+	local box = PlayerData.inventory[boxSlot]
+	local loose = box and Items[box.name] and Items[box.name].ammoUnpack
+	if not loose then return nil, 'invalid' end
+
+	local operationId = lib.callback.await('w_inventory:prepareAmmoPack', false, boxSlot)
+	if not operationId then return nil, 'invalid' end
+
+	local ok, reason = lib.callback.await('w_inventory:packAmmo', false, boxSlot, operationId)
+	if not ok then return nil, reason end
+
+	-- The server syncs the changed slots before it answers; the wait only covers a late packet.
+	local deadline = GetGameTimer() + 1000
+	local slot = Inventory.GetSlotIdWithItem(loose, nil, false)
+
+	while not slot and GetGameTimer() < deadline do
+		Wait(50)
+		slot = Inventory.GetSlotIdWithItem(loose, nil, false)
+	end
+
+	return slot, not slot and 'invalid' or nil
+end
+
 --- Reloading a particular weapon - exclusively from the 'reload' button in the bag's menu.
 --- It works with the weapon holstered, since the bow is holstered automatically when the arrows run out.
 ---@param weaponSlot number the weapon's slot in the bag
@@ -2309,13 +2381,27 @@ reloadWeapon = function(weaponSlot, forcedAmmoSlot)
             description=locale('no_ammo_for_weapon',weaponItem.label or '')})
     end
 
+	-- A box (the only form the shops sell) is opened first and the reload continues from its rounds.
+	-- Refusing it here was the 'this is not its ammo' report: every weapon, every type.
 	if ammoItem.ammoUnpack then
-		return Utils.Notify({
-			id = 'ammo_boxed',
-			title = locale('ammo_title'),
-			type = 'error',
-			description = locale('ammo_boxed')
-		})
+		reloadInProgress[weaponSlot] = true
+		local openedSlot, reason = openAmmoBox(ammoSlotId)
+		reloadInProgress[weaponSlot] = nil
+
+		local opened = openedSlot and PlayerData.inventory[openedSlot]
+		local openedItem = opened and Items[opened.name]
+		rtrace('box %s opened -> slot %s (%s)', tostring(ammoSlot.name), tostring(openedSlot), tostring(reason))
+
+		if not openedItem or openedItem.ammoUnpack or openedItem.ammoFamily ~= weaponItem.ammoFamily then
+			return Utils.Notify({
+				id = 'ammo_boxed',
+				title = locale('ammo_title'),
+				type = 'error',
+				description = reason == 'weight' and locale('ammo_pack_weight') or locale('ammo_boxed')
+			})
+		end
+
+		ammoSlotId, ammoSlot, ammoItem = openedSlot, opened, openedItem
 	end
 
 	local capacity = getWeaponCapacity(weaponItem)
@@ -2551,8 +2637,9 @@ exports('reloadWeaponWithAmmo', function(weaponSlot, ammoItemName)
 	local weaponItem = Items[slotData.name]
 	if not weaponItem or not weaponItem.weapon or not weaponItem.ammoname then return false end
 
+	-- A box is accepted: reloadWeapon opens it before loading.
 	local ammoDef = Items[ammoItemName]
-	if not ammoDef or ammoDef.ammoUnpack then return false end
+	if not ammoDef then return false end
 
 	local weaponAmmo = Items[weaponItem.ammoname]
 	local wfam = weaponAmmo and weaponAmmo.ammoFamily
@@ -2588,8 +2675,9 @@ local function switchWeaponAmmo(weaponSlot, ammoItemName)
 		return false, 'invalid_weapon'
 	end
 
+	-- A box is accepted: reloadWeapon opens it before loading.
 	local ammoDef = Items[ammoItemName]
-	if not ammoDef or ammoDef.ammoUnpack then return false, 'invalid_ammo' end
+	if not ammoDef then return false, 'invalid_ammo' end
 
 	local weaponAmmo = Items[weaponItem.ammoname]
 	local family = weaponAmmo and weaponAmmo.ammoFamily
@@ -2608,7 +2696,8 @@ local function switchWeaponAmmo(weaponSlot, ammoItemName)
 		current = default and default.item or weaponItem.ammoname
 	end
 
-	if current == ammoItemName then return true, 'already' end
+	-- A box is the type of the loose round it opens into.
+	if current == (ammoDef.ammoUnpack or ammoItemName) then return true, 'already' end
 
 	-- Unload first when it holds bullets of another type, otherwise the reload is refused.
 	if loaded > 0 then

@@ -42,7 +42,8 @@ w_lib {
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
     'init.lua',
-    'server_debt.lua'
+    'server_debt.lua',
+    'server_purge.lua', -- PurgeCharacter: w_core's character deletion
 }
 
 client_script 'init.lua'

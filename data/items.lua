@@ -395,28 +395,28 @@ return {
 	-- ════════════════════════════════════════════════════════════════════
 	["satchel_small"] = {
 		label = { ar = 'حقيبة صغيرة', en = 'Small Satchel' },
-		description = { ar = 'ترفع ما تحمله ١٠ كجم — تُستعمل مرّةً واحدة', en = 'Raises your carry weight by 10kg -- used once' },
+		description = { ar = 'ترفع ما تحمله 10 كجم — تُستعمل مرّةً واحدة', en = 'Raises your carry weight by 10kg -- used once' },
 		weight = 500, stack = false, close = true,
 		client = { image = 'bag_small.png' },
 		model = "p_satchel01x",
 	},
 	["satchel_medium"] = {
 		label = { ar = 'حقيبة متوسّطة', en = 'Medium Satchel' },
-		description = { ar = 'ترفع ما تحمله ٢٥ كجم — تُستعمل مرّةً واحدة', en = 'Raises your carry weight by 25kg -- used once' },
+		description = { ar = 'ترفع ما تحمله 25 كجم — تُستعمل مرّةً واحدة', en = 'Raises your carry weight by 25kg -- used once' },
 		weight = 800, stack = false, close = true,
 		client = { image = 'satchel_nav_all.png' },
 		model = "p_satchel01x",
 	},
 	["satchel_large"] = {
 		label = { ar = 'حقيبة كبيرة', en = 'Large Satchel' },
-		description = { ar = 'ترفع ما تحمله ٤٥ كجم — تُستعمل مرّةً واحدة', en = 'Raises your carry weight by 45kg -- used once' },
+		description = { ar = 'ترفع ما تحمله 45 كجم — تُستعمل مرّةً واحدة', en = 'Raises your carry weight by 45kg -- used once' },
 		weight = 1200, stack = false, close = true,
 		client = { image = 'satchel_nav_donate.png' },
 		model = "p_satchel01x",
 	},
 	["satchel_legendary"] = {
 		label = { ar = 'حقيبة الوحوش الأسطوريّة', en = 'Legendary Animal Satchel' },
-		description = { ar = 'ترفع ما تحمله ٧٠ كجم — أكبر ما يُصنع', en = 'Raises your carry weight by 70kg -- the largest there is' },
+		description = { ar = 'ترفع ما تحمله 70 كجم — أكبر ما يُصنع', en = 'Raises your carry weight by 70kg -- the largest there is' },
 		weight = 1500, stack = false, close = true,
 		client = { image = 'satchel_nav_animals.png' },
 		model = "p_satchel01x",
@@ -491,6 +491,29 @@ return {
 			image = "bandage.png",
 		},
 		model = "p_bandage01x",
+	},
+	-- w_ambulancejob's two other supplies (its armory and the medic shop sell them, a medic's
+	-- revive and the self-treatment use them). They were never defined here, so the bag refused
+	-- to hold them and a medic could not revive anyone.
+	["firstaid"] = {
+		label = { ar = "حقيبة إسعافات أولية", en = "First Aid Kit" },
+		weight = 500,
+		stack = true,
+		close = true,
+		description = { ar = "عُدّة الطبيب لإسعاف مصاب ملقى على الأرض", en = "A doctor's kit for reviving a downed patient." },
+		client = {
+			image = "firstaid.png",
+		},
+	},
+	["painkillers"] = {
+		label = { ar = "مسكّن ألم (لودانوم)", en = "Painkillers (Laudanum)" },
+		weight = 100,
+		stack = true,
+		close = true,
+		description = { ar = "قطرات تُسكّن ألم الجروح وتُخفّف العرج لبعض الوقت", en = "Drops that dull the pain of wounds and ease a limp for a while." },
+		client = {
+			image = "painkillers.png",
+		},
 	},
 	["kit_gun_oil"] = {
 		label = { ar = "زيت سلاح", en = "Gun Oil" },

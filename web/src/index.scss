@@ -1,11 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   w_inventory - the same w_crafting theme to the letter.
-   White chrome on black, and the red #CB0101 for the negative only. Every visible surface is composed from
+   w_inventory in the Wraith theme (w_lib/nui/theme): the loading screen's and the pause menu's
+   warm ink and aged paper, one red as a mark only. Every visible surface is composed from
    RDR2's own art through the texture masks (the --tex-* registered in main.tsx): the
    crafting_highlight frame in eight pieces, the crafting_outline slots, the buttons' panels
    selection_box_bg, the badges' plates swatch_bg/counter_bg, and the dividers
    divider_line / list_item_h_line_narrow / vertical_divider_line.
-   The tokens and the colour and the fonts come from global.css.
+   The tokens and the font roles come from global.css (each one a --w-* theme token). The cursor
+   (hover, keyboard focus, the active tab, the selected row) is the paper band with ink text.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ═══════════════ 1. The shared RDR primitives (matching w_crafting) ═══════════════ */
@@ -160,9 +161,11 @@
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    opacity: .07;
-    mix-blend-mode: overlay;
-    background: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat
+    opacity: .09;
+    mix-blend-mode: screen;
+    filter: invert(1);
+    background: var(--w-tex-grain);
+    background-size: 256px 256px
 }
 
 /* A section title in the crafting's style: a display font + a thin rule filling the rest */
@@ -191,18 +194,18 @@
     display: block;
     width: 100%;
     height: .38rem;
-    border-radius: 999px;
+    border-radius: 0;
     overflow: hidden;
-    background: rgba(255, 255, 255, .1);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12)
+    background: rgba(237, 230, 214, .1);
+    box-shadow: inset 0 -1px 0 var(--w-rule)
 }
 
 .wc-bar>i {
     position: absolute;
     inset-block: 0;
     inset-inline-start: 0;
-    border-radius: 999px;
-    background: linear-gradient(180deg, var(--wc-accent), rgba(0, 0, 0, .18));
+    border-radius: 0;
+    background: var(--wc-accent);
     transition: width .25s linear, background .3s ease
 }
 
@@ -258,7 +261,7 @@
 ::-webkit-scrollbar:horizontal { display: none !important; width: 0 !important; height: 0 !important; }
 ::-webkit-scrollbar-track { background: rgba(0, 0, 0, .25) }
 ::-webkit-scrollbar-thumb { background: var(--wc-text-faint) }
-::-webkit-scrollbar-thumb:hover { background: var(--wc-red) }
+::-webkit-scrollbar-thumb:hover { background: var(--wc-text-dim) }
 ::-webkit-scrollbar-corner { background: transparent !important; display: none !important; }
 * { scrollbar-width: thin; scrollbar-color: var(--wc-text-faint) rgba(0, 0, 0, .25) }
 
@@ -283,8 +286,8 @@
     inset: 0;
     pointer-events: none;
     background:
-        radial-gradient(120% 100% at 22% 50%, rgba(0, 0, 0, .2), rgba(0, 0, 0, 0) 62%),
-        rgba(0, 0, 0, .4);
+        radial-gradient(120% 100% at 22% 50%, rgba(11, 10, 8, .22), rgba(11, 10, 8, 0) 62%),
+        rgba(11, 10, 8, .42);
     animation: invScrimIn .35s ease-out both
 }
 
@@ -319,9 +322,11 @@
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    opacity: .07;
-    mix-blend-mode: overlay;
-    background: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat
+    opacity: .09;
+    mix-blend-mode: screen;
+    filter: invert(1);
+    background: var(--w-tex-grain);
+    background-size: 256px 256px
 }
 
 #inventory-wrapper {
@@ -418,10 +423,10 @@
     display: block;
     width: 100%;
     font-family: var(--font-display);
-    font-size: 1.06rem;
-    font-weight: 700;
+    font-size: calc(1.2rem * var(--w-k-title));
+    font-weight: var(--w-wt-title);
     line-height: 1.3;
-    letter-spacing: .02em;
+    letter-spacing: var(--w-track-title);
     padding-block: 1px;
     color: var(--wc-text);
     white-space: nowrap;
@@ -462,17 +467,21 @@
     justify-content: space-between;
     gap: .4rem;
     font-size: .62rem;
+    line-height: 1.3;
     color: var(--wc-text-dim)
 }
 
 #inventory .sub-info .weight-label {
     color: var(--wc-text-faint);
-    letter-spacing: .04em
+    font-size: calc(.62rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
+    text-transform: var(--w-label-case);
+    letter-spacing: var(--w-label-track)
 }
 
 #inv-weight-text {
-    font-family: var(--font-numeral);
-    font-variant-numeric: tabular-nums;
+    font-family: var(--font-main);
+    font-variant-numeric: lining-nums tabular-nums;
     color: var(--wc-text)
 }
 
@@ -481,26 +490,26 @@
     position: relative;
     width: 100%;
     height: .38rem;
-    border-radius: 999px;
+    border-radius: 0;
     overflow: hidden;
-    background: rgba(255, 255, 255, .1);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12)
+    background: rgba(237, 230, 214, .1);
+    box-shadow: inset 0 -1px 0 var(--w-rule)
 }
 
 #inventory .progress .progress-bar {
     height: 100%;
-    border-radius: 999px;
-    background: linear-gradient(180deg, #ffffff, #b4b4b4);
+    border-radius: 0;
+    background: var(--w-paper);
     transition: width .35s linear, background .35s ease
 }
 
 #inventory .progress .progress-bar.warning {
-    background: linear-gradient(180deg, var(--gauge-mid), var(--gauge-mid-deep))
+    background: var(--gauge-mid)
 }
 
 #inventory .progress .progress-bar.critical,
 #inventory .progress .progress-bar.heavy {
-    background: linear-gradient(180deg, var(--gauge-low), var(--gauge-low-deep))
+    background: var(--gauge-low)
 }
 
 /* The close button: the RDR cross - the same as .wc-close */
@@ -537,79 +546,50 @@
 #inv-currency-row {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .5rem;
-    margin-bottom: .5rem
+    gap: 0;
+    margin-bottom: .5rem;
+    border-block: 1px solid var(--wc-line);
+    direction: ltr
 }
 
-/* The currency tile on a selection_box_bg_1a panel from the game's art */
+/* A money figure: $ or the gold bar in paper, then the figure in RDR Catalogue, divided by a vertical hairline */
 .inv-currency {
     position: relative;
     isolation: isolate;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: .35rem;
-    padding: .4rem .55rem;
+    gap: .3rem;
+    padding: .42rem .55rem;
     font-size: .62rem;
     color: var(--wc-text-dim);
     font-family: var(--font-main);
     background: transparent
 }
 
-.inv-currency::before {
-    content: "";
-    position: absolute;
-    inset: -1px -2px;
-    z-index: -1;
-    background-color: var(--wc-plate);
-    -webkit-mask: var(--tex-selection_box_bg_1a) center / 100% 100% no-repeat;
-    mask: var(--tex-selection_box_bg_1a) center / 100% 100% no-repeat
-}
-
-.inv-currency::after {
-    content: "";
-    position: absolute;
-    inset-inline: .3rem;
-    bottom: -1px;
-    height: 2px;
-    background-color: var(--wc-accent);
-    opacity: .45;
-    -webkit-mask: var(--tex-list_item_h_line_narrow) center / 100% 100% no-repeat;
-    mask: var(--tex-list_item_h_line_narrow) center / 100% 100% no-repeat
-}
+.inv-currency + .inv-currency { border-inline-start: 1px solid var(--wc-line) }
 
 .inv-currency .inv-currency-icon {
     display: grid;
     place-items: center;
-    width: 1.25rem;
-    height: 1.25rem;
+    height: 1.1rem;
     flex: none;
     color: var(--wc-text-dim);
     background: none
 }
 
-/* svg for legacy icons, img for VORP's own currency artwork */
-.inv-currency .inv-currency-icon svg,
-.inv-currency .inv-currency-icon img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .85))
-}
+/* The money glyphs (utils/items.tsx): a $ in the figures' face, the gold bar drawn in currentColor */
+.cur-glyph { display: block; flex: none; color: inherit }
+.cur-cash { font-family: var(--font-numeral); font-size: 1.05rem; line-height: 1; }
+svg.cur-gold { width: 1.05rem; height: 1.05rem; }
 
-.inv-currency.cash .inv-currency-icon { color: var(--wc-ok) }
-.inv-currency.gold .inv-currency-icon { color: #ffffff }
-
-/* The VORP artwork is visually heavy, so the figure has to carry its own
-   weight beside it — at .72rem it read as a caption under an icon rather than
-   the number the tile exists to show. */
 .inv-currency .inv-currency-val {
     font-family: var(--font-numeral);
-    font-variant-numeric: tabular-nums;
-    font-size: .95rem;
-    font-weight: 600;
-    letter-spacing: .01em;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, .9);
+    font-variant-numeric: lining-nums tabular-nums;
+    font-size: 1.1rem;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: .02em;
     color: var(--wc-text)
 }
 
@@ -632,7 +612,7 @@
     position: absolute;
     inset: -2px -3px;
     z-index: -1;
-    background-color: #1a1a1a;
+    background-color: var(--w-ink-2);
     -webkit-mask: var(--tex-selection_box_bg_1a) center / 100% 100% no-repeat;
     mask: var(--tex-selection_box_bg_1a) center / 100% 100% no-repeat
 }
@@ -658,15 +638,17 @@
     padding-block: .52rem;
     padding-inline: 1.5rem .1rem;
     background: transparent;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%236d6d6d' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%237D7466' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right center;
     background-size: .85rem;
     border: 0;
     outline: none;
     color: var(--wc-text);
-    font-family: var(--font-main);
-    font-size: .74rem
+    font-family: var(--font-input);
+    font-weight: var(--w-wt-input);
+    font-size: calc(.8rem * var(--w-k-input));
+    line-height: 1.3
 }
 
 #inventory .search-bar::placeholder { color: var(--wc-text-faint) }
@@ -718,7 +700,7 @@
     position: absolute;
     inset: -2px -3px;
     z-index: -1;
-    background-color: #1a1a1a;
+    background-color: var(--w-ink-2);
     -webkit-mask: var(--tex-selection_box_bg_1a) center / 100% 100% no-repeat;
     mask: var(--tex-selection_box_bg_1a) center / 100% 100% no-repeat
 }
@@ -745,9 +727,11 @@
 
 .inv-amount-label,
 #right-inventory-panel .rp-amount-label {
-    font-size: .62rem;
+    font-size: calc(.62rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
     color: var(--wc-text-dim);
-    letter-spacing: .03em
+    text-transform: var(--w-label-case);
+    letter-spacing: var(--w-label-track)
 }
 
 .inv-amount-input,
@@ -755,12 +739,12 @@
     width: 4rem;
     padding: .3rem .4rem;
     border: 0;
-    box-shadow: inset 0 0 0 1px var(--wc-line);
-    background: rgba(255, 255, 255, .04);
+    box-shadow: inset 0 -1px 0 var(--wc-line-strong);
+    background: var(--w-ink-2);
     color: var(--wc-text);
-    font-size: .68rem;
-    font-family: var(--font-numeral);
-    font-variant-numeric: tabular-nums;
+    font-size: .74rem;
+    font-family: var(--font-main);
+    font-variant-numeric: lining-nums tabular-nums;
     outline: none;
     text-align: center;
     transition: box-shadow .15s ease, background .15s ease
@@ -768,8 +752,8 @@
 
 .inv-amount-input:focus,
 #right-inventory-panel .rp-amount-input:focus {
-    box-shadow: inset 0 0 0 1px var(--wc-line-strong);
-    background: rgba(255, 255, 255, .07)
+    box-shadow: inset 0 -2px 0 var(--w-paper);
+    background: var(--w-ink-3)
 }
 
 /* ═════════════════════════════ 7. The grid and the slots ═════════════════════════════ */
@@ -811,7 +795,7 @@
     inset: 5%;
     z-index: -1;
     pointer-events: none;
-    background-color: #131313;
+    background-color: var(--w-ink-2);
     -webkit-mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
     mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
     transition: background-color .18s ease
@@ -832,11 +816,11 @@
 
 .inv-grid .slot.filled { cursor: pointer }
 .inv-grid .slot.filled::before { opacity: .55 }
-.inv-grid .slot.filled::after { background-color: #1c1c1c }
+.inv-grid .slot.filled::after { background-color: var(--w-ink-3) }
 
 .inv-grid .slot.filled:hover { z-index: 2 }
-.inv-grid .slot.filled:hover::before { opacity: 1; background-color: #ffffff }
-.inv-grid .slot.filled:hover::after { background-color: #2a2a2a }
+.inv-grid .slot.filled:hover::before { opacity: 1; background-color: var(--w-paper) }
+.inv-grid .slot.filled:hover::after { background-color: var(--w-ink-4) }
 .inv-grid .slot.filled:hover img { transform: scale(1.08) }
 
 .inv-grid .slot .slot-inner {
@@ -873,10 +857,10 @@
     min-width: .8rem;
     padding: .04rem .24rem;
     background: rgba(0, 0, 0, .82);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1);
+    box-shadow: inset 0 0 0 1px rgba(237, 230, 214, .1);
     color: var(--wc-text);
-    font-family: var(--font-numeral);
-    font-variant-numeric: tabular-nums;
+    font-family: var(--font-main);
+    font-variant-numeric: lining-nums tabular-nums;
     font-size: .6rem;
     line-height: 1.2;
     text-align: center
@@ -896,12 +880,12 @@
 /* An equipped weapon */
 .inv-grid .slot.weapon-equipped::before {
     opacity: 1;
-    background-color: #ffffff
+    background-color: var(--w-paper)
 }
 
 .inv-grid .slot.weapon-equipped::after {
-    background-color: #262626;
-    background-image: linear-gradient(180deg, rgba(255, 255, 255, .1), transparent 60%)
+    background-color: var(--w-ink-4);
+    background-image: linear-gradient(180deg, rgba(237, 230, 214, .1), transparent 60%)
 }
 
 .inv-grid .slot .equipped-badge {
@@ -913,8 +897,8 @@
     place-items: center;
     width: .78rem;
     height: .78rem;
-    background: #ffffff;
-    color: #090909
+    background: var(--w-paper);
+    color: var(--w-ink)
 }
 
 .inv-grid .slot .equipped-badge svg {
@@ -939,8 +923,8 @@
     width: .95rem;
     height: .95rem;
     color: var(--wc-text);
-    font-family: var(--font-numeral);
-    font-size: .5rem;
+    font-family: var(--font-main);
+    font-size: .56rem;
     font-weight: 700;
     line-height: 1;
     text-shadow: 0 1px 2px rgba(0, 0, 0, .9)
@@ -951,7 +935,7 @@
     position: absolute;
     inset: 0;
     z-index: -1;
-    background-color: #3a3a3a;
+    background-color: var(--w-ink-5);
     -webkit-mask: var(--tex-counter_bg_1a) center / contain no-repeat;
     mask: var(--tex-counter_bg_1a) center / contain no-repeat
 }
@@ -959,10 +943,10 @@
 /* A selected slot - a fully bright frame + the RDR selection brackets on both sides */
 .inv-grid .slot.selected::before {
     opacity: 1;
-    background-color: #ffffff
+    background-color: var(--w-paper)
 }
 
-.inv-grid .slot.selected::after { background-color: #303030 }
+.inv-grid .slot.selected::after { background-color: var(--w-ink-5) }
 
 .inv-grid .slot.selected .slot-inner::before,
 .inv-grid .slot.selected .slot-inner::after {
@@ -973,7 +957,7 @@
     height: .72rem;
     margin-top: -.36rem;
     z-index: 3;
-    background-color: #ffffff;
+    background-color: var(--w-paper);
     -webkit-mask-size: contain;
     mask-size: contain;
     -webkit-mask-repeat: no-repeat;
@@ -998,18 +982,18 @@
 .inv-grid .slot.drag-source { opacity: .15; transform: scale(.92); pointer-events: none }
 
 .inv-grid .slot.drag-over::before { opacity: .85 }
-.inv-grid .slot.drag-over::after { background-color: #2a2a2a }
-.inv-grid .slot.filled.drag-over::before { opacity: 1; background-color: #ffffff }
+.inv-grid .slot.drag-over::after { background-color: var(--w-ink-4) }
+.inv-grid .slot.filled.drag-over::before { opacity: 1; background-color: var(--w-paper) }
 .inv-grid .slot.filled.drag-over { z-index: 2 }
 
 /* The rarity: a grey glow inside the panel (no colours outside the theme) */
-.inv-grid .slot.uncommon::after { background-image: radial-gradient(circle at 50% 55%, rgba(255, 255, 255, .12), transparent 72%) }
-.inv-grid .slot.rare::after { background-image: radial-gradient(circle at 50% 55%, rgba(200, 200, 200, .16), transparent 72%) }
-.inv-grid .slot.epic::after { background-image: radial-gradient(circle at 50% 55%, rgba(220, 220, 220, .2), transparent 72%) }
-.inv-grid .slot.legendary::after { background-image: radial-gradient(circle at 50% 55%, rgba(235, 235, 235, .24), transparent 72%) }
-.inv-grid .slot.mythic::after { background-image: radial-gradient(circle at 50% 55%, rgba(245, 245, 245, .26), transparent 72%) }
-.inv-grid .slot.exotic::after { background-image: radial-gradient(circle at 50% 55%, rgba(250, 248, 243, .24), transparent 72%) }
-.inv-grid .slot.divine::after { background-image: radial-gradient(circle at 50% 55%, rgba(255, 255, 255, .3), transparent 72%) }
+.inv-grid .slot.uncommon::after { background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, .12), transparent 72%) }
+.inv-grid .slot.rare::after { background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, .16), transparent 72%) }
+.inv-grid .slot.epic::after { background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, .2), transparent 72%) }
+.inv-grid .slot.legendary::after { background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, .24), transparent 72%) }
+.inv-grid .slot.mythic::after { background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, .26), transparent 72%) }
+.inv-grid .slot.exotic::after { background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, .24), transparent 72%) }
+.inv-grid .slot.divine::after { background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, .3), transparent 72%) }
 
 .inv-grid .slot.legendary::before,
 .inv-grid .slot.mythic::before,
@@ -1027,9 +1011,9 @@
     min-width: .8rem;
     padding: .04rem .24rem;
     background: rgba(0, 0, 0, .82);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
-    font-family: var(--font-numeral);
-    font-variant-numeric: tabular-nums;
+    box-shadow: inset 0 0 0 1px rgba(237, 230, 214, .08);
+    font-family: var(--font-main);
+    font-variant-numeric: lining-nums tabular-nums;
     font-size: .52rem;
     line-height: 1.25;
     text-align: center
@@ -1051,9 +1035,9 @@
 }
 
 .inv-grid .slot .durability-fill { height: 100%; transition: width .3s }
-.inv-grid .slot .durability-fill.high { background: linear-gradient(90deg, #d2d2d2, #ffffff) }
-.inv-grid .slot .durability-fill.mid { background: linear-gradient(90deg, #a9a9a9, #c6c6c6) }
-.inv-grid .slot .durability-fill.low { background: linear-gradient(90deg, var(--gauge-low-deep), var(--gauge-low)) }
+.inv-grid .slot .durability-fill.high { background: var(--w-paper) }
+.inv-grid .slot .durability-fill.mid { background: var(--w-paper-dim) }
+.inv-grid .slot .durability-fill.low { background: var(--gauge-low) }
 
 @keyframes slotFadeIn {
     from { opacity: 0; transform: scale(.88) }
@@ -1119,11 +1103,20 @@
 
 .inv-toolbar .tb-key,
 #inventory-options .opt-key {
-    padding: .06rem .28rem;
-    font-family: var(--font-numeral);
-    font-size: .5rem;
-    color: var(--wc-text-dim);
-    background: linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .04))
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.1rem;
+    padding: .08rem .28rem;
+    border: 1px solid currentColor;
+    box-shadow: inset 0 -2px 0 rgba(237, 230, 214, .14);
+    background: none;
+    color: inherit;
+    opacity: .75;
+    font-family: var(--font-main);
+    font-size: .56rem;
+    line-height: 1;
+    direction: ltr;
+    unicode-bidi: isolate
 }
 
 /* ═════════════════════════════ 9. The bag's categories ═════════════════════════════ */
@@ -1183,7 +1176,7 @@
 }
 
 #inventory .category:hover { color: var(--wc-text) }
-#inventory .category:hover::before { background-color: #2e2e2e }
+#inventory .category:hover::before { background-color: var(--w-ink-5) }
 #inventory .category:hover::after { opacity: .5 }
 
 #inventory .category.active {
@@ -1191,8 +1184,8 @@
     cursor: default
 }
 
-#inventory .category.active::before { background-color: var(--wc-red-deep) }
-#inventory .category.active::after { opacity: 1; background-color: #ffffff }
+#inventory .category.active::before { background-color: var(--wc-accent) }
+#inventory .category.active::after { opacity: 0 }
 
 #inventory .category.dim { opacity: .4; cursor: default }
 
@@ -1209,18 +1202,18 @@
     min-width: .72rem;
     height: .72rem;
     padding: 0 .13rem;
-    background: rgba(255, 255, 255, .92);
+    background: var(--w-paper);
     box-shadow: 0 0 0 1px rgba(0, 0, 0, .55);
-    color: #090909;
-    font-family: var(--font-numeral);
-    font-size: .44rem;
+    color: var(--w-ink);
+    font-family: var(--font-main);
+    font-size: .52rem;
     font-weight: 700;
     line-height: 1
 }
 
 #inventory .category.active .cat-count {
-    background: var(--wc-red);
-    color: #ffffff
+    background: var(--w-ink);
+    color: var(--w-paper)
 }
 
 /* The category's tooltip - on a help_text_bg panel from the game */
@@ -1230,13 +1223,15 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 99000;
-    padding: .28rem .55rem;
-    font-size: .58rem;
-    color: var(--wc-text);
+    padding: .34rem .7rem .38rem;
+    font-size: calc(.64rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
+    color: var(--w-note-ink);
     white-space: nowrap;
     pointer-events: none;
-    background: var(--glass-modal);
-    box-shadow: inset 0 0 0 1px var(--wc-line), 0 4px 16px rgba(0, 0, 0, .55)
+    background: var(--w-note);
+    box-shadow: inset 0 0 .9rem rgba(90, 70, 40, .28);
+    -webkit-mask-box-image: var(--w-tex-tear) 64 fill / .42rem round
 }
 
 #inventory .category .cat-tooltip::after { content: none }
@@ -1261,8 +1256,8 @@
 }
 
 #inv-empty svg { width: 2.8rem; height: 2.8rem; opacity: .22 }
-#inv-empty .empty-text { font-size: .8rem; letter-spacing: .04em; color: var(--wc-text-dim) }
-#inv-empty .empty-hint { font-size: .62rem; color: var(--wc-text-faint); opacity: .7 }
+#inv-empty .empty-text { font-family: var(--font-text); font-size: calc(.88rem * var(--w-k-text)); line-height: var(--w-lh-text); color: var(--wc-text-dim) }
+#inv-empty .empty-hint { font-size: calc(.64rem * var(--w-k-label)); line-height: var(--w-lh-label); color: var(--wc-text-faint) }
 
 /* ═════════════════════════════ 11. The drag ghost ═════════════════════════════ */
 
@@ -1282,7 +1277,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    background-color: #ffffff;
+    background-color: var(--w-paper);
     opacity: .9;
     -webkit-mask: var(--tex-crafting_outline) center / 100% 100% no-repeat;
     mask: var(--tex-crafting_outline) center / 100% 100% no-repeat
@@ -1303,7 +1298,7 @@
     padding: .02rem .2rem;
     background: rgba(0, 0, 0, .62);
     color: var(--wc-text);
-    font-family: var(--font-numeral);
+    font-family: var(--font-main);
     font-size: .55rem
 }
 
@@ -1320,11 +1315,12 @@
     align-items: center;
     justify-content: center;
     gap: .5rem;
-    background: linear-gradient(to top, rgba(203, 1, 1, .18), transparent);
-    color: var(--wc-text-faint);
-    font-family: var(--font-display);
-    font-size: .82rem;
-    letter-spacing: .06em;
+    background: linear-gradient(to top, rgba(11, 10, 8, .82), rgba(11, 10, 8, 0));
+    color: var(--wc-text-dim);
+    font-family: var(--font-main);
+    font-size: calc(.78rem * var(--w-k-label));
+    text-transform: var(--w-label-case);
+    letter-spacing: var(--w-label-track);
     pointer-events: auto;
     transition: background .2s, color .2s
 }
@@ -1336,7 +1332,7 @@
     top: 0;
     height: 3px;
     background-color: var(--wc-red);
-    opacity: .5;
+    opacity: .85;
     -webkit-mask: var(--tex-divider_line) center / 100% 100% no-repeat;
     mask: var(--tex-divider_line) center / 100% 100% no-repeat
 }
@@ -1344,7 +1340,7 @@
 #inv-ground-zone.active { display: flex }
 
 #inv-ground-zone.hover {
-    background: linear-gradient(to top, rgba(203, 1, 1, .42), rgba(60, 8, 8, .1));
+    background: linear-gradient(to top, rgba(203, 1, 1, .34), rgba(11, 10, 8, .2));
     color: var(--wc-text)
 }
 
@@ -1357,8 +1353,8 @@
     z-index: 97000;
     display: none;
     max-width: 16.5rem;
-    min-width: 8.5rem;
-    padding: .6rem .65rem;
+    min-width: 9rem;
+    padding: .7rem .9rem .65rem;
     color: var(--wc-text);
     font-family: var(--font-main);
     font-size: .72rem;
@@ -1384,31 +1380,33 @@
     transform: translateX(-50%) rotate(45deg);
     width: .5rem;
     height: .5rem;
-    background: #131313;
+    background: var(--w-ink);
     box-shadow: 1px 1px 0 0 var(--wc-line)
 }
 
 #inventory-tooltip .tt-name {
     font-family: var(--font-display);
-    font-size: .88rem;
-    line-height: 1.35;
+    font-size: calc(1.2rem * var(--w-k-title));
+    line-height: 1.3;
     color: var(--wc-text);
     margin-bottom: .1rem
 }
 
-#inventory-tooltip .tt-name.uncommon { color: #ffffff }
-#inventory-tooltip .tt-name.rare { color: #d0d0d0 }
-#inventory-tooltip .tt-name.epic { color: #dcdcdc }
-#inventory-tooltip .tt-name.legendary { color: #e8e8e8 }
-#inventory-tooltip .tt-name.mythic { color: #f2f2f2 }
-#inventory-tooltip .tt-name.exotic { color: #f5f3ee }
-#inventory-tooltip .tt-name.divine { color: #ffffff }
+#inventory-tooltip .tt-name.uncommon { color: var(--w-paper) }
+#inventory-tooltip .tt-name.rare { color: var(--w-paper) }
+#inventory-tooltip .tt-name.epic { color: var(--w-paper) }
+#inventory-tooltip .tt-name.legendary { color: var(--w-paper) }
+#inventory-tooltip .tt-name.mythic { color: var(--w-paper) }
+#inventory-tooltip .tt-name.exotic { color: var(--w-paper) }
+#inventory-tooltip .tt-name.divine { color: var(--w-paper) }
 #inventory-tooltip .tt-rarity-dot { display: none }
 
 #inventory-tooltip .tt-desc {
-    font-size: .66rem;
+    font-family: var(--font-text);
+    font-size: calc(.84rem * var(--w-k-text));
+    font-weight: 400;
     color: var(--wc-text-dim);
-    line-height: 1.45;
+    line-height: var(--w-lh-text);
     margin-bottom: .3rem
 }
 
@@ -1435,26 +1433,28 @@
 #inventory-tooltip .tt-stat {
     display: flex;
     justify-content: space-between;
+    align-items: baseline;
     gap: .6rem;
-    font-size: .64rem
+    font-size: calc(.62rem * var(--w-k-label));
+    line-height: var(--w-lh-label)
 }
 
-#inventory-tooltip .tt-stat-l { color: var(--wc-text-faint) }
+#inventory-tooltip .tt-stat-l { color: var(--wc-text-faint); text-transform: var(--w-label-case); letter-spacing: var(--w-label-track) }
 
 #inventory-tooltip .tt-stat-v {
     color: var(--wc-text);
-    font-family: var(--font-numeral);
-    font-variant-numeric: tabular-nums
+    font-family: var(--font-main);
+    font-variant-numeric: lining-nums tabular-nums
 }
 
 #inventory-tooltip .tt-hint {
     position: relative;
     margin-top: .35rem;
     padding-top: .3rem;
-    font-size: .55rem;
+    font-size: calc(.6rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
     color: var(--wc-text-faint);
-    text-align: center;
-    letter-spacing: .03em
+    text-align: center
 }
 
 #inventory-tooltip .tt-hint::before {
@@ -1469,9 +1469,11 @@
     mask: var(--tex-list_item_h_line_narrow) center / 100% 100% no-repeat
 }
 
-.dur-high { color: #ffffff !important }
-.dur-mid { color: #c6c6c6 !important }
-.dur-low { color: var(--wc-red) !important }
+/* Durability: the figure stays paper (red is never a text colour); worn is paper-dim, broken carries the red square */
+.dur-high { color: var(--w-paper) !important }
+.dur-mid { color: var(--w-paper-dim) !important }
+.dur-low { color: var(--w-paper) !important }
+.dur-low::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-inline-end: .35em; vertical-align: .08em; background: var(--w-red) }
 
 /* ═════════════════════════════ 14. The context menu ═════════════════════════════ */
 
@@ -1480,13 +1482,14 @@
     z-index: 96000;
     display: none;
     flex-direction: column;
-    min-width: 11rem;
-    padding: .25rem 0 .3rem;
+    min-width: 12rem;
+    padding: .55rem .35rem .6rem;
     color: var(--wc-text);
     font-family: var(--font-main);
     font-size: .72rem;
-    background: var(--glass-modal);
-    box-shadow: inset 0 0 0 1px var(--wc-line), 0 22px 60px -18px rgba(0, 0, 0, .9);
+    background: none;
+    box-shadow: none;
+    filter: drop-shadow(0 .6rem 1rem rgba(0, 0, 0, .6));
     opacity: 0;
     transition: opacity .12s
 }
@@ -1495,11 +1498,11 @@
 
 #inventory-options .opt-header {
     position: relative;
-    padding: .4rem .7rem .45rem;
+    padding: .25rem .7rem .5rem;
     font-family: var(--font-display);
-    font-size: .68rem;
+    font-size: calc(1.2rem * var(--w-k-title));
+    line-height: 1.3;
     color: var(--wc-text);
-    letter-spacing: .03em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis
@@ -1527,33 +1530,33 @@
 #inventory-options .option {
     display: flex;
     align-items: center;
-    gap: .5rem;
-    padding: .45rem .7rem;
-    color: var(--wc-text-dim);
+    gap: .55rem;
+    min-height: 2.1rem;
+    padding: .28rem .75rem;
+    color: var(--wc-text);
+    font-family: var(--font-action);
+    font-weight: var(--w-wt-action);
+    font-size: calc(1.05rem * var(--w-k-action));
+    line-height: var(--w-lh-action);
     white-space: nowrap;
     cursor: pointer;
-    transition: background-color .12s ease, color .12s ease
+    transition: color .12s ease
 }
 
 #inventory-options .option span { flex: 1 }
 
-#inventory-options .option:hover {
-    background: var(--wc-accent-soft);
-    color: var(--wc-text)
-}
-
-#inventory-options .option.danger { color: var(--wc-text-dim) }
-
-#inventory-options .option.danger:hover {
-    background: var(--wc-red-soft);
-    color: var(--wc-red)
+#inventory-options .option.danger span {
+    text-decoration: underline;
+    text-decoration-color: var(--w-red);
+    text-decoration-thickness: 2px;
+    text-underline-offset: .32em
 }
 
 #inventory-options .option.equipped { color: var(--wc-ok) }
 #inventory-options .option svg { width: .85rem; height: .85rem; flex: none; opacity: .6 }
 #inventory-options .option:hover svg { opacity: 1 }
 
-.hb-slot-opt { padding-inline-start: 1.4rem !important; font-size: .62rem !important; opacity: .75 }
+.hb-slot-opt { padding-inline-start: 1.4rem !important; font-family: var(--font-main) !important; font-weight: var(--w-wt-label) !important; font-size: calc(.7rem * var(--w-k-label)) !important; line-height: var(--w-lh-label) !important; min-height: 1.7rem !important; opacity: .8 }
 .hb-slot-opt:hover { opacity: 1 }
 .hb-slot-opt:hover span { color: var(--wc-text) }
 
@@ -1590,13 +1593,13 @@
     padding: 1rem .9rem .7rem
 }
 
-#inventory-detail .detail-hero.uncommon { background: linear-gradient(180deg, rgba(255, 255, 255, .06), transparent) }
-#inventory-detail .detail-hero.rare { background: linear-gradient(180deg, rgba(169, 169, 169, .06), transparent) }
-#inventory-detail .detail-hero.epic { background: linear-gradient(180deg, rgba(198, 198, 198, .07), transparent) }
-#inventory-detail .detail-hero.legendary { background: linear-gradient(180deg, rgba(216, 216, 216, .09), transparent) }
-#inventory-detail .detail-hero.mythic { background: linear-gradient(180deg, rgba(237, 237, 237, .09), transparent) }
-#inventory-detail .detail-hero.exotic { background: linear-gradient(180deg, rgba(245, 243, 238, .07), transparent) }
-#inventory-detail .detail-hero.divine { background: linear-gradient(180deg, rgba(255, 255, 255, .07), transparent) }
+#inventory-detail .detail-hero.uncommon { background: linear-gradient(180deg, rgba(237, 230, 214, .06), transparent) }
+#inventory-detail .detail-hero.rare { background: linear-gradient(180deg, rgba(237, 230, 214, .06), transparent) }
+#inventory-detail .detail-hero.epic { background: linear-gradient(180deg, rgba(237, 230, 214, .07), transparent) }
+#inventory-detail .detail-hero.legendary { background: linear-gradient(180deg, rgba(237, 230, 214, .09), transparent) }
+#inventory-detail .detail-hero.mythic { background: linear-gradient(180deg, rgba(237, 230, 214, .09), transparent) }
+#inventory-detail .detail-hero.exotic { background: linear-gradient(180deg, rgba(237, 230, 214, .07), transparent) }
+#inventory-detail .detail-hero.divine { background: linear-gradient(180deg, rgba(237, 230, 214, .07), transparent) }
 
 #inventory-detail .detail-img-wrap {
     position: relative;
@@ -1614,7 +1617,7 @@
     position: absolute;
     inset: 5%;
     z-index: -1;
-    background-color: #1c1c1c;
+    background-color: var(--w-ink-3);
     -webkit-mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
     mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat
 }
@@ -1639,7 +1642,7 @@
 
 #inventory-detail .detail-name {
     font-family: var(--font-display);
-    font-size: .98rem;
+    font-size: calc(1.2rem * var(--w-k-title));
     line-height: 1.3;
     color: var(--wc-text);
     text-align: center;
@@ -1649,21 +1652,22 @@
 #inventory-detail .detail-rarity,
 #inspect-overlay .inspect-rarity {
     margin-top: .25rem;
-    padding: .1rem .45rem;
-    font-size: .52rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .12em
+    padding: .12rem .5rem;
+    font-size: calc(.56rem * var(--w-k-label));
+    font-weight: var(--w-wt-label);
+    line-height: var(--w-lh-label);
+    text-transform: var(--w-label-case);
+    letter-spacing: var(--w-label-track)
 }
 
-.detail-rarity.common { color: var(--wc-text-faint); background: rgba(255, 255, 255, .05) }
-.detail-rarity.uncommon { color: #ffffff; background: rgba(255, 255, 255, .08) }
-.detail-rarity.rare { color: #d0d0d0; background: rgba(208, 208, 208, .1) }
-.detail-rarity.epic { color: #dcdcdc; background: rgba(220, 220, 220, .1) }
-.detail-rarity.legendary { color: #e8e8e8; background: rgba(232, 232, 232, .12) }
-.detail-rarity.mythic { color: #f2f2f2; background: rgba(242, 242, 242, .12) }
-.detail-rarity.exotic { color: #f5f3ee; background: rgba(245, 243, 238, .1) }
-.detail-rarity.divine { color: #ffffff; background: rgba(255, 255, 255, .12) }
+.detail-rarity.common { color: var(--wc-text-faint); background: rgba(237, 230, 214, .05) }
+.detail-rarity.uncommon { color: var(--w-paper); background: rgba(237, 230, 214, .08) }
+.detail-rarity.rare { color: var(--w-paper); background: rgba(237, 230, 214, .1) }
+.detail-rarity.epic { color: var(--w-paper); background: rgba(237, 230, 214, .1) }
+.detail-rarity.legendary { color: var(--w-paper); background: rgba(237, 230, 214, .12) }
+.detail-rarity.mythic { color: var(--w-paper); background: rgba(237, 230, 214, .12) }
+.detail-rarity.exotic { color: var(--w-paper); background: rgba(237, 230, 214, .1) }
+.detail-rarity.divine { color: var(--w-paper); background: rgba(237, 230, 214, .12) }
 
 #inventory-detail .detail-sep {
     height: 3px;
@@ -1676,9 +1680,11 @@
 
 #inventory-detail .detail-desc {
     padding: .6rem .9rem;
-    font-size: .68rem;
+    font-family: var(--font-text);
+    font-size: calc(.88rem * var(--w-k-text));
+    font-weight: 400;
     color: var(--wc-text-dim);
-    line-height: 1.5
+    line-height: var(--w-lh-text)
 }
 
 #inventory-detail .detail-stats {
@@ -1691,9 +1697,11 @@
     position: relative;
     display: flex;
     justify-content: space-between;
+    align-items: baseline;
     gap: .6rem;
-    padding: .3rem 0;
-    font-size: .68rem
+    padding: .34rem 0;
+    font-size: calc(.66rem * var(--w-k-label));
+    line-height: var(--w-lh-label)
 }
 
 #inventory-detail .detail-stat::after {
@@ -1709,12 +1717,12 @@
 }
 
 #inventory-detail .detail-stat:last-child::after { content: none }
-#inventory-detail .detail-stat .lbl { color: var(--wc-text-faint) }
+#inventory-detail .detail-stat .lbl { color: var(--wc-text-faint); text-transform: var(--w-label-case); letter-spacing: var(--w-label-track) }
 
 #inventory-detail .detail-stat .val {
     color: var(--wc-text);
-    font-family: var(--font-numeral);
-    font-variant-numeric: tabular-nums
+    font-family: var(--font-main);
+    font-variant-numeric: lining-nums tabular-nums
 }
 
 #inventory-detail .detail-stat .val.equipped-text { color: var(--wc-ok) }
@@ -1725,9 +1733,9 @@
     justify-content: center;
     gap: .35rem;
     padding: .5rem .9rem .6rem;
-    font-size: .58rem;
-    color: var(--wc-text-faint);
-    letter-spacing: .03em
+    font-size: calc(.6rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
+    color: var(--wc-text-faint)
 }
 
 /* ═════════════════════════════ 16. The container panel ═════════════════════════════ */
@@ -1811,7 +1819,7 @@
 
 #container-panel .cp-title {
     font-family: var(--font-display);
-    font-size: .92rem;
+    font-size: calc(1.2rem * var(--w-k-title));
     line-height: 1.3;
     color: var(--wc-text);
     white-space: nowrap;
@@ -1820,9 +1828,9 @@
 }
 
 #container-panel .cp-subtitle {
-    font-size: .58rem;
-    color: var(--wc-text-dim);
-    letter-spacing: .04em
+    font-size: calc(.6rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
+    color: var(--wc-text-dim)
 }
 
 #container-panel .cp-close,
@@ -1869,14 +1877,15 @@
     align-items: center;
     gap: .35rem;
     font-size: .6rem;
+    line-height: 1.3;
     color: var(--wc-text-dim)
 }
 
-#container-panel .cp-metric-label { flex: 1; letter-spacing: .04em }
+#container-panel .cp-metric-label { flex: 1; text-transform: var(--w-label-case); letter-spacing: var(--w-label-track) }
 
 #container-panel .cp-metric-value {
-    font-family: var(--font-numeral);
-    font-variant-numeric: tabular-nums;
+    font-family: var(--font-main);
+    font-variant-numeric: lining-nums tabular-nums;
     color: var(--wc-text)
 }
 
@@ -1885,21 +1894,21 @@
     position: relative;
     width: 100%;
     height: .34rem;
-    border-radius: 999px;
+    border-radius: 0;
     overflow: hidden;
-    background: rgba(255, 255, 255, .1);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12)
+    background: rgba(237, 230, 214, .1);
+    box-shadow: inset 0 -1px 0 var(--w-rule)
 }
 
 #container-panel .cp-bar-fill,
 #right-inventory-panel .rp-bar-fill {
     height: 100%;
-    border-radius: 999px;
-    background: linear-gradient(180deg, #ffffff, #b4b4b4);
+    border-radius: 0;
+    background: var(--w-paper);
     transition: width .4s
 }
 
-#container-panel .cp-bar-fill.slots { background: linear-gradient(180deg, #c6c6c6, #8f8f8f) }
+#container-panel .cp-bar-fill.slots { background: var(--w-paper-dim) }
 
 #container-panel .cp-bar-marker {
     position: absolute;
@@ -1910,9 +1919,9 @@
 }
 
 #container-panel .cp-bar-marker.warn { background: rgba(203, 1, 1, .55) }
-#container-panel .cp-metric.warn .cp-bar-fill { background: linear-gradient(180deg, var(--gauge-mid), var(--gauge-mid-deep)) }
-#container-panel .cp-metric.critical .cp-bar-fill { background: linear-gradient(180deg, var(--gauge-low), var(--gauge-low-deep)) }
-#container-panel .cp-metric.critical .cp-metric-value { color: var(--wc-red) }
+#container-panel .cp-metric.warn .cp-bar-fill { background: var(--gauge-mid) }
+#container-panel .cp-metric.critical .cp-bar-fill { background: var(--gauge-low) }
+#container-panel .cp-metric.critical .cp-metric-value { color: var(--wc-text) }
 
 #container-panel .cp-divider {
     height: 2px;
@@ -1938,8 +1947,8 @@
 
 #container-panel .cp-empty-icon { width: 2.4rem; height: 2.4rem; color: var(--wc-accent); opacity: .18 }
 #container-panel .cp-empty-icon svg { width: 100%; height: 100% }
-#container-panel .cp-empty-text { font-size: .78rem; color: var(--wc-text-dim) }
-#container-panel .cp-empty-hint { font-size: .58rem; color: var(--wc-text-faint); letter-spacing: .03em }
+#container-panel .cp-empty-text { font-family: var(--font-text); font-size: calc(.88rem * var(--w-k-text)); line-height: var(--w-lh-text); color: var(--wc-text-dim) }
+#container-panel .cp-empty-hint { font-size: calc(.6rem * var(--w-k-label)); line-height: var(--w-lh-label); color: var(--wc-text-faint); text-align: center; padding-inline: 1rem }
 
 #container-panel .cp-footer {
     position: relative;
@@ -1948,9 +1957,9 @@
     justify-content: center;
     gap: .38rem;
     padding: .5rem .85rem .6rem;
-    font-size: .58rem;
-    color: var(--wc-text-faint);
-    letter-spacing: .03em
+    font-size: calc(.6rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
+    color: var(--wc-text-faint)
 }
 
 #container-panel .cp-footer::before {
@@ -2023,8 +2032,8 @@
 
 #right-inventory-panel .rp-title {
     font-family: var(--font-display);
-    font-size: 1.05rem;
-    font-weight: 700;
+    font-size: calc(1.2rem * var(--w-k-title));
+    font-weight: var(--w-wt-title);
     line-height: 1.35;
     color: var(--wc-text);
     white-space: nowrap;
@@ -2033,9 +2042,9 @@
 }
 
 #right-inventory-panel .rp-subtitle {
-    font-size: .6rem;
-    color: var(--wc-text-dim);
-    letter-spacing: .04em
+    font-size: calc(.6rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
+    color: var(--wc-text-dim)
 }
 
 #right-inventory-panel .rp-shop-controls {
@@ -2077,28 +2086,21 @@
 }
 
 #right-inventory-panel .rp-currency-btn:hover { color: var(--wc-text) }
-#right-inventory-panel .rp-currency-btn:hover::before { background-color: #2e2e2e }
+#right-inventory-panel .rp-currency-btn:hover::before { background-color: var(--w-ink-5) }
 
 #right-inventory-panel .rp-currency-btn.active { color: var(--wc-text) }
-#right-inventory-panel .rp-currency-btn.active::before { background-color: var(--wc-red-deep) }
+#right-inventory-panel .rp-currency-btn.active::before { background-color: var(--wc-accent) }
 
 #right-inventory-panel .rp-currency-icon {
     display: grid;
     place-items: center;
-    width: 1rem;
     height: 1rem;
-    flex: none
+    flex: none;
+    color: inherit
 }
 
-#right-inventory-panel .rp-currency-icon svg,
-#right-inventory-panel .rp-currency-icon img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .85))
-}
-
-#right-inventory-panel .rp-currency-icon.gold { color: #ffffff }
+#right-inventory-panel .rp-currency-icon .cur-cash { font-size: .8rem }
+#right-inventory-panel .rp-currency-icon svg.cur-gold { width: .95rem; height: .95rem }
 
 #right-inventory-panel .rp-weight-bar { margin-bottom: .55rem }
 
@@ -2107,8 +2109,8 @@
     margin-bottom: .22rem;
     font-size: .62rem;
     color: var(--wc-text-dim);
-    font-family: var(--font-numeral);
-    font-variant-numeric: tabular-nums
+    font-family: var(--font-main);
+    font-variant-numeric: lining-nums tabular-nums
 }
 
 #right-inventory-panel .inv-grid { max-height: min(24rem, 44vh) }
@@ -2127,7 +2129,7 @@
 }
 
 #inspect-overlay .inspect-bg { position: absolute; inset: 0; background: rgba(0, 0, 0, 0); transition: background .6s }
-#inspect-overlay .inspect-bg.active { background: rgba(0, 0, 0, .84) }
+#inspect-overlay .inspect-bg.active { background: rgba(6, 5, 4, .86) }
 #inspect-overlay .inspect-bars { position: absolute; inset: 0; pointer-events: none }
 
 #inspect-overlay .bar-t,
@@ -2167,7 +2169,7 @@
     object-fit: contain;
     margin-bottom: 1.1rem;
     animation: float 3.5s ease-in-out infinite;
-    filter: drop-shadow(0 6px 24px rgba(255, 255, 255, .16))
+    filter: drop-shadow(0 6px 24px rgba(237, 230, 214, .16))
 }
 
 @keyframes float {
@@ -2187,10 +2189,12 @@
 #inspect-overlay .inspect-rarity { margin-bottom: .7rem }
 
 #inspect-overlay .inspect-desc {
-    max-width: 24rem;
+    max-width: 26rem;
     margin-bottom: .8rem;
-    font-size: .8rem;
-    line-height: 1.5;
+    font-family: var(--font-text);
+    font-size: calc(.95rem * var(--w-k-text));
+    font-weight: 400;
+    line-height: var(--w-lh-text);
     color: var(--wc-text-dim);
     text-align: center
 }
@@ -2214,7 +2218,7 @@
     gap: .2rem;
     min-width: 5.5rem;
     padding: .55rem .6rem;
-    background: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(0, 0, 0, .2))
+    background: none
 }
 
 #inspect-overlay .inspect-s::after {
@@ -2230,23 +2234,26 @@
 }
 
 #inspect-overlay .inspect-sv {
-    font-family: var(--font-numeral);
-    font-variant-numeric: tabular-nums;
-    font-size: 1rem;
+    font-family: var(--font-main);
+    font-variant-numeric: lining-nums tabular-nums;
+    font-size: 1.15rem;
+    line-height: 1.1;
     color: var(--wc-text)
 }
 
 #inspect-overlay .inspect-sl {
-    font-size: .55rem;
+    font-size: calc(.6rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
     color: var(--wc-text-faint);
-    letter-spacing: .08em
+    text-transform: var(--w-label-case);
+    letter-spacing: var(--w-label-track)
 }
 
 #inspect-overlay .inspect-x {
-    font-family: var(--font-display);
-    font-size: .68rem;
+    font-family: var(--font-main);
+    font-size: calc(.66rem * var(--w-k-label));
     color: var(--wc-text-faint);
-    letter-spacing: .1em;
+    letter-spacing: var(--w-label-track);
     cursor: pointer;
     animation: pulse 2s ease-in-out infinite;
     transition: color .15s
@@ -2292,7 +2299,7 @@
     position: absolute;
     inset: 0;
     z-index: -1;
-    background-color: rgba(10, 10, 10, .96);
+    background-color: rgba(11, 10, 8, .96);
     -webkit-mask: var(--tex-toast_bg) center / 100% 100% no-repeat;
     mask: var(--tex-toast_bg) center / 100% 100% no-repeat
 }
@@ -2310,7 +2317,7 @@
     background: var(--wc-line-strong)
 }
 
-.inv-toast.success::after { background: #ffffff }
+.inv-toast.success::after { background: var(--w-paper) }
 .inv-toast.error::after { background: var(--wc-red) }
 .inv-toast.info::after { background: var(--wc-text-dim) }
 
@@ -2376,8 +2383,8 @@
 
 #inv-split-dialog .split-title {
     font-family: var(--font-display);
-    font-size: .84rem;
-    line-height: 1.35;
+    font-size: calc(1.2rem * var(--w-k-title));
+    line-height: 1.3;
     color: var(--wc-text)
 }
 
@@ -2398,7 +2405,7 @@
     gap: .12rem;
     min-width: 4.2rem;
     padding: .45rem .5rem;
-    background: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(0, 0, 0, .2))
+    background: none
 }
 
 #inv-split-dialog .split-stack::after {
@@ -2415,7 +2422,7 @@
 
 #inv-split-dialog .split-stack-num {
     font-family: var(--font-numeral);
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: lining-nums tabular-nums;
     font-size: 1.1rem;
     color: var(--wc-text-dim)
 }
@@ -2423,9 +2430,11 @@
 #inv-split-dialog .split-stack-num.highlight { color: var(--wc-text) }
 
 #inv-split-dialog .split-stack-label {
-    font-size: .52rem;
+    font-size: calc(.58rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
     color: var(--wc-text-faint);
-    letter-spacing: .08em
+    text-transform: var(--w-label-case);
+    letter-spacing: var(--w-label-track)
 }
 
 #inv-split-dialog .split-arrow { color: var(--wc-text-faint) }
@@ -2447,7 +2456,7 @@
     flex: none;
     cursor: pointer;
     user-select: none;
-    background: rgba(255, 255, 255, .05);
+    background: rgba(237, 230, 214, .05);
     box-shadow: inset 0 0 0 1px var(--wc-line);
     color: var(--wc-text-dim);
     font-size: .8rem;
@@ -2456,12 +2465,14 @@
 
 #inv-split-dialog .split-adj:hover { background: var(--wc-hover); color: var(--wc-text) }
 
-#inv-split-dialog .split-slider { flex: 1; accent-color: #ffffff; height: .25rem }
+#inv-split-dialog .split-slider { flex: 1 }
 
 #inv-split-dialog .split-actions {
     position: relative;
     display: flex;
-    width: 100%
+    gap: .45rem;
+    width: 100%;
+    padding: .45rem .6rem .6rem
 }
 
 #inv-split-dialog .split-actions::before {
@@ -2479,9 +2490,8 @@
     flex: 1;
     padding: .55rem;
     text-align: center;
-    font-family: var(--font-display);
-    font-size: .7rem;
-    letter-spacing: .04em;
+    font-family: var(--font-main);
+    font-size: calc(.7rem * var(--w-k-label));
     color: var(--wc-text-dim);
     cursor: pointer;
     transition: background-color .12s ease, color .12s ease
@@ -2585,28 +2595,28 @@
     margin-bottom: .08rem;
     overflow: hidden;
     color: var(--wc-text-faint);
-    font-size: .54rem;
-    line-height: 1.2;
-    letter-spacing: .12em;
+    font-size: calc(.58rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
+    letter-spacing: var(--w-label-track);
     text-overflow: ellipsis;
-    text-transform: uppercase;
+    text-transform: var(--w-label-case);
     white-space: nowrap
 }
 
 .ammo-picker-heading h2 {
     color: var(--wc-text);
     font-family: var(--font-display);
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: calc(1.2rem * var(--w-k-title));
+    font-weight: var(--w-wt-title);
     line-height: 1.3;
-    letter-spacing: .03em
+    letter-spacing: var(--w-track-title)
 }
 
 .ammo-picker-heading p {
-    margin-top: .2rem;
+    margin-top: .15rem;
     color: var(--wc-text-dim);
-    font-size: .58rem;
-    line-height: 1.35
+    font-size: calc(.64rem * var(--w-k-label));
+    line-height: var(--w-lh-label)
 }
 
 .ammo-picker-close {
@@ -2641,7 +2651,7 @@
     align-items: center;
     gap: .7rem;
     padding: .55rem .95rem;
-    background: rgba(255, 255, 255, .02)
+    background: rgba(237, 230, 214, .02)
 }
 
 .ammo-picker-load::after {
@@ -2662,13 +2672,14 @@
     justify-content: space-between;
     gap: .35rem;
     color: var(--wc-text-dim);
-    font-size: .56rem
+    font-size: calc(.6rem * var(--w-k-label));
+    line-height: var(--w-lh-label)
 }
 
 .ammo-picker-load-copy strong {
     color: var(--wc-text);
-    font-family: var(--font-numeral);
-    font-variant-numeric: tabular-nums;
+    font-family: var(--font-main);
+    font-variant-numeric: lining-nums tabular-nums;
     font-size: .8rem
 }
 
@@ -2676,17 +2687,17 @@
 
 .ammo-picker-load-track {
     height: .3rem;
-    border-radius: 999px;
+    border-radius: 0;
     overflow: hidden;
-    background: rgba(255, 255, 255, .1);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12)
+    background: rgba(237, 230, 214, .1);
+    box-shadow: inset 0 -1px 0 var(--w-rule)
 }
 
 .ammo-picker-load-track i {
     display: block;
     height: 100%;
-    border-radius: 999px;
-    background: linear-gradient(180deg, #ffffff, #b4b4b4);
+    border-radius: 0;
+    background: var(--w-paper);
     box-shadow: none;
     transition: width .25s ease
 }
@@ -2738,22 +2749,14 @@
     transition: background .15s ease
 }
 
-.ammo-picker-option:hover:not(:disabled) { background: var(--wc-accent-soft); transform: none }
-
-.ammo-picker-option.selected {
-    background: linear-gradient(90deg, var(--wc-hover), rgba(0, 0, 0, 0) 78%);
-    transform: none
-}
-
-[dir='rtl'] .ammo-picker-option.selected { background: linear-gradient(270deg, var(--wc-hover), rgba(0, 0, 0, 0) 78%) }
+.ammo-picker-option:hover:not(:disabled) { transform: none }
+.ammo-picker-option.selected { transform: none }
 [dir='rtl'] .ammo-picker-option:hover:not(:disabled) { transform: none }
-
-.ammo-picker-option.selected::before { background: #ffffff; box-shadow: none }
 .ammo-picker-option.locked:not(.selected) { opacity: .5 }
 
 .ammo-picker-index {
     color: var(--wc-text-faint);
-    font-family: var(--font-numeral);
+    font-family: var(--font-main);
     font-size: .6rem;
     letter-spacing: .08em
 }
@@ -2789,52 +2792,57 @@
 .ammo-picker-option-copy strong {
     overflow: hidden;
     color: var(--wc-text);
-    font-size: .7rem;
-    font-weight: 700;
-    line-height: 1.2;
+    font-family: var(--font-action);
+    font-size: calc(1.05rem * var(--w-k-action));
+    font-weight: var(--w-wt-action);
+    line-height: 1.6;
+    margin-block: -.12em;
     text-overflow: ellipsis;
     white-space: nowrap
 }
 
 .ammo-picker-option-copy small {
     color: var(--wc-text-faint);
-    font-family: var(--font-numeral);
-    font-variant-numeric: tabular-nums;
+    font-family: var(--font-main);
+    font-variant-numeric: lining-nums tabular-nums;
     font-size: .54rem;
     line-height: 1.1
 }
 
+/* The pause menu's on / off chips: 'current' is the outline, the one pinned with the right button (what the
+   R key loads) is the filled chip, so the two never look alike when they sit on the same type. */
 .ammo-picker-current {
-    padding: .14rem .34rem;
-    color: var(--wc-text);
-    font-size: .48rem;
-    letter-spacing: .07em;
-    text-transform: uppercase;
-    border: 0;
-    box-shadow: inset 0 0 0 1px var(--wc-line);
-    background: rgba(255, 255, 255, .06)
+    padding: .12rem .36rem .16rem;
+    color: var(--wc-text-dim);
+    font-size: calc(.52rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
+    letter-spacing: var(--w-label-track);
+    text-transform: var(--w-label-case);
+    white-space: nowrap;
+    border: 1px solid currentColor;
+    box-shadow: none;
+    background: none
 }
 
-/* The one pinned with the right button - what the R key loads. It is told from the 'current' badge by the gold
-   because the two may show on the same type, so they must not look alike. */
 .ammo-picker-preferred {
-    padding: .14rem .34rem;
-    color: #e8c37a;
-    font-size: .48rem;
-    letter-spacing: .07em;
-    text-transform: uppercase;
+    padding: .12rem .36rem .16rem;
+    color: var(--w-ink);
+    font-size: calc(.52rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
+    letter-spacing: var(--w-label-track);
+    text-transform: var(--w-label-case);
     white-space: nowrap;
-    border: 0;
-    box-shadow: inset 0 0 0 1px rgba(232, 195, 122, .5);
-    background: rgba(232, 195, 122, .1)
+    border: 1px solid var(--w-paper);
+    box-shadow: none;
+    background: var(--w-paper)
 }
 
 .ammo-picker-hint {
     margin: .3rem 0 0;
     padding: 0 .2rem;
-    color: var(--wc-text-dim, rgba(255, 255, 255, .45));
-    font-size: .5rem;
-    letter-spacing: .04em;
+    color: var(--wc-text-dim);
+    font-size: calc(.58rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
     text-align: center
 }
 
@@ -2845,7 +2853,7 @@
     height: .95rem;
     border: 0;
     border-radius: 0;
-    box-shadow: inset 0 0 0 1px var(--wc-line-strong)
+    box-shadow: inset 0 0 0 1px currentColor
 }
 
 .ammo-picker-radio i {
@@ -2857,7 +2865,7 @@
     transition: transform .14s ease, background .14s ease
 }
 
-.ammo-picker-option.selected .ammo-picker-radio i { background: #ffffff; transform: scale(1) }
+.ammo-picker-option.selected .ammo-picker-radio i { background: currentColor; transform: scale(1) }
 
 .ammo-picker-warning {
     display: flex;
@@ -2865,12 +2873,13 @@
     justify-content: space-between;
     gap: .55rem;
     margin: .3rem .8rem .6rem;
-    padding: .42rem .55rem;
-    color: var(--wc-red);
-    font-size: .58rem;
-    line-height: 1.35;
+    padding: .42rem .6rem;
+    color: var(--wc-text);
+    font-family: var(--font-text);
+    font-size: calc(.8rem * var(--w-k-text));
+    line-height: var(--w-lh-text);
     background: var(--wc-red-soft);
-    border-inline-start: .14rem solid var(--wc-red)
+    border-inline-start: .18rem solid var(--wc-red)
 }
 
 .ammo-picker-warning span { flex: 1 }
@@ -2880,15 +2889,16 @@
     padding: .24rem .45rem;
     border: 0;
     border-radius: 0;
-    box-shadow: inset 0 0 0 1px var(--wc-red-deep);
-    color: var(--wc-red);
+    box-shadow: inset 0 -2px 0 var(--wc-red);
+    color: var(--wc-text);
     background: transparent;
-    font-family: var(--font-display);
-    font-size: .52rem;
+    font-family: var(--font-main);
+    font-size: calc(.6rem * var(--w-k-label));
+    text-transform: var(--w-label-case);
     cursor: pointer
 }
 
-.ammo-picker-warning button:hover:not(:disabled) { background: rgba(203, 1, 1, .28); color: #ffffff }
+.ammo-picker-warning button:hover:not(:disabled) { background: var(--wc-red); box-shadow: none; color: var(--w-paper) }
 
 .ammo-picker-actions {
     position: relative;
@@ -2918,9 +2928,8 @@
     border-radius: 0;
     background: transparent;
     cursor: pointer;
-    font-family: var(--font-display);
-    font-size: .68rem;
-    letter-spacing: .04em;
+    font-family: var(--font-main);
+    font-size: calc(.7rem * var(--w-k-label));
     transition: color .14s ease
 }
 
@@ -2961,11 +2970,10 @@
     gap: .45rem;
     color: var(--wc-text);
     background: transparent;
-    border: 0;
-    font-weight: 700
+    border: 0
 }
 
-.ammo-picker-confirm:hover:not(:disabled) { color: #ffffff; background: transparent; transform: none }
+.ammo-picker-confirm:hover:not(:disabled) { color: var(--w-paper); background: transparent; transform: none }
 .ammo-picker-confirm svg { width: .36rem; height: .82rem; fill: currentColor; stroke: transparent }
 
 @keyframes ammoBackdropIn {
@@ -3033,7 +3041,7 @@
     inset: 5%;
     z-index: -1;
     pointer-events: none;
-    background-color: rgba(13, 13, 13, .88);
+    background-color: rgba(11, 10, 8, .88);
     -webkit-mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
     mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
     transition: background-color .2s
@@ -3054,12 +3062,12 @@
 
 .hb-slot.hb-filled { cursor: pointer }
 .hb-slot.hb-filled::before { opacity: .58 }
-.hb-slot.hb-filled::after { background-color: rgba(26, 26, 26, .9) }
+.hb-slot.hb-filled::after { background-color: rgba(21, 19, 15, .9) }
 .hb-slot.hb-filled:hover { transform: translateY(-3px) }
-.hb-slot.hb-filled:hover::before { opacity: 1; background-color: #ffffff }
-.hb-slot.hb-filled:hover::after { background-color: rgba(42, 42, 42, .92) }
-.hb-slot.hb-equipped::before { opacity: 1; background-color: #ffffff }
-.hb-slot.hb-equipped::after { background-color: rgba(46, 46, 46, .92) }
+.hb-slot.hb-filled:hover::before { opacity: 1; background-color: var(--w-paper) }
+.hb-slot.hb-filled:hover::after { background-color: rgba(39, 35, 28, .92) }
+.hb-slot.hb-equipped::before { opacity: 1; background-color: var(--w-paper) }
+.hb-slot.hb-equipped::after { background-color: rgba(56, 50, 42, .92) }
 
 /* The slot's number on a counter_bg_1a disc */
 .hb-key {
@@ -3072,7 +3080,7 @@
     place-items: center;
     width: 1.05rem;
     height: 1.05rem;
-    font-family: var(--font-numeral);
+    font-family: var(--font-main);
     font-size: .55rem;
     font-weight: 700;
     line-height: 1;
@@ -3085,7 +3093,7 @@
     position: absolute;
     inset: 0;
     z-index: -1;
-    background-color: #2a2a2a;
+    background-color: var(--w-ink-4);
     opacity: .85;
     -webkit-mask: var(--tex-counter_bg_1a) center / contain no-repeat;
     mask: var(--tex-counter_bg_1a) center / contain no-repeat
@@ -3118,15 +3126,15 @@
     z-index: 2;
     padding: 0 .25rem;
     text-align: center;
-    font-size: .46rem;
-    line-height: 1.25;
+    font-size: calc(.62rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
     color: var(--wc-text-dim);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis
 }
 
-.hb-empty-text { font-size: .48rem; color: var(--wc-text-faint); opacity: .5; letter-spacing: .03em }
+.hb-empty-text { font-size: calc(.56rem * var(--w-k-label)); color: var(--wc-text-faint); opacity: .6 }
 
 .hb-equip-dot {
     position: absolute;
@@ -3135,14 +3143,14 @@
     z-index: 2;
     width: .42rem;
     height: .42rem;
-    background: #ffffff;
-    box-shadow: 0 0 .35rem rgba(255, 255, 255, .5)
+    background: var(--w-paper);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .55)
 }
 
-.hb-slot.uncommon::after { background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .12), transparent 72%) }
-.hb-slot.rare::after { background-image: radial-gradient(circle at 50% 50%, rgba(200, 200, 200, .16), transparent 72%) }
-.hb-slot.epic::after { background-image: radial-gradient(circle at 50% 50%, rgba(220, 220, 220, .2), transparent 72%) }
-.hb-slot.legendary::after { background-image: radial-gradient(circle at 50% 50%, rgba(235, 235, 235, .24), transparent 72%) }
+.hb-slot.uncommon::after { background-image: radial-gradient(circle at 50% 50%, rgba(237, 230, 214, .12), transparent 72%) }
+.hb-slot.rare::after { background-image: radial-gradient(circle at 50% 50%, rgba(237, 230, 214, .16), transparent 72%) }
+.hb-slot.epic::after { background-image: radial-gradient(circle at 50% 50%, rgba(237, 230, 214, .2), transparent 72%) }
+.hb-slot.legendary::after { background-image: radial-gradient(circle at 50% 50%, rgba(237, 230, 214, .24), transparent 72%) }
 
 .hb-tooltip {
     position: absolute;
@@ -3151,24 +3159,28 @@
     transform: translateX(-50%);
     z-index: 10001;
     min-width: 5rem;
-    padding: .38rem .55rem;
+    padding: .42rem .75rem .46rem;
     text-align: center;
     white-space: nowrap;
     pointer-events: none;
-    background: var(--glass-modal);
-    box-shadow: inset 0 0 0 1px var(--wc-line), 0 4px 16px rgba(0, 0, 0, .55)
+    color: var(--w-note-ink);
+    background: var(--w-note);
+    box-shadow: inset 0 0 .9rem rgba(90, 70, 40, .28);
+    -webkit-mask-box-image: var(--w-tex-tear) 64 fill / .42rem round
 }
 
 .hb-tooltip::after { content: none }
 
 .hb-tooltip-name {
-    margin-bottom: .1rem;
-    font-family: var(--font-display);
-    font-size: .68rem;
-    color: var(--wc-text)
+    margin-bottom: .05rem;
+    font-family: var(--font-action);
+    font-weight: var(--w-wt-action);
+    font-size: calc(.9rem * var(--w-k-action));
+    line-height: var(--w-lh-action);
+    color: var(--w-note-ink)
 }
 
-.hb-tooltip-hint { font-size: .5rem; color: var(--wc-text-dim); letter-spacing: .02em }
+.hb-tooltip-hint { font-size: calc(.56rem * var(--w-k-label)); line-height: var(--w-lh-label); color: var(--w-note-dim) }
 
 /* ═════════════════════════════ 23. The trade ═════════════════════════════ */
 
@@ -3179,54 +3191,41 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, .6);
+    background: var(--w-scrim);
     pointer-events: auto;
     font-family: var(--font-main)
 }
 
+.trade-request-note { animation: ammoLedgerIn .22s cubic-bezier(.2, .8, .2, 1) both }
+
 .trade-request-card {
     position: relative;
-    min-width: 16rem;
-    padding: 1.4rem 1.7rem;
+    min-width: 19rem;
+    max-width: min(26rem, calc(100vw - 2rem));
+    padding: 1.7rem 2.1rem 1.35rem;
     text-align: center;
-    color: var(--wc-text);
-    background: var(--glass-modal);
-    box-shadow: var(--shadow);
-    animation: slideIn .25s ease
+    color: var(--w-note-ink)
 }
 
-.trade-request-icon { width: 2.3rem; height: 2.3rem; margin: 0 auto .6rem; color: var(--wc-accent); opacity: .8 }
+.trade-request-icon { width: 2rem; height: 2rem; margin: 0 auto .45rem; color: var(--w-note-ink); opacity: .7 }
 .trade-request-icon svg { width: 100%; height: 100% }
 
 .trade-request-title {
-    margin-bottom: .35rem;
-    font-family: var(--font-display);
-    font-size: 1rem;
-    line-height: 1.35;
-    color: var(--wc-text)
+    margin-bottom: .2rem;
+    font-size: calc(1.5rem * var(--w-k-title));
+    color: var(--w-note-ink)
 }
 
-.trade-request-name { font-family: var(--font-display); font-size: .9rem; color: var(--wc-text) }
-.trade-request-sub { margin-bottom: .85rem; font-size: .62rem; color: var(--wc-text-dim) }
-.trade-request-actions { display: flex; gap: .55rem; justify-content: center }
+.trade-request-name { font-family: var(--font-action); font-weight: var(--w-wt-action); font-size: calc(1.05rem * var(--w-k-action)); line-height: var(--w-lh-action); color: var(--w-note-ink) }
+.trade-request-sub { margin-bottom: .75rem; font-family: var(--font-text); font-size: calc(.9rem * var(--w-k-text)); line-height: var(--w-lh-text); color: var(--w-note-dim) }
+.trade-request-actions { display: flex; gap: 2rem; justify-content: center }
 
-.trade-req-btn {
-    padding: .45rem 1rem;
-    border: 0;
-    cursor: pointer;
-    background: transparent;
-    box-shadow: inset 0 0 0 1px var(--wc-line);
-    color: var(--wc-text-dim);
-    font-family: var(--font-display);
-    font-size: .68rem;
-    letter-spacing: .04em;
-    transition: background-color .15s ease, box-shadow .15s ease, color .15s ease
-}
-
-.trade-req-btn.accept { color: var(--wc-text); box-shadow: inset 0 0 0 1px var(--wc-line-strong) }
-.trade-req-btn.accept:hover { background: var(--wc-hover) }
-.trade-req-btn.decline { color: var(--wc-red); box-shadow: inset 0 0 0 1px var(--wc-red-deep) }
-.trade-req-btn.decline:hover { background: var(--wc-red-soft) }
+/* the refusal is destructive: its underline is red at rest, and it fills red under the cursor */
+.trade-req-btn.decline::after { opacity: .55 }
+.trade-req-btn.decline:hover,
+.trade-req-btn.decline:focus-visible { color: var(--w-paper); background: var(--w-red) }
+.trade-req-btn.decline:hover::after,
+.trade-req-btn.decline:focus-visible::after { opacity: 0 }
 
 #trade-panel {
     position: fixed;
@@ -3285,12 +3284,12 @@
 
 .trade-title {
     font-family: var(--font-display);
-    font-size: .92rem;
+    font-size: calc(1.2rem * var(--w-k-title));
     line-height: 1.3;
     color: var(--wc-text)
 }
 
-.trade-partner { font-size: .58rem; color: var(--wc-text-dim) }
+.trade-partner { font-size: calc(.6rem * var(--w-k-label)); line-height: var(--w-lh-label); color: var(--wc-text-dim) }
 
 .trade-columns { display: flex; gap: 0; padding: .6rem .75rem }
 
@@ -3306,13 +3305,15 @@
     transition: box-shadow .3s, background .3s
 }
 
-.trade-col.trade-confirmed { box-shadow: inset 0 0 0 1px var(--wc-line-strong); background: rgba(255, 255, 255, .04) }
+.trade-col.trade-confirmed { box-shadow: inset 0 0 0 1px var(--wc-line-strong); background: rgba(237, 230, 214, .04) }
 
 .trade-col-label {
-    font-family: var(--font-display);
-    font-size: .64rem;
+    font-family: var(--font-main);
+    font-size: calc(.62rem * var(--w-k-label));
+    line-height: var(--w-lh-label);
     color: var(--wc-text-dim);
-    letter-spacing: .06em
+    text-transform: var(--w-label-case);
+    letter-spacing: var(--w-label-track)
 }
 
 .trade-col-drop {
@@ -3327,8 +3328,8 @@
     transition: box-shadow .2s, background .2s
 }
 
-.trade-col-drop.trade-drop-hover { box-shadow: inset 0 0 0 1px var(--wc-line-strong); background: rgba(255, 255, 255, .05) }
-.trade-drop-hint { padding: .6rem 0; font-size: .58rem; color: var(--wc-text-faint); user-select: none }
+.trade-col-drop.trade-drop-hover { box-shadow: inset 0 0 0 1px var(--wc-line-strong); background: rgba(237, 230, 214, .05) }
+.trade-drop-hint { padding: .6rem 0; font-size: calc(.6rem * var(--w-k-label)); line-height: var(--w-lh-label); color: var(--wc-text-faint); user-select: none }
 .trade-col-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .3rem; width: 100% }
 
 .trade-divider {
@@ -3361,7 +3362,7 @@
     display: grid;
     place-items: center;
     overflow: hidden;
-    background: rgba(255, 255, 255, .015)
+    background: rgba(237, 230, 214, .015)
 }
 
 .trade-slot::before {
@@ -3377,7 +3378,7 @@
     transition: opacity .18s
 }
 
-.trade-slot-filled { cursor: pointer; background: rgba(255, 255, 255, .04) }
+.trade-slot-filled { cursor: pointer; background: rgba(237, 230, 214, .04) }
 .trade-slot-filled::before { opacity: .5 }
 .trade-slot-filled:hover::before { opacity: .95 }
 .trade-slot img { position: relative; width: 70%; height: 70%; object-fit: contain; pointer-events: none }
@@ -3390,8 +3391,9 @@
     padding: .02rem .16rem;
     background: rgba(0, 0, 0, .6);
     color: var(--wc-text);
-    font-family: var(--font-numeral);
-    font-size: .46rem
+    font-family: var(--font-main);
+    font-size: .54rem;
+    line-height: 1.2
 }
 
 .trade-slot-remove {
@@ -3408,14 +3410,14 @@
 }
 
 .trade-slot-filled:hover .trade-slot-remove { display: flex }
-.trade-slot-remove svg { width: .36rem; height: .36rem; color: #fff }
+.trade-slot-remove svg { width: .36rem; height: .36rem; color: var(--w-paper) }
 
-.trade-slot.uncommon { background: radial-gradient(circle, rgba(255, 255, 255, .1), transparent 70%) }
-.trade-slot.rare { background: radial-gradient(circle, rgba(169, 169, 169, .1), transparent 70%) }
-.trade-slot.epic { background: radial-gradient(circle, rgba(198, 198, 198, .12), transparent 70%) }
-.trade-slot.legendary { background: radial-gradient(circle, rgba(216, 216, 216, .14), transparent 70%) }
+.trade-slot.uncommon { background: radial-gradient(circle, rgba(237, 230, 214, .1), transparent 70%) }
+.trade-slot.rare { background: radial-gradient(circle, rgba(237, 230, 214, .1), transparent 70%) }
+.trade-slot.epic { background: radial-gradient(circle, rgba(237, 230, 214, .12), transparent 70%) }
+.trade-slot.legendary { background: radial-gradient(circle, rgba(237, 230, 214, .14), transparent 70%) }
 
-.trade-footer { position: relative; display: flex; gap: 0 }
+.trade-footer { position: relative; display: flex; gap: .5rem; padding: .45rem .7rem .65rem }
 
 .trade-footer::before {
     content: "";
@@ -3435,15 +3437,14 @@
     text-align: center;
     background: transparent;
     color: var(--wc-text-dim);
-    font-family: var(--font-display);
-    font-size: .7rem;
-    letter-spacing: .04em;
+    font-family: var(--font-main);
+    font-size: calc(.7rem * var(--w-k-label));
     cursor: pointer;
     transition: background-color .12s ease, color .12s ease
 }
 
 .trade-btn:hover { background: var(--wc-accent-soft); color: var(--wc-text) }
-.trade-btn.cancel:hover { background: var(--wc-red-soft); color: var(--wc-red) }
+.trade-btn.cancel:hover { background: transparent; color: var(--wc-text) }
 
 .trade-btn.confirm {
     display: flex;
@@ -3465,7 +3466,7 @@
     align-items: center;
     gap: .5rem;
     padding: 1.1rem .9rem;
-    background: linear-gradient(180deg, rgba(255, 255, 255, .04), transparent)
+    background: none
 }
 
 .trade-completing-overlay::before {
@@ -3483,27 +3484,28 @@
 
 .trade-completing-text {
     font-family: var(--font-display);
-    font-size: .75rem;
-    color: var(--wc-text);
-    letter-spacing: .04em
+    font-size: calc(1.05rem * var(--w-k-title));
+    font-weight: var(--w-wt-title);
+    line-height: 1.3;
+    color: var(--wc-text)
 }
 
-.trade-completing-sub { font-size: .55rem; color: var(--wc-text-faint); animation: tradePulse 2s ease-in-out infinite }
+.trade-completing-sub { font-size: calc(.6rem * var(--w-k-label)); line-height: var(--w-lh-label); color: var(--wc-text-faint); animation: tradePulse 2s ease-in-out infinite }
 
 .trade-completing-bar-track {
     width: 100%;
     height: .32rem;
-    border-radius: 999px;
+    border-radius: 0;
     overflow: hidden;
-    background: rgba(255, 255, 255, .1);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12)
+    background: rgba(237, 230, 214, .1);
+    box-shadow: inset 0 -1px 0 var(--w-rule)
 }
 
 .trade-completing-bar-fill {
     width: 0;
     height: 100%;
-    border-radius: 999px;
-    background: linear-gradient(180deg, #ffffff, #b4b4b4);
+    border-radius: 0;
+    background: var(--w-paper);
     animation: tradeBarFill 2.4s ease-in-out forwards
 }
 
@@ -3519,10 +3521,9 @@
 
 /* ═══════════ 24. Dressing the rest of the buttons and the tooltips with the game's art panels ═══════════ */
 
-/* The primary action buttons (confirm the split/the trade/the order) on a selection_box_bg_1c panel */
+/* The primary action buttons (confirm the split/the trade) on a selection_box_bg_1c panel */
 #inv-split-dialog .split-btn.confirm,
-.trade-btn.confirm,
-.trade-req-btn.accept {
+.trade-btn.confirm {
     position: relative;
     isolation: isolate;
     color: var(--wc-text);
@@ -3531,8 +3532,7 @@
 }
 
 #inv-split-dialog .split-btn.confirm::before,
-.trade-btn.confirm::before,
-.trade-req-btn.accept::before {
+.trade-btn.confirm::before {
     content: "";
     position: absolute;
     inset: .12rem .2rem;
@@ -3543,8 +3543,7 @@
 }
 
 #inv-split-dialog .split-btn.confirm::after,
-.trade-btn.confirm::after,
-.trade-req-btn.accept::after {
+.trade-btn.confirm::after {
     content: "";
     position: absolute;
     inset: .12rem .2rem;
@@ -3557,31 +3556,10 @@
 }
 
 #inv-split-dialog .split-btn.confirm:hover::after,
-.trade-btn.confirm:hover::after,
-.trade-req-btn.accept:hover::after { opacity: 1 }
+.trade-btn.confirm:hover::after { opacity: 1 }
 
 #inv-split-dialog .split-btn.confirm:hover,
 .trade-btn.confirm:hover { background: transparent }
-
-/* The refuse/cancel buttons on the cleaner bar's panel with a red touch */
-.trade-req-btn.decline {
-    position: relative;
-    isolation: isolate;
-    box-shadow: none
-}
-
-.trade-req-btn.decline::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background-color: #260404;
-    -webkit-mask: var(--tex-selection_box_bg_1a) center / 100% 100% no-repeat;
-    mask: var(--tex-selection_box_bg_1a) center / 100% 100% no-repeat
-}
-
-.trade-req-btn.decline:hover { background: transparent }
-.trade-req-btn.decline:hover::before { background-color: #3d0606 }
 
 /* The bottom tooltip lines on a help_text_bg panel - the 'help text' panel in RDR2 */
 #inventory-detail .detail-hint,
@@ -3596,7 +3574,7 @@
     position: absolute;
     inset: .18rem .55rem;
     z-index: -1;
-    background-color: rgba(255, 255, 255, .045);
+    background-color: rgba(237, 230, 214, .045);
     -webkit-mask: var(--tex-help_text_bg) center / 100% 100% no-repeat;
     mask: var(--tex-help_text_bg) center / 100% 100% no-repeat
 }
@@ -3621,7 +3599,7 @@
 }
 
 #inv-split-dialog .split-adj:hover { background: transparent }
-#inv-split-dialog .split-adj:hover::before { background-color: #2e2e2e }
+#inv-split-dialog .split-adj:hover::before { background-color: var(--w-ink-5) }
 
 /* The hotbar's rod a little quieter */
 #hotbar::after { opacity: .4 }

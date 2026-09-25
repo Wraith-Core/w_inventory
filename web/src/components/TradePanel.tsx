@@ -37,15 +37,16 @@ export function TradeRequest({ request, onAccept, onDecline }: { request: any; o
   if (!request) return null;
   return (
     <div className="trade-request-overlay">
-      <div className="wst-panel trade-request-card">
-        <Frame px={11} opacity={0.5} />
-        <div className="trade-request-icon">{SVG_HANDSHAKE}</div>
-        <div className="wst-title trade-request-title">{tr('ui_trade_request', 'Trade request')}</div>
-        <div className="trade-request-name">{request.fromName}</div>
-        <div className="trade-request-sub">{tr('ui_trade_wants', 'wants to trade with you')}</div>
-        <div className="trade-request-actions">
-          <button className="wst-button danger trade-req-btn decline" onClick={onDecline}>{tr('ui_decline', 'Decline')}</button>
-          <button className="wst-button primary trade-req-btn accept" onClick={onAccept}>{tr('ui_accept', 'Accept')}</button>
+      <div className="w-note-wrap trade-request-note">
+        <div className="w-note trade-request-card" role="dialog" aria-modal="true">
+          <div className="trade-request-icon">{SVG_HANDSHAKE}</div>
+          <div className="w-t-title trade-request-title">{tr('ui_trade_request', 'Trade request')}</div>
+          <div className="trade-request-name">{request.fromName}</div>
+          <div className="trade-request-sub">{tr('ui_trade_wants', 'wants to trade with you')}</div>
+          <div className="trade-request-actions">
+            <button className="w-choice trade-req-btn accept" onClick={onAccept}>{tr('ui_accept', 'Accept')}</button>
+            <button className="w-choice trade-req-btn decline" onClick={onDecline}>{tr('ui_decline', 'Decline')}</button>
+          </div>
         </div>
       </div>
     </div>

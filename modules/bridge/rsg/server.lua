@@ -130,7 +130,9 @@ local function saveOfflineItems(playerData)
         }
     end
 
-    db.savePlayer(playerData.citizenid, next(buffer) and json.encode(buffer) or nil)
+    -- an offline Player object is a copy read earlier: its players row (id) is named, so a copy of
+    -- a character w_core has since moved to another number never writes over that number's next holder
+    db.savePlayer(playerData.citizenid, next(buffer) and json.encode(buffer) or nil, nil, tonumber(playerData.id))
     return true
 end
 

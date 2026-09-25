@@ -57,6 +57,9 @@ local function mutate(owner, action, name, count, id, ammo)
     local ok, result, reason = xpcall(function()
         if online(owner) or server.nativeLoadingOwners[owner] then return false, 'Character is loading' end
         if not db.playerExists(owner) then return false, 'Character not found' end
+        -- the row read here is the one written below: a character w_core moves to another number
+        -- meanwhile (its number handed on) must not have its edit land on the next holder
+        local rowId = db.playerRowId(owner)
         local rows = db.loadPlayer(owner) or {}
         local item = name and Items(name)
         if action == 'add' then
@@ -110,13 +113,26 @@ local function mutate(owner, action, name, count, id, ammo)
                 if match.row.count == 0 then rows[match.index] = nil end
                 if count == 0 then break end
             end
+        elseif action == 'clear' then
+            -- /clearinv on an offline character. Cash and gunbelt ammo rows only mirror a
+            -- core-owned account (the money is not the bag's to wipe): they stay.
+            local kept = {}
+            for _, row in pairs(rows) do
+                local definition = Items(row.name)
+                if row.name == 'money' or row.name == 'gold'
+                    or definition and (definition.nativeCurrency or definition.nativeGunbelt) then
+                    kept[#kept + 1] = row
+                end
+            end
+            rows = kept
         else return false, 'Invalid operation' end
         if online(owner) then return false, 'Character is online' end
-        return db.savePlayer(owner, json.encode(rows)) == true
+        return db.savePlayer(owner, json.encode(rows), nil, rowId) == true
     end, debug.traceback)
     server.nativeOfflineLocks[owner] = nil
     if not ok then return false, result end
     return result, reason
 end
+-- action: 'add' (name, count), 'remove' (name, count, weapon id) or 'clear' (every item row)
 exports('MutateNativeOfflineInventory', mutate)
 return true

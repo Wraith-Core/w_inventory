@@ -269,7 +269,7 @@ const ClothingInterface: React.FC = () => {
         className={`
           relative group w-16 h-16 rounded-xl border-2 transition-all duration-300
           flex flex-col items-center justify-center gap-1 cursor-pointer
-          backdrop-blur-sm font-[Tajawal] overflow-hidden
+          backdrop-blur-sm font-main overflow-hidden
           ${isToggled
             ? 'bg-white/90 border-white text-black shadow-lg shadow-white/25'
             : 'bg-black/40 border-white/20 text-white hover:bg-black/60 hover:border-white/40 hover:shadow-md'
@@ -326,7 +326,7 @@ const ClothingInterface: React.FC = () => {
   return (
     <div className="w-full p-2" ref={containerRef}>
       {visibleItems.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 text-center font-[Tajawal] text-white/70">
+        <div className="flex flex-col items-center justify-center py-8 text-center font-main text-white/70">
           <span className="text-sm">{Locale.ui_no_clothing_worn ?? 'No clothing worn'}</span>
           <span className="text-xs mt-1">{Locale.ui_wear_clothing_to_see ?? 'Wear clothing to see it here'}</span>
         </div>
@@ -347,7 +347,7 @@ const ClothingInterface: React.FC = () => {
             className={`
               group relative flex flex-col items-center justify-center
               w-full aspect-square rounded-lg border-2 p-1.5 cursor-pointer
-              backdrop-blur-md font-[Tajawal] overflow-hidden
+              backdrop-blur-md font-main overflow-hidden
               ${worn
                 ? 'bg-gradient-to-br from-clothing-active-from/90 to-clothing-active-to/90 border-clothing-border-active text-white shadow-lg shadow-clothing-active/25'
                 : 'bg-clothing-inactive/80 text-white/90 border-amber-500/40 hover:border-amber-400/60'

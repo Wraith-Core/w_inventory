@@ -75,7 +75,7 @@ local function ensureMarkerTable()
             `stashes` INT NOT NULL DEFAULT 0,
             `migrated_at` TIMESTAMP NOT NULL DEFAULT current_timestamp(),
             PRIMARY KEY (`cid`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
     ]]):format(MARKER_TABLE))
 end
 

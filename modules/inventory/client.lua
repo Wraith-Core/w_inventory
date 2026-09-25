@@ -18,14 +18,19 @@ function Inventory.OpenSaddlebag(horse, horseUUID)
 end
 
 --- The storage of a wagon: the 'trunk' inventory type. An owned wagon is keyed by the
---- wagonId state bag its stables resource sets; any other wagon gets a temporary store.
+--- wagonUUID state bag w_stables sets (its 'w_stables' tag id as the fallback), so the id
+--- matches the owner's own ('trunk%d'):format(st.id); any other wagon gets a temporary store.
 ---@param entity number
 ---@return boolean?
 function Inventory.OpenWagonStorage(entity)
 	if not entity or entity == 0 or not DoesEntityExist(entity) or not NetworkGetEntityIsNetworked(entity) then return end
 
 	local netId = NetworkGetNetworkIdFromEntity(entity)
-	local wagonId = w.entity.getState(entity, 'wagonId')
+	-- the id is floored to an integer: a float or string id would format a different container
+	local stables = w.entity.getState(entity, 'w_stables')
+	local wagonId = tonumber(w.entity.getState(entity, 'wagonUUID'))
+		or (type(stables) == 'table' and stables.role == 'wagon' and tonumber(stables.id)) or nil
+	if wagonId then wagonId = math.floor(wagonId) end
 	local invId = ('trunk%s'):format(wagonId or ('temp:' .. netId))
 
 	local coords = GetEntityCoords(entity)
@@ -326,18 +331,60 @@ local function clearStoragePrompt()
 	storagePrompt = nil
 end
 
----A horse another player registered: it carries a stable id and its stables owner is not us.
+---Another player's stables entity: it carries w_stables' tag (set by that server on spawn) and
+---the tag names an owner who is not us. No tag, or no owner in it, is "unknown", not "foreign":
+---the player's own horse wears its tag a few frames after it spawns, and in that gap it used to
+---read as foreign and get this prompt on top of w_stables' own rows.
+---@param entity number
+---@param role 'horse' | 'wagon' | 'draft'
+---@return boolean
+local function isForeignStablesEntity(entity, role)
+	if not entity or entity == 0 or not DoesEntityExist(entity) or not NetworkGetEntityIsNetworked(entity) then return false end
+
+	local stables = w.entity.getState(entity, 'w_stables')
+	if type(stables) ~= 'table' or stables.owner == nil or stables.owner == cache.serverId then return false end
+	if role == 'wagon' then return stables.role == 'wagon' end
+	return stables.role ~= 'wagon'
+end
+
+---A horse another player registered. The player's own horse is asked of w_stables directly as
+---well: its rows (mount, saddlebag, hitch) are that resource's, and this prompt must not sit on
+---the same animal and win the corner.
 ---@param ped number
 ---@return boolean
 local function isForeignSaddlebagHorse(ped)
-	-- The proximity scan also visits local NPCs and preview peds. Only a live,
-	-- networked mount can carry the server's stable identity.
-	if not ped or ped == 0 or not DoesEntityExist(ped) or not NetworkGetEntityIsNetworked(ped) then return false end
+	if not isForeignStablesEntity(ped, 'horse') then return false end
 	if not w.entity.getState(ped, 'horseUUID') then return false end
 
-	local stables = w.entity.getState(ped, 'w_stables')
+	if GetResourceState('w_stables') == 'started' then
+		local ok, mine = pcall(function() return exports.w_stables:IsMyHorse(ped) end)
+		if ok and mine == true then return false end
+	end
 
-	return not (type(stables) == 'table' and stables.owner == cache.serverId)
+	return true
+end
+
+---The closest ped / vehicle within `radius` that passes `accept`. w.getClosestPed takes no
+---filter, so the scan is done here: a boat, a train or a stranger's dog must never carry a
+---saddlebag prompt.
+---@param pool 'CPed' | 'CVehicle'
+---@param coords vector3
+---@param radius number
+---@param accept fun(entity: number): boolean
+---@return number? entity
+---@return vector3? coords
+local function closestAccepted(pool, coords, radius, accept)
+	local best, bestCoords, bestDist = nil, nil, radius
+	for _, entity in ipairs(GetGamePool(pool)) do
+		if entity ~= cache.ped then
+			local at = GetEntityCoords(entity)
+			local d = #(coords - at)
+			if d < bestDist and accept(entity) then
+				best, bestCoords, bestDist = entity, at, d
+			end
+		end
+	end
+	return best, bestCoords
 end
 
 ---Mirrors the guard of the storage key: no open bag, no page holding the keyboard, the bag
@@ -392,8 +439,12 @@ function Inventory.StartStoragePrompts()
 
 			if PlayerData.loaded and not cache.vehicle and not cache.mount and not LocalPlayer.state.invOpen then
 				local coords = GetEntityCoords(cache.ped)
-				local wagon, wagonCoords = w.getClosestVehicle(coords, 4.0)
-				local horse, horseCoords = w.getClosestPed(coords, 4.0, isForeignSaddlebagHorse)
+				-- only another player's wagon (its w_stables tag says so): not a boat, not a train,
+				-- not our own wagon -- w_stables draws that one's storage row itself
+				local wagon, wagonCoords = closestAccepted('CVehicle', coords, 4.0, function(veh)
+					return isForeignStablesEntity(veh, 'wagon')
+				end)
+				local horse, horseCoords = closestAccepted('CPed', coords, 4.0, isForeignSaddlebagHorse)
 
 				if wagon and horse then
 					if #(coords - wagonCoords) <= #(coords - horseCoords) then horse = nil else wagon = nil end
