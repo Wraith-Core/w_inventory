@@ -129,10 +129,12 @@ function Utils.ItemNotify(data)
 	local iconUrl = (type(image) == 'string' and image ~= '' and image)
 		or ((item and item.name) and ('nui://w_inventory/web/images/' .. item.name .. '.png')) or nil
 
+	-- a removed item is not an error: its word says what happened, and red stays the mark of a
+	-- real failure (the notice's frame turns red only for type 'error')
 	w.notify({
 		description = ('%s ×%d %s'):format(locale(data[2]), count, label),
 		icon        = iconUrl,
-		type        = added and 'success' or 'error',
+		type        = added and 'success' or 'inform',
 		duration    = 3500,
 		isRTL       = shared.localeKey() == 'ar',
 	})
@@ -194,6 +196,32 @@ end
 ---@field prompt table the w.prompt.at record
 ---@field remove fun()
 
+-- The marker is paint, and every interface is RDR's black and white: paper, never a hue.
+-- A caller's colour is kept only as a paper tone picked by its luminance (paper, paper-dim,
+-- paper-faint), so an old call site that still passes a colour can never draw one.
+local MARKER_PAPER = { r = 237, g = 230, b = 214 }
+local MARKER_TONES = { { 237, 230, 214 }, { 185, 175, 156 }, { 125, 116, 102 } }
+
+---@param r? number
+---@param g? number
+---@param b? number
+---@return number, number, number
+local function markerTone(r, g, b)
+	r, g, b = tonumber(r), tonumber(g), tonumber(b)
+	if not (r and g and b) then return 237, 230, 214 end
+
+	local lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+	local best, bestDist = MARKER_TONES[1], math.huge
+
+	for i = 1, #MARKER_TONES do
+		local tone = MARKER_TONES[i]
+		local dist = math.abs(lum - (0.2126 * tone[1] + 0.7152 * tone[2] + 0.0722 * tone[3]))
+		if dist < bestDist then best, bestDist = tone, dist end
+	end
+
+	return best[1], best[2], best[3]
+end
+
 ---A walk-up place: one marker point plus one library prompt record.
 ---@param opts WPlaceOptions
 ---@return WPlace
@@ -228,8 +256,8 @@ function Utils.Place(opts)
 	local marker = opts.marker
 
 	if marker ~= false then
-		marker = marker or { r = 30, g = 30, b = 150 }
-		local r, g, b = marker.r or marker[1], marker.g or marker[2], marker.b or marker[3]
+		marker = marker or MARKER_PAPER
+		local r, g, b = markerTone(marker.r or marker[1], marker.g or marker[2], marker.b or marker[3])
 
 		place.point = lib.points.new({
 			coords = opts.coords,
