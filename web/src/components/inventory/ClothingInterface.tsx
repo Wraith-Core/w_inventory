@@ -350,7 +350,7 @@ const ClothingInterface: React.FC = () => {
               backdrop-blur-md font-main overflow-hidden
               ${worn
                 ? 'bg-gradient-to-br from-clothing-active-from/90 to-clothing-active-to/90 border-clothing-border-active text-white shadow-lg shadow-clothing-active/25'
-                : 'bg-clothing-inactive/80 text-white/90 border-amber-500/40 hover:border-amber-400/60'
+                : 'bg-clothing-inactive/80 text-white/90 border-[#B9AF9C]/40 hover:border-[#EDE6D6]/60'
               }
             `}
             initial={{ opacity: 0, y: 15 }}

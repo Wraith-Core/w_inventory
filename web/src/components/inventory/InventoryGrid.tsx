@@ -162,7 +162,7 @@ const InventoryGrid: React.FC<{ inventory: Inventory, renderControl?: boolean, m
                 {/* The cash and gold balances from PlayerData.money (gold is an accounting currency) */}
                 {meta?.isMainInventory && (
                   <div className="flex gap-3 text-sm font-medium tabular-nums">
-                    <span className="text-green-400/90" title="Cash">Cash: {formatCompact(playerCash)}</span>
+                    <span className="text-[#EDE6D6]" title="Cash">Cash: {formatCompact(playerCash)}</span>
                   </div>
                 )}
                 <span className="flex-1" />
@@ -194,7 +194,7 @@ const InventoryGrid: React.FC<{ inventory: Inventory, renderControl?: boolean, m
                 {inventory.type === 'shop' && (
                   <div className="flex flex-col gap-2 mt-2" style={{ color: 'rgb(227 228 227)' }}>
                     <div className="flex gap-2 justify-center text-xs tabular-nums">
-                      <span className="text-green-400/90">Cash: {formatCompact(playerCash)}</span>
+                      <span className="text-[#EDE6D6]">Cash: {formatCompact(playerCash)}</span>
                     </div>
                   </div>
                 )}

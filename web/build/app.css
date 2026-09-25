@@ -1557,7 +1557,7 @@ svg.cur-gold {
   white-space: nowrap;
   pointer-events: none;
   background: var(--w-note);
-  box-shadow: inset 0 0 0.9rem rgba(90, 70, 40, 0.28);
+  box-shadow: inset 0 0 0.9rem var(--w-note-glow);
   -webkit-mask-box-image: var(--w-tex-tear) 64 fill/0.42rem round;
 }
 
@@ -3606,7 +3606,8 @@ svg.cur-gold {
   font-family: var(--font-text);
   font-size: calc(0.8rem * var(--w-k-text));
   line-height: var(--w-lh-text);
-  background: var(--wc-red-soft);
+  /* an ink plate; the red is only the bar at its start (a mark, never a tinted area) */
+  background: var(--w-ink-3);
   border-inline-start: 0.18rem solid var(--wc-red);
 }
 
@@ -3991,7 +3992,7 @@ svg.cur-gold {
   pointer-events: none;
   color: var(--w-note-ink);
   background: var(--w-note);
-  box-shadow: inset 0 0 0.9rem rgba(90, 70, 40, 0.28);
+  box-shadow: inset 0 0 0.9rem var(--w-note-glow);
   -webkit-mask-box-image: var(--w-tex-tear) 64 fill/0.42rem round;
 }
 
