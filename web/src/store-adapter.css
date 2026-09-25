@@ -114,7 +114,7 @@ html[dir=rtl] body.wst-inventory *, body.wst-inventory[dir=rtl] * { letter-spaci
   background: var(--w-ink-2) !important;
   -webkit-mask: none !important; mask: none !important;
   -webkit-mask-box-image: var(--w-tex-tear) 64 fill / .8rem round !important;
-  box-shadow: inset 0 0 1rem rgba(237,230,214,.1) !important;
+  box-shadow: inset 0 0 1rem rgba(242,242,242,.1) !important;
 }
 .wst-inventory #inventory-options .wst-frame { display: none !important; }
 .wst-inventory #inventory-options .opt-header::after { inset-inline: .7rem; }

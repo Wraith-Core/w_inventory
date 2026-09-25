@@ -199,8 +199,8 @@ end
 -- The marker is paint, and every interface is RDR's black and white: paper, never a hue.
 -- A caller's colour is kept only as a paper tone picked by its luminance (paper, paper-dim,
 -- paper-faint), so an old call site that still passes a colour can never draw one.
-local MARKER_PAPER = { r = 237, g = 230, b = 214 }
-local MARKER_TONES = { { 237, 230, 214 }, { 185, 175, 156 }, { 125, 116, 102 } }
+local MARKER_PAPER = { r = 242, g = 242, b = 242 }
+local MARKER_TONES = { { 242, 242, 242 }, { 180, 180, 180 }, { 122, 122, 122 } }
 
 ---@param r? number
 ---@param g? number
@@ -208,7 +208,7 @@ local MARKER_TONES = { { 237, 230, 214 }, { 185, 175, 156 }, { 125, 116, 102 } }
 ---@return number, number, number
 local function markerTone(r, g, b)
 	r, g, b = tonumber(r), tonumber(g), tonumber(b)
-	if not (r and g and b) then return 237, 230, 214 end
+	if not (r and g and b) then return 242, 242, 242 end
 
 	local lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
 	local best, bestDist = MARKER_TONES[1], math.huge

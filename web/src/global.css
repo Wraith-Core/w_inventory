@@ -1,5 +1,5 @@
 /* ============================================================
-   The Wraith theme (w_lib/nui/theme): warm ink, aged paper, one red.
+   The Wraith theme (w_lib/nui/theme): black ink, white paper (neutral greys, r = g = b), one red.
    Every face comes from the theme package (theme/fonts.css, pulled in by the
    store-theme.css link in index.html), so the inventory carries no font files
    of its own. The --wc-* names stay: they are what index.scss draws with, and
@@ -20,22 +20,22 @@
   --wc-red: var(--w-red);
   --wc-red-deep: var(--w-red-deep);
   --wc-red-soft: var(--w-red-soft);
-  --wc-hover: rgba(237, 230, 214, 0.12);
+  --wc-hover: rgba(242, 242, 242, 0.12);
   --wc-ok: var(--w-paper);
   --wc-accent: var(--w-paper);
-  --wc-accent-soft: rgba(237, 230, 214, 0.08);
-  --wc-glow: rgba(237, 230, 214, 0.05);
+  --wc-accent-soft: rgba(242, 242, 242, 0.08);
+  --wc-glow: rgba(242, 242, 242, 0.05);
 
   /* w_inventory's old names, bound to the same tokens so nothing breaks */
-  --glass: radial-gradient(130% 90% at 50% 0%, rgba(29, 26, 21, 0.94) 0%, rgba(21, 19, 15, 0.96) 42%, rgba(11, 10, 8, 0.97) 100%);
-  --glass-solid: rgba(11, 10, 8, 0.96);
-  --glass-light: rgba(29, 26, 21, 0.94);
+  --glass: radial-gradient(130% 90% at 50% 0%, rgba(25, 25, 25, 0.94) 0%, rgba(17, 17, 17, 0.96) 42%, rgba(10, 10, 10, 0.97) 100%);
+  --glass-solid: rgba(10, 10, 10, 0.96);
+  --glass-light: rgba(25, 25, 25, 0.94);
   /* The stacked surfaces (menus/dialogs/tooltips) are drawn opaque so the panel does not show through them */
   --glass-modal: radial-gradient(130% 90% at 50% 0%, var(--w-ink-3) 0%, var(--w-ink-2) 42%, var(--w-ink) 100%);
   --border: var(--wc-line);
-  --border-light: rgba(237, 230, 214, 0.08);
+  --border-light: rgba(242, 242, 242, 0.08);
   --accent: var(--wc-accent);
-  --accent-dim: rgba(237, 230, 214, 0.28);
+  --accent-dim: rgba(242, 242, 242, 0.28);
   --accent-glow: var(--wc-glow);
   --accent-deep: var(--w-paper-dim);
   --text: var(--wc-text);

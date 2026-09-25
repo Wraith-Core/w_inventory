@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    w_inventory in the Wraith theme (w_lib/nui/theme): the loading screen's and the pause menu's
-   warm ink and aged paper, one red as a mark only. Every visible surface is composed from
+   black ink and white paper (neutral, no tint: the launcher's palette), one red as a mark only. Every visible surface is composed from
    RDR2's own art through the texture masks (the --tex-* registered in main.tsx): the
    crafting_highlight frame in eight pieces, the crafting_outline slots, the buttons' panels
    selection_box_bg, the badges' plates swatch_bg/counter_bg, and the dividers
@@ -196,7 +196,7 @@
     height: .38rem;
     border-radius: 0;
     overflow: hidden;
-    background: rgba(237, 230, 214, .1);
+    background: rgba(242, 242, 242, .1);
     box-shadow: inset 0 -1px 0 var(--w-rule)
 }
 
@@ -286,8 +286,8 @@
     inset: 0;
     pointer-events: none;
     background:
-        radial-gradient(120% 100% at 22% 50%, rgba(11, 10, 8, .22), rgba(11, 10, 8, 0) 62%),
-        rgba(11, 10, 8, .42);
+        radial-gradient(120% 100% at 22% 50%, rgba(10, 10, 10, .22), rgba(10, 10, 10, 0) 62%),
+        rgba(10, 10, 10, .42);
     animation: invScrimIn .35s ease-out both
 }
 
@@ -492,7 +492,7 @@
     height: .38rem;
     border-radius: 0;
     overflow: hidden;
-    background: rgba(237, 230, 214, .1);
+    background: rgba(242, 242, 242, .1);
     box-shadow: inset 0 -1px 0 var(--w-rule)
 }
 
@@ -638,7 +638,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     padding-block: .52rem;
     padding-inline: 1.5rem .1rem;
     background: transparent;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%237D7466' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%237A7A7A' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right center;
     background-size: .85rem;
@@ -857,7 +857,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     min-width: .8rem;
     padding: .04rem .24rem;
     background: rgba(0, 0, 0, .82);
-    box-shadow: inset 0 0 0 1px rgba(237, 230, 214, .1);
+    box-shadow: inset 0 0 0 1px rgba(242, 242, 242, .1);
     color: var(--wc-text);
     font-family: var(--font-main);
     font-variant-numeric: lining-nums tabular-nums;
@@ -885,7 +885,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
 
 .inv-grid .slot.weapon-equipped::after {
     background-color: var(--w-ink-4);
-    background-image: linear-gradient(180deg, rgba(237, 230, 214, .1), transparent 60%)
+    background-image: linear-gradient(180deg, rgba(242, 242, 242, .1), transparent 60%)
 }
 
 .inv-grid .slot .equipped-badge {
@@ -987,13 +987,13 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
 .inv-grid .slot.filled.drag-over { z-index: 2 }
 
 /* The rarity: a grey glow inside the panel (no colours outside the theme) */
-.inv-grid .slot.uncommon::after { background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, .12), transparent 72%) }
-.inv-grid .slot.rare::after { background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, .16), transparent 72%) }
-.inv-grid .slot.epic::after { background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, .2), transparent 72%) }
-.inv-grid .slot.legendary::after { background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, .24), transparent 72%) }
-.inv-grid .slot.mythic::after { background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, .26), transparent 72%) }
-.inv-grid .slot.exotic::after { background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, .24), transparent 72%) }
-.inv-grid .slot.divine::after { background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, .3), transparent 72%) }
+.inv-grid .slot.uncommon::after { background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, .12), transparent 72%) }
+.inv-grid .slot.rare::after { background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, .16), transparent 72%) }
+.inv-grid .slot.epic::after { background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, .2), transparent 72%) }
+.inv-grid .slot.legendary::after { background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, .24), transparent 72%) }
+.inv-grid .slot.mythic::after { background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, .26), transparent 72%) }
+.inv-grid .slot.exotic::after { background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, .24), transparent 72%) }
+.inv-grid .slot.divine::after { background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, .3), transparent 72%) }
 
 .inv-grid .slot.legendary::before,
 .inv-grid .slot.mythic::before,
@@ -1011,7 +1011,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     min-width: .8rem;
     padding: .04rem .24rem;
     background: rgba(0, 0, 0, .82);
-    box-shadow: inset 0 0 0 1px rgba(237, 230, 214, .08);
+    box-shadow: inset 0 0 0 1px rgba(242, 242, 242, .08);
     font-family: var(--font-main);
     font-variant-numeric: lining-nums tabular-nums;
     font-size: .52rem;
@@ -1108,7 +1108,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     min-width: 1.1rem;
     padding: .08rem .28rem;
     border: 1px solid currentColor;
-    box-shadow: inset 0 -2px 0 rgba(237, 230, 214, .14);
+    box-shadow: inset 0 -2px 0 rgba(242, 242, 242, .14);
     background: none;
     color: inherit;
     opacity: .75;
@@ -1315,7 +1315,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     align-items: center;
     justify-content: center;
     gap: .5rem;
-    background: linear-gradient(to top, rgba(11, 10, 8, .82), rgba(11, 10, 8, 0));
+    background: linear-gradient(to top, rgba(10, 10, 10, .82), rgba(10, 10, 10, 0));
     color: var(--wc-text-dim);
     font-family: var(--font-main);
     font-size: calc(.78rem * var(--w-k-label));
@@ -1340,7 +1340,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
 #inv-ground-zone.active { display: flex }
 
 #inv-ground-zone.hover {
-    background: linear-gradient(to top, rgba(203, 1, 1, .34), rgba(11, 10, 8, .2));
+    background: linear-gradient(to top, rgba(203, 1, 1, .34), rgba(10, 10, 10, .2));
     color: var(--wc-text)
 }
 
@@ -1593,13 +1593,13 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     padding: 1rem .9rem .7rem
 }
 
-#inventory-detail .detail-hero.uncommon { background: linear-gradient(180deg, rgba(237, 230, 214, .06), transparent) }
-#inventory-detail .detail-hero.rare { background: linear-gradient(180deg, rgba(237, 230, 214, .06), transparent) }
-#inventory-detail .detail-hero.epic { background: linear-gradient(180deg, rgba(237, 230, 214, .07), transparent) }
-#inventory-detail .detail-hero.legendary { background: linear-gradient(180deg, rgba(237, 230, 214, .09), transparent) }
-#inventory-detail .detail-hero.mythic { background: linear-gradient(180deg, rgba(237, 230, 214, .09), transparent) }
-#inventory-detail .detail-hero.exotic { background: linear-gradient(180deg, rgba(237, 230, 214, .07), transparent) }
-#inventory-detail .detail-hero.divine { background: linear-gradient(180deg, rgba(237, 230, 214, .07), transparent) }
+#inventory-detail .detail-hero.uncommon { background: linear-gradient(180deg, rgba(242, 242, 242, .06), transparent) }
+#inventory-detail .detail-hero.rare { background: linear-gradient(180deg, rgba(242, 242, 242, .06), transparent) }
+#inventory-detail .detail-hero.epic { background: linear-gradient(180deg, rgba(242, 242, 242, .07), transparent) }
+#inventory-detail .detail-hero.legendary { background: linear-gradient(180deg, rgba(242, 242, 242, .09), transparent) }
+#inventory-detail .detail-hero.mythic { background: linear-gradient(180deg, rgba(242, 242, 242, .09), transparent) }
+#inventory-detail .detail-hero.exotic { background: linear-gradient(180deg, rgba(242, 242, 242, .07), transparent) }
+#inventory-detail .detail-hero.divine { background: linear-gradient(180deg, rgba(242, 242, 242, .07), transparent) }
 
 #inventory-detail .detail-img-wrap {
     position: relative;
@@ -1660,14 +1660,14 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     letter-spacing: var(--w-label-track)
 }
 
-.detail-rarity.common { color: var(--wc-text-faint); background: rgba(237, 230, 214, .05) }
-.detail-rarity.uncommon { color: var(--w-paper); background: rgba(237, 230, 214, .08) }
-.detail-rarity.rare { color: var(--w-paper); background: rgba(237, 230, 214, .1) }
-.detail-rarity.epic { color: var(--w-paper); background: rgba(237, 230, 214, .1) }
-.detail-rarity.legendary { color: var(--w-paper); background: rgba(237, 230, 214, .12) }
-.detail-rarity.mythic { color: var(--w-paper); background: rgba(237, 230, 214, .12) }
-.detail-rarity.exotic { color: var(--w-paper); background: rgba(237, 230, 214, .1) }
-.detail-rarity.divine { color: var(--w-paper); background: rgba(237, 230, 214, .12) }
+.detail-rarity.common { color: var(--wc-text-faint); background: rgba(242, 242, 242, .05) }
+.detail-rarity.uncommon { color: var(--w-paper); background: rgba(242, 242, 242, .08) }
+.detail-rarity.rare { color: var(--w-paper); background: rgba(242, 242, 242, .1) }
+.detail-rarity.epic { color: var(--w-paper); background: rgba(242, 242, 242, .1) }
+.detail-rarity.legendary { color: var(--w-paper); background: rgba(242, 242, 242, .12) }
+.detail-rarity.mythic { color: var(--w-paper); background: rgba(242, 242, 242, .12) }
+.detail-rarity.exotic { color: var(--w-paper); background: rgba(242, 242, 242, .1) }
+.detail-rarity.divine { color: var(--w-paper); background: rgba(242, 242, 242, .12) }
 
 #inventory-detail .detail-sep {
     height: 3px;
@@ -1896,7 +1896,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     height: .34rem;
     border-radius: 0;
     overflow: hidden;
-    background: rgba(237, 230, 214, .1);
+    background: rgba(242, 242, 242, .1);
     box-shadow: inset 0 -1px 0 var(--w-rule)
 }
 
@@ -2129,7 +2129,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
 }
 
 #inspect-overlay .inspect-bg { position: absolute; inset: 0; background: rgba(0, 0, 0, 0); transition: background .6s }
-#inspect-overlay .inspect-bg.active { background: rgba(6, 5, 4, .86) }
+#inspect-overlay .inspect-bg.active { background: rgba(5, 5, 5, .86) }
 #inspect-overlay .inspect-bars { position: absolute; inset: 0; pointer-events: none }
 
 #inspect-overlay .bar-t,
@@ -2169,7 +2169,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     object-fit: contain;
     margin-bottom: 1.1rem;
     animation: float 3.5s ease-in-out infinite;
-    filter: drop-shadow(0 6px 24px rgba(237, 230, 214, .16))
+    filter: drop-shadow(0 6px 24px rgba(242, 242, 242, .16))
 }
 
 @keyframes float {
@@ -2299,7 +2299,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     position: absolute;
     inset: 0;
     z-index: -1;
-    background-color: rgba(11, 10, 8, .96);
+    background-color: rgba(10, 10, 10, .96);
     -webkit-mask: var(--tex-toast_bg) center / 100% 100% no-repeat;
     mask: var(--tex-toast_bg) center / 100% 100% no-repeat
 }
@@ -2456,7 +2456,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     flex: none;
     cursor: pointer;
     user-select: none;
-    background: rgba(237, 230, 214, .05);
+    background: rgba(242, 242, 242, .05);
     box-shadow: inset 0 0 0 1px var(--wc-line);
     color: var(--wc-text-dim);
     font-size: .8rem;
@@ -2651,7 +2651,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     align-items: center;
     gap: .7rem;
     padding: .55rem .95rem;
-    background: rgba(237, 230, 214, .02)
+    background: rgba(242, 242, 242, .02)
 }
 
 .ammo-picker-load::after {
@@ -2689,7 +2689,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     height: .3rem;
     border-radius: 0;
     overflow: hidden;
-    background: rgba(237, 230, 214, .1);
+    background: rgba(242, 242, 242, .1);
     box-shadow: inset 0 -1px 0 var(--w-rule)
 }
 
@@ -3044,7 +3044,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     inset: 5%;
     z-index: -1;
     pointer-events: none;
-    background-color: rgba(11, 10, 8, .88);
+    background-color: rgba(10, 10, 10, .88);
     -webkit-mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
     mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
     transition: background-color .2s
@@ -3065,12 +3065,12 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
 
 .hb-slot.hb-filled { cursor: pointer }
 .hb-slot.hb-filled::before { opacity: .58 }
-.hb-slot.hb-filled::after { background-color: rgba(21, 19, 15, .9) }
+.hb-slot.hb-filled::after { background-color: rgba(17, 17, 17, .9) }
 .hb-slot.hb-filled:hover { transform: translateY(-3px) }
 .hb-slot.hb-filled:hover::before { opacity: 1; background-color: var(--w-paper) }
-.hb-slot.hb-filled:hover::after { background-color: rgba(39, 35, 28, .92) }
+.hb-slot.hb-filled:hover::after { background-color: rgba(34, 34, 34, .92) }
 .hb-slot.hb-equipped::before { opacity: 1; background-color: var(--w-paper) }
-.hb-slot.hb-equipped::after { background-color: rgba(56, 50, 42, .92) }
+.hb-slot.hb-equipped::after { background-color: rgba(51, 51, 51, .92) }
 
 /* The slot's number on a counter_bg_1a disc */
 .hb-key {
@@ -3150,10 +3150,10 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     box-shadow: 0 0 0 1px rgba(0, 0, 0, .55)
 }
 
-.hb-slot.uncommon::after { background-image: radial-gradient(circle at 50% 50%, rgba(237, 230, 214, .12), transparent 72%) }
-.hb-slot.rare::after { background-image: radial-gradient(circle at 50% 50%, rgba(237, 230, 214, .16), transparent 72%) }
-.hb-slot.epic::after { background-image: radial-gradient(circle at 50% 50%, rgba(237, 230, 214, .2), transparent 72%) }
-.hb-slot.legendary::after { background-image: radial-gradient(circle at 50% 50%, rgba(237, 230, 214, .24), transparent 72%) }
+.hb-slot.uncommon::after { background-image: radial-gradient(circle at 50% 50%, rgba(242, 242, 242, .12), transparent 72%) }
+.hb-slot.rare::after { background-image: radial-gradient(circle at 50% 50%, rgba(242, 242, 242, .16), transparent 72%) }
+.hb-slot.epic::after { background-image: radial-gradient(circle at 50% 50%, rgba(242, 242, 242, .2), transparent 72%) }
+.hb-slot.legendary::after { background-image: radial-gradient(circle at 50% 50%, rgba(242, 242, 242, .24), transparent 72%) }
 
 .hb-tooltip {
     position: absolute;
@@ -3309,7 +3309,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     transition: box-shadow .3s, background .3s
 }
 
-.trade-col.trade-confirmed { box-shadow: inset 0 0 0 1px var(--wc-line-strong); background: rgba(237, 230, 214, .04) }
+.trade-col.trade-confirmed { box-shadow: inset 0 0 0 1px var(--wc-line-strong); background: rgba(242, 242, 242, .04) }
 
 .trade-col-label {
     font-family: var(--font-main);
@@ -3332,7 +3332,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     transition: box-shadow .2s, background .2s
 }
 
-.trade-col-drop.trade-drop-hover { box-shadow: inset 0 0 0 1px var(--wc-line-strong); background: rgba(237, 230, 214, .05) }
+.trade-col-drop.trade-drop-hover { box-shadow: inset 0 0 0 1px var(--wc-line-strong); background: rgba(242, 242, 242, .05) }
 .trade-drop-hint { padding: .6rem 0; font-size: calc(.6rem * var(--w-k-label)); line-height: var(--w-lh-label); color: var(--wc-text-faint); user-select: none }
 .trade-col-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .3rem; width: 100% }
 
@@ -3366,7 +3366,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     display: grid;
     place-items: center;
     overflow: hidden;
-    background: rgba(237, 230, 214, .015)
+    background: rgba(242, 242, 242, .015)
 }
 
 .trade-slot::before {
@@ -3382,7 +3382,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     transition: opacity .18s
 }
 
-.trade-slot-filled { cursor: pointer; background: rgba(237, 230, 214, .04) }
+.trade-slot-filled { cursor: pointer; background: rgba(242, 242, 242, .04) }
 .trade-slot-filled::before { opacity: .5 }
 .trade-slot-filled:hover::before { opacity: .95 }
 .trade-slot img { position: relative; width: 70%; height: 70%; object-fit: contain; pointer-events: none }
@@ -3416,10 +3416,10 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
 .trade-slot-filled:hover .trade-slot-remove { display: flex }
 .trade-slot-remove svg { width: .36rem; height: .36rem; color: var(--w-paper) }
 
-.trade-slot.uncommon { background: radial-gradient(circle, rgba(237, 230, 214, .1), transparent 70%) }
-.trade-slot.rare { background: radial-gradient(circle, rgba(237, 230, 214, .1), transparent 70%) }
-.trade-slot.epic { background: radial-gradient(circle, rgba(237, 230, 214, .12), transparent 70%) }
-.trade-slot.legendary { background: radial-gradient(circle, rgba(237, 230, 214, .14), transparent 70%) }
+.trade-slot.uncommon { background: radial-gradient(circle, rgba(242, 242, 242, .1), transparent 70%) }
+.trade-slot.rare { background: radial-gradient(circle, rgba(242, 242, 242, .1), transparent 70%) }
+.trade-slot.epic { background: radial-gradient(circle, rgba(242, 242, 242, .12), transparent 70%) }
+.trade-slot.legendary { background: radial-gradient(circle, rgba(242, 242, 242, .14), transparent 70%) }
 
 .trade-footer { position: relative; display: flex; gap: .5rem; padding: .45rem .7rem .65rem }
 
@@ -3501,7 +3501,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     height: .32rem;
     border-radius: 0;
     overflow: hidden;
-    background: rgba(237, 230, 214, .1);
+    background: rgba(242, 242, 242, .1);
     box-shadow: inset 0 -1px 0 var(--w-rule)
 }
 
@@ -3578,7 +3578,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     position: absolute;
     inset: .18rem .55rem;
     z-index: -1;
-    background-color: rgba(237, 230, 214, .045);
+    background-color: rgba(242, 242, 242, .045);
     -webkit-mask: var(--tex-help_text_bg) center / 100% 100% no-repeat;
     mask: var(--tex-help_text_bg) center / 100% 100% no-repeat
 }

@@ -12,10 +12,10 @@ const ClothingButton: React.FC<ClothingButtonProps> = ({ isActive, onClick }) =>
     <motion.button
       className={`flex items-center justify-center w-10 h-10 rounded-lg backdrop-blur-md border-2 transition-all duration-150 cursor-pointer ${
         isActive
-          ? 'text-white border-[#e8e1d3] shadow-md'
+          ? 'text-white border-[#e1e1e1] shadow-md'
           : 'bg-black/40 text-white border-white/20 hover:border-white/40 hover:bg-black/60'
       }`}
-      style={isActive ? { backgroundColor: '#e8e1d3' } : undefined}
+      style={isActive ? { backgroundColor: '#e1e1e1' } : undefined}
       onClick={onClick}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}

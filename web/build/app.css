@@ -2,7 +2,7 @@
 
 /* ═══════════════════════════════════════════════════════════════════════════
    w_inventory in the Wraith theme (w_lib/nui/theme): the loading screen's and the pause menu's
-   warm ink and aged paper, one red as a mark only. Every visible surface is composed from
+   black ink and white paper (neutral, no tint: the launcher's palette), one red as a mark only. Every visible surface is composed from
    RDR2's own art through the texture masks (the --tex-* registered in main.tsx): the
    crafting_highlight frame in eight pieces, the crafting_outline slots, the buttons' panels
    selection_box_bg, the badges' plates swatch_bg/counter_bg, and the dividers
@@ -271,7 +271,7 @@
   height: 0.38rem;
   border-radius: 0;
   overflow: hidden;
-  background: rgba(237, 230, 214, 0.1);
+  background: rgba(242, 242, 242, 0.1);
   box-shadow: inset 0 -1px 0 var(--w-rule);
 }
 
@@ -394,7 +394,7 @@
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(120% 100% at 22% 50%, rgba(11, 10, 8, 0.22), rgba(11, 10, 8, 0) 62%), rgba(11, 10, 8, 0.42);
+  background: radial-gradient(120% 100% at 22% 50%, rgba(10, 10, 10, 0.22), rgba(10, 10, 10, 0) 62%), rgba(10, 10, 10, 0.42);
   animation: invScrimIn 0.35s ease-out both;
 }
 
@@ -615,7 +615,7 @@
   height: 0.38rem;
   border-radius: 0;
   overflow: hidden;
-  background: rgba(237, 230, 214, 0.1);
+  background: rgba(242, 242, 242, 0.1);
   box-shadow: inset 0 -1px 0 var(--w-rule);
 }
 
@@ -792,7 +792,7 @@ svg.cur-gold {
   padding-block: 0.52rem;
   padding-inline: 1.5rem 0.1rem;
   background: transparent;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%237D7466' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%237A7A7A' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right center;
   background-size: 0.85rem;
@@ -1058,7 +1058,7 @@ svg.cur-gold {
   min-width: 0.8rem;
   padding: 0.04rem 0.24rem;
   background: rgba(0, 0, 0, 0.82);
-  box-shadow: inset 0 0 0 1px rgba(237, 230, 214, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(242, 242, 242, 0.1);
   color: var(--wc-text);
   font-family: var(--font-main);
   font-variant-numeric: lining-nums tabular-nums;
@@ -1088,7 +1088,7 @@ svg.cur-gold {
 
 .inv-grid .slot.weapon-equipped::after {
   background-color: var(--w-ink-4);
-  background-image: linear-gradient(180deg, rgba(237, 230, 214, 0.1), transparent 60%);
+  background-image: linear-gradient(180deg, rgba(242, 242, 242, 0.1), transparent 60%);
 }
 
 .inv-grid .slot .equipped-badge {
@@ -1224,31 +1224,31 @@ svg.cur-gold {
 /* The rarity: a grey glow inside the panel (no colours outside the theme) */
 
 .inv-grid .slot.uncommon::after {
-  background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, 0.12), transparent 72%);
+  background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, 0.12), transparent 72%);
 }
 
 .inv-grid .slot.rare::after {
-  background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, 0.16), transparent 72%);
+  background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, 0.16), transparent 72%);
 }
 
 .inv-grid .slot.epic::after {
-  background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, 0.2), transparent 72%);
+  background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, 0.2), transparent 72%);
 }
 
 .inv-grid .slot.legendary::after {
-  background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, 0.24), transparent 72%);
+  background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, 0.24), transparent 72%);
 }
 
 .inv-grid .slot.mythic::after {
-  background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, 0.26), transparent 72%);
+  background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, 0.26), transparent 72%);
 }
 
 .inv-grid .slot.exotic::after {
-  background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, 0.24), transparent 72%);
+  background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, 0.24), transparent 72%);
 }
 
 .inv-grid .slot.divine::after {
-  background-image: radial-gradient(circle at 50% 55%, rgba(237, 230, 214, 0.3), transparent 72%);
+  background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, 0.3), transparent 72%);
 }
 
 .inv-grid .slot.legendary::before,
@@ -1272,7 +1272,7 @@ svg.cur-gold {
   min-width: 0.8rem;
   padding: 0.04rem 0.24rem;
   background: rgba(0, 0, 0, 0.82);
-  box-shadow: inset 0 0 0 1px rgba(237, 230, 214, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(242, 242, 242, 0.08);
   font-family: var(--font-main);
   font-variant-numeric: lining-nums tabular-nums;
   font-size: 0.52rem;
@@ -1408,7 +1408,7 @@ svg.cur-gold {
   min-width: 1.1rem;
   padding: 0.08rem 0.28rem;
   border: 1px solid currentColor;
-  box-shadow: inset 0 -2px 0 rgba(237, 230, 214, 0.14);
+  box-shadow: inset 0 -2px 0 rgba(242, 242, 242, 0.14);
   background: none;
   color: inherit;
   opacity: 0.75;
@@ -1662,7 +1662,7 @@ svg.cur-gold {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: linear-gradient(to top, rgba(11, 10, 8, 0.82), rgba(11, 10, 8, 0));
+  background: linear-gradient(to top, rgba(10, 10, 10, 0.82), rgba(10, 10, 10, 0));
   color: var(--wc-text-dim);
   font-family: var(--font-main);
   font-size: calc(0.78rem * var(--w-k-label));
@@ -1689,7 +1689,7 @@ svg.cur-gold {
 }
 
 #inv-ground-zone.hover {
-  background: linear-gradient(to top, rgba(203, 1, 1, 0.34), rgba(11, 10, 8, 0.2));
+  background: linear-gradient(to top, rgba(203, 1, 1, 0.34), rgba(10, 10, 10, 0.2));
   color: var(--wc-text);
 }
 
@@ -2036,31 +2036,31 @@ svg.cur-gold {
 }
 
 #inventory-detail .detail-hero.uncommon {
-  background: linear-gradient(180deg, rgba(237, 230, 214, 0.06), transparent);
+  background: linear-gradient(180deg, rgba(242, 242, 242, 0.06), transparent);
 }
 
 #inventory-detail .detail-hero.rare {
-  background: linear-gradient(180deg, rgba(237, 230, 214, 0.06), transparent);
+  background: linear-gradient(180deg, rgba(242, 242, 242, 0.06), transparent);
 }
 
 #inventory-detail .detail-hero.epic {
-  background: linear-gradient(180deg, rgba(237, 230, 214, 0.07), transparent);
+  background: linear-gradient(180deg, rgba(242, 242, 242, 0.07), transparent);
 }
 
 #inventory-detail .detail-hero.legendary {
-  background: linear-gradient(180deg, rgba(237, 230, 214, 0.09), transparent);
+  background: linear-gradient(180deg, rgba(242, 242, 242, 0.09), transparent);
 }
 
 #inventory-detail .detail-hero.mythic {
-  background: linear-gradient(180deg, rgba(237, 230, 214, 0.09), transparent);
+  background: linear-gradient(180deg, rgba(242, 242, 242, 0.09), transparent);
 }
 
 #inventory-detail .detail-hero.exotic {
-  background: linear-gradient(180deg, rgba(237, 230, 214, 0.07), transparent);
+  background: linear-gradient(180deg, rgba(242, 242, 242, 0.07), transparent);
 }
 
 #inventory-detail .detail-hero.divine {
-  background: linear-gradient(180deg, rgba(237, 230, 214, 0.07), transparent);
+  background: linear-gradient(180deg, rgba(242, 242, 242, 0.07), transparent);
 }
 
 #inventory-detail .detail-img-wrap {
@@ -2126,42 +2126,42 @@ svg.cur-gold {
 
 .detail-rarity.common {
   color: var(--wc-text-faint);
-  background: rgba(237, 230, 214, 0.05);
+  background: rgba(242, 242, 242, 0.05);
 }
 
 .detail-rarity.uncommon {
   color: var(--w-paper);
-  background: rgba(237, 230, 214, 0.08);
+  background: rgba(242, 242, 242, 0.08);
 }
 
 .detail-rarity.rare {
   color: var(--w-paper);
-  background: rgba(237, 230, 214, 0.1);
+  background: rgba(242, 242, 242, 0.1);
 }
 
 .detail-rarity.epic {
   color: var(--w-paper);
-  background: rgba(237, 230, 214, 0.1);
+  background: rgba(242, 242, 242, 0.1);
 }
 
 .detail-rarity.legendary {
   color: var(--w-paper);
-  background: rgba(237, 230, 214, 0.12);
+  background: rgba(242, 242, 242, 0.12);
 }
 
 .detail-rarity.mythic {
   color: var(--w-paper);
-  background: rgba(237, 230, 214, 0.12);
+  background: rgba(242, 242, 242, 0.12);
 }
 
 .detail-rarity.exotic {
   color: var(--w-paper);
-  background: rgba(237, 230, 214, 0.1);
+  background: rgba(242, 242, 242, 0.1);
 }
 
 .detail-rarity.divine {
   color: var(--w-paper);
-  background: rgba(237, 230, 214, 0.12);
+  background: rgba(242, 242, 242, 0.12);
 }
 
 #inventory-detail .detail-sep {
@@ -2421,7 +2421,7 @@ svg.cur-gold {
   height: 0.34rem;
   border-radius: 0;
   overflow: hidden;
-  background: rgba(237, 230, 214, 0.1);
+  background: rgba(242, 242, 242, 0.1);
   box-shadow: inset 0 -1px 0 var(--w-rule);
 }
 
@@ -2731,7 +2731,7 @@ svg.cur-gold {
 }
 
 #inspect-overlay .inspect-bg.active {
-  background: rgba(6, 5, 4, 0.86);
+  background: rgba(5, 5, 5, 0.86);
 }
 
 #inspect-overlay .inspect-bars {
@@ -2787,7 +2787,7 @@ svg.cur-gold {
   object-fit: contain;
   margin-bottom: 1.1rem;
   animation: float 3.5s ease-in-out infinite;
-  filter: drop-shadow(0 6px 24px rgba(237, 230, 214, 0.16));
+  filter: drop-shadow(0 6px 24px rgba(242, 242, 242, 0.16));
 }
 
 @keyframes float {
@@ -2935,7 +2935,7 @@ svg.cur-gold {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background-color: rgba(11, 10, 8, 0.96);
+  background-color: rgba(10, 10, 10, 0.96);
   -webkit-mask: var(--tex-toast_bg) center/100% 100% no-repeat;
   mask: var(--tex-toast_bg) center/100% 100% no-repeat;
 }
@@ -3137,7 +3137,7 @@ svg.cur-gold {
   flex: none;
   cursor: pointer;
   user-select: none;
-  background: rgba(237, 230, 214, 0.05);
+  background: rgba(242, 242, 242, 0.05);
   box-shadow: inset 0 0 0 1px var(--wc-line);
   color: var(--wc-text-dim);
   font-size: 0.8rem;
@@ -3355,7 +3355,7 @@ svg.cur-gold {
   align-items: center;
   gap: 0.7rem;
   padding: 0.55rem 0.95rem;
-  background: rgba(237, 230, 214, 0.02);
+  background: rgba(242, 242, 242, 0.02);
 }
 
 .ammo-picker-load::after {
@@ -3396,7 +3396,7 @@ svg.cur-gold {
   height: 0.3rem;
   border-radius: 0;
   overflow: hidden;
-  background: rgba(237, 230, 214, 0.1);
+  background: rgba(242, 242, 242, 0.1);
   box-shadow: inset 0 -1px 0 var(--w-rule);
 }
 
@@ -3822,7 +3822,7 @@ svg.cur-gold {
   inset: 5%;
   z-index: -1;
   pointer-events: none;
-  background-color: rgba(11, 10, 8, 0.88);
+  background-color: rgba(10, 10, 10, 0.88);
   -webkit-mask: var(--tex-swatch_bg_1a) center/100% 100% no-repeat;
   mask: var(--tex-swatch_bg_1a) center/100% 100% no-repeat;
   transition: background-color 0.2s;
@@ -3850,7 +3850,7 @@ svg.cur-gold {
 }
 
 .hb-slot.hb-filled::after {
-  background-color: rgba(21, 19, 15, 0.9);
+  background-color: rgba(17, 17, 17, 0.9);
 }
 
 .hb-slot.hb-filled:hover {
@@ -3863,7 +3863,7 @@ svg.cur-gold {
 }
 
 .hb-slot.hb-filled:hover::after {
-  background-color: rgba(39, 35, 28, 0.92);
+  background-color: rgba(34, 34, 34, 0.92);
 }
 
 .hb-slot.hb-equipped::before {
@@ -3872,7 +3872,7 @@ svg.cur-gold {
 }
 
 .hb-slot.hb-equipped::after {
-  background-color: rgba(56, 50, 42, 0.92);
+  background-color: rgba(51, 51, 51, 0.92);
 }
 
 
@@ -3964,19 +3964,19 @@ svg.cur-gold {
 }
 
 .hb-slot.uncommon::after {
-  background-image: radial-gradient(circle at 50% 50%, rgba(237, 230, 214, 0.12), transparent 72%);
+  background-image: radial-gradient(circle at 50% 50%, rgba(242, 242, 242, 0.12), transparent 72%);
 }
 
 .hb-slot.rare::after {
-  background-image: radial-gradient(circle at 50% 50%, rgba(237, 230, 214, 0.16), transparent 72%);
+  background-image: radial-gradient(circle at 50% 50%, rgba(242, 242, 242, 0.16), transparent 72%);
 }
 
 .hb-slot.epic::after {
-  background-image: radial-gradient(circle at 50% 50%, rgba(237, 230, 214, 0.2), transparent 72%);
+  background-image: radial-gradient(circle at 50% 50%, rgba(242, 242, 242, 0.2), transparent 72%);
 }
 
 .hb-slot.legendary::after {
-  background-image: radial-gradient(circle at 50% 50%, rgba(237, 230, 214, 0.24), transparent 72%);
+  background-image: radial-gradient(circle at 50% 50%, rgba(242, 242, 242, 0.24), transparent 72%);
 }
 
 .hb-tooltip {
@@ -4212,7 +4212,7 @@ svg.cur-gold {
 
 .trade-col.trade-confirmed {
   box-shadow: inset 0 0 0 1px var(--wc-line-strong);
-  background: rgba(237, 230, 214, 0.04);
+  background: rgba(242, 242, 242, 0.04);
 }
 
 .trade-col-label {
@@ -4238,7 +4238,7 @@ svg.cur-gold {
 
 .trade-col-drop.trade-drop-hover {
   box-shadow: inset 0 0 0 1px var(--wc-line-strong);
-  background: rgba(237, 230, 214, 0.05);
+  background: rgba(242, 242, 242, 0.05);
 }
 
 .trade-drop-hint {
@@ -4296,7 +4296,7 @@ svg.cur-gold {
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: rgba(237, 230, 214, 0.015);
+  background: rgba(242, 242, 242, 0.015);
 }
 
 .trade-slot::before {
@@ -4314,7 +4314,7 @@ svg.cur-gold {
 
 .trade-slot-filled {
   cursor: pointer;
-  background: rgba(237, 230, 214, 0.04);
+  background: rgba(242, 242, 242, 0.04);
 }
 
 .trade-slot-filled::before {
@@ -4370,19 +4370,19 @@ svg.cur-gold {
 }
 
 .trade-slot.uncommon {
-  background: radial-gradient(circle, rgba(237, 230, 214, 0.1), transparent 70%);
+  background: radial-gradient(circle, rgba(242, 242, 242, 0.1), transparent 70%);
 }
 
 .trade-slot.rare {
-  background: radial-gradient(circle, rgba(237, 230, 214, 0.1), transparent 70%);
+  background: radial-gradient(circle, rgba(242, 242, 242, 0.1), transparent 70%);
 }
 
 .trade-slot.epic {
-  background: radial-gradient(circle, rgba(237, 230, 214, 0.12), transparent 70%);
+  background: radial-gradient(circle, rgba(242, 242, 242, 0.12), transparent 70%);
 }
 
 .trade-slot.legendary {
-  background: radial-gradient(circle, rgba(237, 230, 214, 0.14), transparent 70%);
+  background: radial-gradient(circle, rgba(242, 242, 242, 0.14), transparent 70%);
 }
 
 .trade-footer {
@@ -4501,7 +4501,7 @@ svg.cur-gold {
   height: 0.32rem;
   border-radius: 0;
   overflow: hidden;
-  background: rgba(237, 230, 214, 0.1);
+  background: rgba(242, 242, 242, 0.1);
   box-shadow: inset 0 -1px 0 var(--w-rule);
 }
 
@@ -4594,7 +4594,7 @@ svg.cur-gold {
   position: absolute;
   inset: 0.18rem 0.55rem;
   z-index: -1;
-  background-color: rgba(237, 230, 214, 0.045);
+  background-color: rgba(242, 242, 242, 0.045);
   -webkit-mask: var(--tex-help_text_bg) center/100% 100% no-repeat;
   mask: var(--tex-help_text_bg) center/100% 100% no-repeat;
 }
@@ -4634,7 +4634,7 @@ svg.cur-gold {
 #hotbar::after {
   opacity: 0.4;
 }/* ============================================================
-   The Wraith theme (w_lib/nui/theme): warm ink, aged paper, one red.
+   The Wraith theme (w_lib/nui/theme): black ink, white paper (neutral greys, r = g = b), one red.
    Every face comes from the theme package (theme/fonts.css, pulled in by the
    store-theme.css link in index.html), so the inventory carries no font files
    of its own. The --wc-* names stay: they are what index.scss draws with, and
@@ -4656,22 +4656,22 @@ svg.cur-gold {
   --wc-red: var(--w-red);
   --wc-red-deep: var(--w-red-deep);
   --wc-red-soft: var(--w-red-soft);
-  --wc-hover: rgba(237, 230, 214, 0.12);
+  --wc-hover: rgba(242, 242, 242, 0.12);
   --wc-ok: var(--w-paper);
   --wc-accent: var(--w-paper);
-  --wc-accent-soft: rgba(237, 230, 214, 0.08);
-  --wc-glow: rgba(237, 230, 214, 0.05);
+  --wc-accent-soft: rgba(242, 242, 242, 0.08);
+  --wc-glow: rgba(242, 242, 242, 0.05);
 
   /* w_inventory's old names, bound to the same tokens so nothing breaks */
-  --glass: radial-gradient(130% 90% at 50% 0%, rgba(29, 26, 21, 0.94) 0%, rgba(21, 19, 15, 0.96) 42%, rgba(11, 10, 8, 0.97) 100%);
-  --glass-solid: rgba(11, 10, 8, 0.96);
-  --glass-light: rgba(29, 26, 21, 0.94);
+  --glass: radial-gradient(130% 90% at 50% 0%, rgba(25, 25, 25, 0.94) 0%, rgba(17, 17, 17, 0.96) 42%, rgba(10, 10, 10, 0.97) 100%);
+  --glass-solid: rgba(10, 10, 10, 0.96);
+  --glass-light: rgba(25, 25, 25, 0.94);
   /* The stacked surfaces (menus/dialogs/tooltips) are drawn opaque so the panel does not show through them */
   --glass-modal: radial-gradient(130% 90% at 50% 0%, var(--w-ink-3) 0%, var(--w-ink-2) 42%, var(--w-ink) 100%);
   --border: var(--wc-line);
-  --border-light: rgba(237, 230, 214, 0.08);
+  --border-light: rgba(242, 242, 242, 0.08);
   --accent: var(--wc-accent);
-  --accent-dim: rgba(237, 230, 214, 0.28);
+  --accent-dim: rgba(242, 242, 242, 0.28);
   --accent-glow: var(--wc-glow);
   --accent-deep: var(--w-paper-dim);
   --text: var(--wc-text);
@@ -5091,7 +5091,7 @@ body.wst-inventory[dir=rtl] * {
   -webkit-mask: none !important;
   mask: none !important;
   -webkit-mask-box-image: var(--w-tex-tear) 64 fill / .8rem round !important;
-  box-shadow: inset 0 0 1rem rgba(237,230,214,.1) !important;
+  box-shadow: inset 0 0 1rem rgba(242,242,242,.1) !important;
 }
 
 .wst-inventory #inventory-options .wst-frame {
