@@ -1654,6 +1654,26 @@ local function bagItemCounts()
 	return counts
 end
 
+--- The picture the wheel draws for a bag row: the same file the bag shows for it, in the bag UI's
+--- own order (getItemUrl): the row's metadata.image, then the item's client.image.
+--- ★ Sent two ways: `imageUrl` exactly as the bag loads it, and `image` as the bare file name the
+---   wheel also tries in its own image folders. Without them the wheel guessed '<name>.png', which
+---   is not the file of the 30 items whose picture has another name (satchel_small -> bag_small,
+---   the cooked meats, the scopes ...), of an ammo kind (ammo_revolver -> ammo_bullet_normal) nor
+---   of a weapon whose file is not its upper-case name.
+--- ⚠️ metadata.imageurl (an address outside the game) is left out: the wheel loads local art only.
+---@return string? image, string? imageUrl
+local function wheelImage(item, metadata)
+	local url
+	if type(metadata) == 'table' and type(metadata.image) == 'string' and metadata.image ~= '' then
+		url = ('%s/%s.png'):format(client.imagepath, metadata.image)
+	elseif item and type(item.client) == 'table' and type(item.client.image) == 'string' and item.client.image ~= '' then
+		url = item.client.image
+	end
+	if not url then return nil, nil end
+	return url:match('([^/]+)%.%w+$'), url
+end
+
 --- The family's bullet kinds **the player really owns**, with each one's balance.
 ---
 --- * A kind with no item in the bag stays in the list with a balance of zero: the wheel shows it
@@ -1699,11 +1719,14 @@ local function ownedAmmoOptions(family, counts)
 		itemName = itemName or boxName or fallback
 
 		if itemName then
+			local image, imageUrl = wheelImage(Items[itemName])
 			out[#out + 1] = {
 				item  = itemName,
 				ammo  = entry.ammo,
 				label = (english and entry.label_en) or entry.label or itemName,
 				count = rounds,
+				image = image,
+				imageUrl = imageUrl,
 			}
 		end
 	end
@@ -1804,11 +1827,14 @@ exports('getWeaponWheelState', function()
             for category, component in pairs(type(metadata.gunComps) == 'table' and metadata.gunComps or {}) do
                 if type(component) == 'string' or type(component) == 'number' then components[category] = component end
             end
+			local image, imageUrl = wheelImage(weaponItem, metadata)
 
 			state.weapons[#state.weapons + 1] = {
 				slot      = slot,
 				name      = slotData.name,
 				label     = weaponItem.label or slotData.name,
+				image     = image,
+				imageUrl  = imageUrl,
 				hash      = hash,
 				serial    = metadata.serial,
 				components = components,
@@ -1846,10 +1872,13 @@ exports('getWeaponWheelState', function()
 			-- And no filtering here either: we export what is in the bag and the wheel decides what it shows
 			-- (the consumable_/kit_/provision_ prefixes and the like in its config). So the server
 			-- owner changes the wheel's list with no touching the bag.
+			local image, imageUrl = wheelImage(weaponItem, slotData.metadata)
 			state.items[#state.items + 1] = {
 				slot     = tonumber(slot),
 				name     = slotData.name,
 				label    = weaponItem.label or slotData.name,
+				image    = image,
+				imageUrl = imageUrl,
 				count    = math.max(0, math.floor(tonumber(slotData.count) or 0)),
 				-- The bullets are shown under their weapon and not in the items tab.
 				ammoFamily = weaponItem.ammoFamily,
