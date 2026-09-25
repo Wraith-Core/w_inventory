@@ -3628,10 +3628,14 @@ svg.cur-gold {
   cursor: pointer;
 }
 
-.ammo-picker-warning button:hover:not(:disabled) {
-  background: var(--wc-red);
-  box-shadow: none;
-  color: var(--w-paper);
+
+/* under the cursor: the paper band with ink text, the red underline kept (red is never a plate here) */
+
+.ammo-picker-warning button:hover:not(:disabled),
+.ammo-picker-warning button:focus-visible {
+  background: var(--w-paper);
+  color: var(--w-ink);
+  outline: none;
 }
 
 .ammo-picker-actions {
@@ -4828,6 +4832,11 @@ body.wst-root {
   color: var(--w-paper) !important;
 }
 
+.wst-root .wst-card .wst-button.danger:hover:not(:disabled),
+.wst-root .wst-card .wst-button.danger:focus-visible {
+  color: var(--w-ink) !important;
+}
+
 .wst-root .wst-card .wst-button :is(span,b,strong) {
   color: inherit !important;
 }
@@ -5053,19 +5062,7 @@ body.wst-inventory[dir=rtl] * {
   border-top-color: transparent !important;
 }
 
-/* the destructive row fills red under the cursor, its text stays paper */
-
-.wst-inventory #inventory-options .option.danger.wst-card:is(:hover,:focus-visible) {
-  color: var(--w-paper) !important;
-}
-
-.wst-inventory #inventory-options .option.danger.wst-card:is(:hover,:focus-visible)::before {
-  background: var(--w-red) !important;
-}
-
-.wst-inventory #inventory-options .option.danger.wst-card:is(:hover,:focus-visible) span {
-  text-decoration-color: transparent;
-}
+/* the destructive row takes the same paper band under the cursor; its red underline stays under the ink word */
 
 /* The ammunition chips follow the row: on the band the filled chip turns ink */
 

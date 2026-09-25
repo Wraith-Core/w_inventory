@@ -395,28 +395,28 @@ return {
 	-- ════════════════════════════════════════════════════════════════════
 	["satchel_small"] = {
 		label = { ar = 'حقيبة صغيرة', en = 'Small Satchel' },
-		description = { ar = 'ترفع ما تحمله 10 كجم — تُستعمل مرّةً واحدة', en = 'Raises your carry weight by 10kg -- used once' },
+		description = { ar = 'ترفع ما تحمله ١٠ كجم — تُستعمل مرّةً واحدة', en = 'Raises your carry weight by 10kg -- used once' },
 		weight = 500, stack = false, close = true,
 		client = { image = 'bag_small.png' },
 		model = "p_satchel01x",
 	},
 	["satchel_medium"] = {
 		label = { ar = 'حقيبة متوسّطة', en = 'Medium Satchel' },
-		description = { ar = 'ترفع ما تحمله 25 كجم — تُستعمل مرّةً واحدة', en = 'Raises your carry weight by 25kg -- used once' },
+		description = { ar = 'ترفع ما تحمله ٢٥ كجم — تُستعمل مرّةً واحدة', en = 'Raises your carry weight by 25kg -- used once' },
 		weight = 800, stack = false, close = true,
 		client = { image = 'satchel_nav_all.png' },
 		model = "p_satchel01x",
 	},
 	["satchel_large"] = {
 		label = { ar = 'حقيبة كبيرة', en = 'Large Satchel' },
-		description = { ar = 'ترفع ما تحمله 45 كجم — تُستعمل مرّةً واحدة', en = 'Raises your carry weight by 45kg -- used once' },
+		description = { ar = 'ترفع ما تحمله ٤٥ كجم — تُستعمل مرّةً واحدة', en = 'Raises your carry weight by 45kg -- used once' },
 		weight = 1200, stack = false, close = true,
 		client = { image = 'satchel_nav_donate.png' },
 		model = "p_satchel01x",
 	},
 	["satchel_legendary"] = {
 		label = { ar = 'حقيبة الوحوش الأسطوريّة', en = 'Legendary Animal Satchel' },
-		description = { ar = 'ترفع ما تحمله 70 كجم — أكبر ما يُصنع', en = 'Raises your carry weight by 70kg -- the largest there is' },
+		description = { ar = 'ترفع ما تحمله ٧٠ كجم — أكبر ما يُصنع', en = 'Raises your carry weight by 70kg -- the largest there is' },
 		weight = 1500, stack = false, close = true,
 		client = { image = 'satchel_nav_animals.png' },
 		model = "p_satchel01x",
