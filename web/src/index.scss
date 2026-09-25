@@ -2898,7 +2898,9 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     cursor: pointer
 }
 
-.ammo-picker-warning button:hover:not(:disabled) { background: var(--wc-red); box-shadow: none; color: var(--w-paper) }
+/* under the cursor: the paper band with ink text, the red underline kept (red is never a plate here) */
+.ammo-picker-warning button:hover:not(:disabled),
+.ammo-picker-warning button:focus-visible { background: var(--w-paper); color: var(--w-ink); outline: none }
 
 .ammo-picker-actions {
     position: relative;
