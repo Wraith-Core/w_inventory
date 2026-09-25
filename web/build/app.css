@@ -4085,10 +4085,13 @@ svg.cur-gold {
 }
 
 
-/* the refusal is destructive: its underline is red at rest, and it fills red under the cursor */
+/* the refusal is destructive: a thin underline in the one red at rest (never a faded red, which reads
+   pink on the note), and it fills red under the cursor */
 
 .trade-req-btn.decline::after {
-  opacity: 0.55;
+  opacity: 1;
+  inset-inline: 22%;
+  height: 2px;
 }
 
 .trade-req-btn.decline:hover,

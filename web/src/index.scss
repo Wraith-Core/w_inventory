@@ -3223,8 +3223,9 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
 .trade-request-sub { margin-bottom: .75rem; font-family: var(--font-text); font-size: calc(.9rem * var(--w-k-text)); line-height: var(--w-lh-text); color: var(--w-note-dim) }
 .trade-request-actions { display: flex; gap: 2rem; justify-content: center }
 
-/* the refusal is destructive: its underline is red at rest, and it fills red under the cursor */
-.trade-req-btn.decline::after { opacity: .55 }
+/* the refusal is destructive: a thin underline in the one red at rest (never a faded red, which reads
+   pink on the note), and it fills red under the cursor */
+.trade-req-btn.decline::after { opacity: 1; inset-inline: 22%; height: 2px }
 .trade-req-btn.decline:hover,
 .trade-req-btn.decline:focus-visible { color: var(--w-paper); background: var(--w-red) }
 .trade-req-btn.decline:hover::after,
