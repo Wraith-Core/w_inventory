@@ -122,7 +122,12 @@ function Utils.ItemNotify(data)
 	local added = data[2] == 'ui_added' or data[2] == 'ui_equipped'
 	-- a custom (metadata) label as it is; a catalogue label in the player's language
 	local label = item and (item.metadata?.label or (item.name and resolveArg({ item = item.name })) or item.label) or ''
-	local iconUrl = (item and item.name) and ('nui://w_inventory/web/images/' .. item.name .. '.png') or nil
+	-- the item's own picture (client.image, already a full nui:// path) as the bag shows it: the file is
+	-- not always named after the item (the hunting parts, satchel_small -> bag_small ...); else <name>.png
+	local def = item and item.name and (require 'modules.items.client')[item.name]
+	local image = def and type(def.client) == 'table' and def.client.image
+	local iconUrl = (type(image) == 'string' and image ~= '' and image)
+		or ((item and item.name) and ('nui://w_inventory/web/images/' .. item.name .. '.png')) or nil
 
 	w.notify({
 		description = ('%s ×%d %s'):format(locale(data[2]), count, label),
