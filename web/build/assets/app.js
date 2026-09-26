@@ -4792,6 +4792,9 @@ function rarity(it) {
   }
   return "common";
 }
+function rarityLabel(r) {
+  return tr(`ui_rarity_${r}`, r);
+}
 function fmtWeight(grams) {
   const kg = (Number(grams) || 0) / 1e3;
   return `${kg.toFixed(2)} ${tr("ui_weight_unit", "kg")}`;
@@ -5835,10 +5838,37 @@ function Frame({
   return /* @__PURE__ */ jsx("span", { className: "wc-frame wst-frame", style, "aria-hidden": "true", children: PIECES.map((p) => /* @__PURE__ */ jsx("span", { className: `wc-fr-${p} wst-fr-${p}` }, p)) });
 }
 
+function sameText(a, b) {
+  const norm = (s) => String(s ?? "").normalize("NFKC").replace(/[\u200e\u200f\u061c]/g, "").replace(/[\s.\u06d4\u2026!?\u061f,\u060c:;\-\u2013\u2014]+/g, " ").trim().toLowerCase();
+  const left = norm(a);
+  return left !== "" && left === norm(b);
+}
 function DetailPanel({ item, panel, containerOpen, panelPos }) {
   const panelRef = reactExports.useRef(null);
+  const bodyRef = reactExports.useRef(null);
+  const [fade, setFade] = reactExports.useState({ top: false, bottom: false });
   const extra = PANEL_W_REM + PANEL_GAP_REM + (containerOpen !== null ? CONTAINER_W_REM + PANEL_GAP_REM : 0);
   const fitted = usePanelPosition(panelRef, panelPos ? { x: panelPos.x + remPx(extra), y: panelPos.y } : null, !!item);
+  reactExports.useLayoutEffect(() => {
+    const body = bodyRef.current;
+    if (!body)
+      return;
+    body.scrollTop = 0;
+    const measure = () => {
+      const top = body.scrollTop > 1;
+      const bottom = body.scrollTop + body.clientHeight < body.scrollHeight - 1;
+      setFade((old) => old.top === top && old.bottom === bottom ? old : { top, bottom });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(body);
+    Array.from(body.children).forEach((child) => observer.observe(child));
+    body.addEventListener("scroll", measure, { passive: true });
+    return () => {
+      observer.disconnect();
+      body.removeEventListener("scroll", measure);
+    };
+  }, [item]);
   if (!item)
     return /* @__PURE__ */ jsx("div", { id: "inventory-detail", style: { display: "none" } });
   const r = rarity(item);
@@ -5847,6 +5877,8 @@ function DetailPanel({ item, panel, containerOpen, panelPos }) {
   const unitWeight = item.count > 1 ? fmtWeight(N(item.weight) / item.count) : fmtWeight(N(item.weight));
   const ammoEntries = item.ammo ? Object.entries(item.ammo).filter(([, v]) => v > 0) : [];
   const pctRound = item.percentage != null ? Math.round(item.percentage) : null;
+  const title = item.label || item.name;
+  const desc = item.desc && !sameText(item.desc, title) && !sameText(item.desc, item.name) ? item.desc : null;
   const posStyle = fitted ? {
     left: `${fitted.x}px`,
     top: `${fitted.y}px`,
@@ -5859,6 +5891,11 @@ function DetailPanel({ item, panel, containerOpen, panelPos }) {
       ref: panelRef,
       className: "wst-panel " + (fitted ? "positioned" : shifted ? "shifted" : ""),
       style: { display: "flex", ...posStyle },
+      onWheel: (e) => {
+        const body = bodyRef.current;
+        if (body && !body.contains(e.target))
+          body.scrollTop += e.deltaY;
+      },
       children: [
         /* @__PURE__ */ jsx(Frame, { px: 11, opacity: 0.45 }),
         /* @__PURE__ */ jsxs("div", { className: `detail-hero ${r}`, children: [
@@ -5872,61 +5909,63 @@ function DetailPanel({ item, panel, containerOpen, panelPos }) {
               alt: ""
             }
           ) }),
-          /* @__PURE__ */ jsx("div", { className: "wst-title detail-name", children: item.label || item.name }),
-          /* @__PURE__ */ jsx("div", { className: `detail-rarity ${r}`, children: r })
+          /* @__PURE__ */ jsx("div", { className: "wst-title detail-name", children: title }),
+          /* @__PURE__ */ jsx("div", { className: `detail-rarity ${r}`, children: rarityLabel(r) })
         ] }),
         /* @__PURE__ */ jsx("div", { className: "wst-rule detail-sep" }),
-        item.desc && /* @__PURE__ */ jsx("div", { className: "wst-sub detail-desc", children: item.desc }),
-        /* @__PURE__ */ jsxs("div", { className: "detail-stats", children: [
-          /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
-            /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_weight", "Weight") }),
-            /* @__PURE__ */ jsx("span", { className: "val", children: unitWeight })
-          ] }),
-          /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
-            /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_quantity", "Quantity") }),
-            /* @__PURE__ */ jsx("span", { className: "val", children: item.count })
-          ] }),
-          item.count > 1 && /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
-            /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_total_weight", "Total weight") }),
-            /* @__PURE__ */ jsx("span", { className: "val", children: totalWeight })
-          ] }),
-          item.isContainer && /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
-            /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_storage", "Storage") }),
-            /* @__PURE__ */ jsxs("span", { className: "val", children: [
-              fmtWeight(N(item.containerContentWeight)),
-              "/",
-              fmtWeight(N(item.containerMaxWeight))
-            ] })
-          ] }),
-          item.isWeapon && /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
-            /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_status", "Status") }),
-            /* @__PURE__ */ jsx("span", { className: `val ${item.equipped ? "equipped-text" : ""}`, children: item.equipped ? tr("ui_equipped", "Equipped") : tr("ui_in_bag", "In bag") })
-          ] }),
-          item.isWeapon && (item.metadata?.serial || item.metadata?.serial_number) && /* @__PURE__ */ jsxs(
-            "div",
-            {
-              className: "wst-row detail-stat",
-              style: { cursor: "pointer" },
-              title: tr("ui_click_copy_serial", "Click to copy serial number"),
-              onClick: () => setClipboard(String(item.metadata?.serial || item.metadata?.serial_number)),
-              children: [
-                /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_serial", "Serial number") }),
-                /* @__PURE__ */ jsxs("span", { className: "val", style: { fontSize: ".42rem", letterSpacing: ".04em" }, children: [
-                  item.metadata?.serial || item.metadata?.serial_number,
-                  " ⧉"
-                ] })
-              ]
-            }
-          ),
-          ammoEntries.map(([type, count]) => /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
-            /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_ammo", "Ammo") }),
-            /* @__PURE__ */ jsx("span", { className: "val", children: count })
-          ] }, type)),
-          pctRound != null && /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
-            /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_durability", "Durability") }),
-            /* @__PURE__ */ jsxs("span", { className: `val dur-${pctRound <= 25 ? "low" : pctRound <= 60 ? "mid" : "high"}`, children: [
-              pctRound,
-              "%"
+        /* @__PURE__ */ jsxs("div", { ref: bodyRef, className: "detail-body" + (fade.top ? " fade-top" : "") + (fade.bottom ? " fade-bottom" : ""), children: [
+          desc && /* @__PURE__ */ jsx("div", { className: "wst-sub detail-desc", children: desc }),
+          /* @__PURE__ */ jsxs("div", { className: "detail-stats", children: [
+            /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
+              /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_weight", "Weight") }),
+              /* @__PURE__ */ jsx("span", { className: "val", children: unitWeight })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
+              /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_quantity", "Quantity") }),
+              /* @__PURE__ */ jsx("span", { className: "val", children: item.count })
+            ] }),
+            item.count > 1 && /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
+              /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_total_weight", "Total weight") }),
+              /* @__PURE__ */ jsx("span", { className: "val", children: totalWeight })
+            ] }),
+            item.isContainer && /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
+              /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_storage", "Storage") }),
+              /* @__PURE__ */ jsxs("span", { className: "val", children: [
+                fmtWeight(N(item.containerContentWeight)),
+                "/",
+                fmtWeight(N(item.containerMaxWeight))
+              ] })
+            ] }),
+            item.isWeapon && /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
+              /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_status", "Status") }),
+              /* @__PURE__ */ jsx("span", { className: `val ${item.equipped ? "equipped-text" : ""}`, children: item.equipped ? tr("ui_equipped", "Equipped") : tr("ui_in_bag", "In bag") })
+            ] }),
+            item.isWeapon && (item.metadata?.serial || item.metadata?.serial_number) && /* @__PURE__ */ jsxs(
+              "div",
+              {
+                className: "wst-row detail-stat",
+                style: { cursor: "pointer" },
+                title: tr("ui_click_copy_serial", "Click to copy serial number"),
+                onClick: () => setClipboard(String(item.metadata?.serial || item.metadata?.serial_number)),
+                children: [
+                  /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_serial", "Serial number") }),
+                  /* @__PURE__ */ jsxs("span", { className: "val", style: { fontSize: ".42rem", letterSpacing: ".04em" }, children: [
+                    item.metadata?.serial || item.metadata?.serial_number,
+                    " ⧉"
+                  ] })
+                ]
+              }
+            ),
+            ammoEntries.map(([type, count]) => /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
+              /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_ammo", "Ammo") }),
+              /* @__PURE__ */ jsx("span", { className: "val", children: count })
+            ] }, type)),
+            pctRound != null && /* @__PURE__ */ jsxs("div", { className: "wst-row detail-stat", children: [
+              /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_durability", "Durability") }),
+              /* @__PURE__ */ jsxs("span", { className: `val dur-${pctRound <= 25 ? "low" : pctRound <= 60 ? "mid" : "high"}`, children: [
+                pctRound,
+                "%"
+              ] })
             ] })
           ] })
         ] }),
@@ -6594,7 +6633,7 @@ function InspectOverlay({ item, onClose }) {
         }
       ),
       /* @__PURE__ */ jsx("div", { className: "wst-title inspect-label", children: item.label || item.name }),
-      /* @__PURE__ */ jsx("div", { className: `inspect-rarity detail-rarity ${r}`, children: r }),
+      /* @__PURE__ */ jsx("div", { className: `inspect-rarity detail-rarity ${r}`, children: rarityLabel(r) }),
       /* @__PURE__ */ jsx("div", { className: "wst-rule inspect-sep" }),
       /* @__PURE__ */ jsx("div", { className: "wst-sub inspect-desc", children: item.desc || tr("ui_no_description", "No description.") }),
       /* @__PURE__ */ jsxs("div", { className: "inspect-stats", children: [

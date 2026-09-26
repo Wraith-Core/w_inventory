@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { rarity, N, fmtType, fmtWeight } from '../utils/items';
+import { rarity, rarityLabel, N, fmtType, fmtWeight } from '../utils/items';
 import { getItemUrl, itemImageError } from '../utils/nui';
 import { InventoryItem } from '../typings';
 import { tr } from '../i18n';
@@ -64,7 +64,7 @@ export default function InspectOverlay({ item, onClose }: InspectOverlayProps) {
           alt=""
         />
         <div className="wst-title inspect-label">{item.label || item.name}</div>
-        <div className={`inspect-rarity detail-rarity ${r}`}>{r}</div>
+        <div className={`inspect-rarity detail-rarity ${r}`}>{rarityLabel(r)}</div>
         <div className="wst-rule inspect-sep" />
         <div className="wst-sub inspect-desc">{item.desc || tr('ui_no_description', 'No description.')}</div>
         <div className="inspect-stats">

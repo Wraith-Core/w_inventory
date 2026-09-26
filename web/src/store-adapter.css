@@ -55,7 +55,9 @@ html[dir=rtl] body.wst-inventory *, body.wst-inventory[dir=rtl] * { letter-spaci
 .wst-inventory .wst-toast .toast-text { color:inherit; }
 /* Vertical space determines UI scale, including on 21:9 and 32:9 screens. */
 .wst-inventory :is(#inventory-wrapper,#right-inventory-panel,#container-panel,#inventory-detail) { max-height:calc(100vh - 2rem); }
-.wst-inventory #inventory-detail { max-height:calc(100vh - 2rem); overflow-y:auto; overflow-x:hidden; }
+/* The details panel never scrolls as a whole: its torn backing (::before) reaches 4px past its edge, which made a
+   scroll container show a bar on a panel that fitted. Only its body (.detail-body) scrolls, with no bar. */
+.wst-inventory #inventory-detail { max-height:calc(100vh - 2rem); overflow:visible; }
 .wst-inventory :is(#inventory-options,#inv-split-dialog,#inv-ammo-picker) { max-height:calc(100vh - 2rem); overflow:visible !important; }
 .wst-inventory #inventory-tooltip {
   max-width: min(16.5rem, calc(100vw - 16px));

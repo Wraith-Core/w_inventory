@@ -19,6 +19,11 @@ export function rarity(it: any): string {
   return 'common';
 }
 
+/** The rarity chip's text in the player's language (ui_rarity_<tier>); an unknown tier shows as it is. */
+export function rarityLabel(r: string): string {
+  return tr(`ui_rarity_${r}`, r);
+}
+
 export function fmtWeight(grams: number): string {
   const kg = (Number(grams) || 0) / 1000;
   return `${kg.toFixed(2)} ${tr('ui_weight_unit', 'kg')}`;

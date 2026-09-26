@@ -2173,6 +2173,41 @@ svg.cur-gold {
   opacity: 0.7;
 }
 
+
+/* The description and the rows: the panel grows to fit them, and only when they pass the screen does this part
+   scroll - by the wheel, with no bar; a fade on the edge that has more tells the player there is more. */
+
+#inventory-detail .detail-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none;
+}
+
+#inventory-detail .detail-body::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+#inventory-detail .detail-body.fade-top {
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 1.75rem);
+  mask-image: linear-gradient(180deg, transparent, #000 1.75rem);
+}
+
+#inventory-detail .detail-body.fade-bottom {
+  -webkit-mask-image: linear-gradient(0deg, transparent, #000 1.75rem);
+  mask-image: linear-gradient(0deg, transparent, #000 1.75rem);
+}
+
+#inventory-detail .detail-body.fade-top.fade-bottom {
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 1.75rem, #000 calc(100% - 1.75rem), transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 1.75rem, #000 calc(100% - 1.75rem), transparent);
+}
+
 #inventory-detail .detail-desc {
   padding: 0.6rem 0.9rem;
   font-family: var(--font-text);
@@ -4952,10 +4987,12 @@ body.wst-inventory[dir=rtl] * {
   max-height: calc(100vh - 2rem);
 }
 
+/* The details panel never scrolls as a whole: its torn backing (::before) reaches 4px past its edge, which made a
+   scroll container show a bar on a panel that fitted. Only its body (.detail-body) scrolls, with no bar. */
+
 .wst-inventory #inventory-detail {
   max-height: calc(100vh - 2rem);
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: visible;
 }
 
 .wst-inventory :is(#inventory-options,#inv-split-dialog,#inv-ammo-picker) {

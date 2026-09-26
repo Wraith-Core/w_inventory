@@ -1,10 +1,10 @@
-import { rarity, N, fmtWeight } from '../utils/items';
+import { rarity, rarityLabel, N, fmtWeight } from '../utils/items';
 import { getItemUrl, itemImageError } from '../utils/nui';
 import { setClipboard } from '../utils/setClipboard';
 import { InventoryItem } from '../typings';
 import { tr } from '../i18n';
 import Frame from './Frame';
-import { useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import usePanelPosition from '../hooks/usePanelPosition';
 import { PANEL_W_REM, CONTAINER_W_REM, PANEL_GAP_REM, remPx } from '../utils/layout';
 
@@ -15,10 +15,37 @@ interface DetailPanelProps {
   panelPos?: { x: number; y: number } | null;
 }
 
+/** Two texts that say the same thing once case, spaces, direction marks and end punctuation are set aside. */
+function sameText(a?: string, b?: string): boolean {
+  const norm = (s?: string) => String(s ?? '').normalize('NFKC').replace(/[\u200e\u200f\u061c]/g, '')
+    .replace(/[\s.\u06d4\u2026!?\u061f,\u060c:;\-\u2013\u2014]+/g, ' ').trim().toLowerCase();
+  const left = norm(a);
+  return left !== '' && left === norm(b);
+}
+
 export default function DetailPanel({ item, panel, containerOpen, panelPos }: DetailPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  // The body (description + rows) is the only part that scrolls, with no bar: a fade on the edge that has more.
+  const [fade, setFade] = useState({ top:false, bottom:false });
   const extra = PANEL_W_REM + PANEL_GAP_REM + (containerOpen !== null ? CONTAINER_W_REM + PANEL_GAP_REM : 0);
   const fitted = usePanelPosition(panelRef, panelPos ? { x:panelPos.x + remPx(extra), y:panelPos.y } : null, !!item);
+  useLayoutEffect(() => {
+    const body = bodyRef.current;
+    if (!body) return;
+    body.scrollTop = 0;
+    const measure = () => {
+      const top = body.scrollTop > 1;
+      const bottom = body.scrollTop + body.clientHeight < body.scrollHeight - 1;
+      setFade(old => old.top === top && old.bottom === bottom ? old : { top, bottom });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(body);
+    Array.from(body.children).forEach(child => observer.observe(child));
+    body.addEventListener('scroll', measure, { passive:true });
+    return () => { observer.disconnect(); body.removeEventListener('scroll', measure); };
+  }, [item]);
   if (!item) return <div id="inventory-detail" style={{ display: 'none' }} />;
 
   const r = rarity(item);
@@ -27,6 +54,9 @@ export default function DetailPanel({ item, panel, containerOpen, panelPos }: De
   const unitWeight = item.count > 1 ? fmtWeight(N(item.weight) / item.count) : fmtWeight(N(item.weight));
   const ammoEntries = item.ammo ? Object.entries(item.ammo).filter(([, v]) => v > 0) : [];
   const pctRound = item.percentage != null ? Math.round(item.percentage) : null;
+  const title = item.label || item.name;
+  // A catalogue with no description repeats the name there: the line says nothing new, so it is left out.
+  const desc = item.desc && !sameText(item.desc, title) && !sameText(item.desc, item.name) ? item.desc : null;
 
   const posStyle: React.CSSProperties = fitted
     ? {
@@ -42,6 +72,11 @@ export default function DetailPanel({ item, panel, containerOpen, panelPos }: De
       ref={panelRef}
       className={'wst-panel ' + (fitted ? 'positioned' : shifted ? 'shifted' : '')}
       style={{ display: 'flex', ...posStyle }}
+      onWheel={(e) => {
+        // The wheel over the picture or the footer still moves the body.
+        const body = bodyRef.current;
+        if (body && !body.contains(e.target as Node)) body.scrollTop += e.deltaY;
+      }}
     >
       <Frame px={11} opacity={0.45} />
       <div className={`detail-hero ${r}`}>
@@ -52,13 +87,14 @@ export default function DetailPanel({ item, panel, containerOpen, panelPos }: De
             alt=""
           />
         </div>
-        <div className="wst-title detail-name">{item.label || item.name}</div>
-        <div className={`detail-rarity ${r}`}>{r}</div>
+        <div className="wst-title detail-name">{title}</div>
+        <div className={`detail-rarity ${r}`}>{rarityLabel(r)}</div>
       </div>
 
       <div className="wst-rule detail-sep" />
 
-      {item.desc && <div className="wst-sub detail-desc">{item.desc}</div>}
+      <div ref={bodyRef} className={'detail-body' + (fade.top ? ' fade-top' : '') + (fade.bottom ? ' fade-bottom' : '')}>
+      {desc && <div className="wst-sub detail-desc">{desc}</div>}
 
       <div className="detail-stats">
         <div className="wst-row detail-stat">
@@ -112,6 +148,7 @@ export default function DetailPanel({ item, panel, containerOpen, panelPos }: De
             <span className={`val dur-${pctRound <= 25 ? 'low' : pctRound <= 60 ? 'mid' : 'high'}`}>{pctRound}%</span>
           </div>
         )}
+      </div>
       </div>
 
       <div className="wst-rule detail-sep" />
