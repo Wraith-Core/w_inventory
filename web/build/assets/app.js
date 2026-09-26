@@ -5849,11 +5849,15 @@ function DetailPanel({ item, panel, containerOpen, panelPos }) {
   const [fade, setFade] = reactExports.useState({ top: false, bottom: false });
   const extra = PANEL_W_REM + PANEL_GAP_REM + (containerOpen !== null ? CONTAINER_W_REM + PANEL_GAP_REM : 0);
   const fitted = usePanelPosition(panelRef, panelPos ? { x: panelPos.x + remPx(extra), y: panelPos.y } : null, !!item);
+  const itemKey = item ? `${panel}:${item.slot}:${item.name}` : "";
+  reactExports.useLayoutEffect(() => {
+    if (bodyRef.current)
+      bodyRef.current.scrollTop = 0;
+  }, [itemKey]);
   reactExports.useLayoutEffect(() => {
     const body = bodyRef.current;
     if (!body)
       return;
-    body.scrollTop = 0;
     const measure = () => {
       const top = body.scrollTop > 1;
       const bottom = body.scrollTop + body.clientHeight < body.scrollHeight - 1;

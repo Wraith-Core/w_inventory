@@ -4995,6 +4995,13 @@ body.wst-inventory[dir=rtl] * {
   overflow: visible;
 }
 
+/* The same 4px backing gave the right panel (stash/shop) a bar too. Its grid is the part that scrolls (max 46vh), so the
+   panel itself never needs to: it keeps its height limit and shows its torn edges like the bag. */
+
+.wst-inventory #right-inventory-panel {
+  overflow: visible;
+}
+
 .wst-inventory :is(#inventory-options,#inv-split-dialog,#inv-ammo-picker) {
   max-height: calc(100vh - 2rem);
   overflow: visible !important;

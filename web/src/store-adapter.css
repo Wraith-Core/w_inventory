@@ -58,6 +58,9 @@ html[dir=rtl] body.wst-inventory *, body.wst-inventory[dir=rtl] * { letter-spaci
 /* The details panel never scrolls as a whole: its torn backing (::before) reaches 4px past its edge, which made a
    scroll container show a bar on a panel that fitted. Only its body (.detail-body) scrolls, with no bar. */
 .wst-inventory #inventory-detail { max-height:calc(100vh - 2rem); overflow:visible; }
+/* The same 4px backing gave the right panel (stash/shop) a bar too. Its grid is the part that scrolls (max 46vh), so the
+   panel itself never needs to: it keeps its height limit and shows its torn edges like the bag. */
+.wst-inventory #right-inventory-panel { overflow:visible; }
 .wst-inventory :is(#inventory-options,#inv-split-dialog,#inv-ammo-picker) { max-height:calc(100vh - 2rem); overflow:visible !important; }
 .wst-inventory #inventory-tooltip {
   max-width: min(16.5rem, calc(100vw - 16px));

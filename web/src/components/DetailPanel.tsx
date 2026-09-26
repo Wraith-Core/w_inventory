@@ -30,10 +30,12 @@ export default function DetailPanel({ item, panel, containerOpen, panelPos }: De
   const [fade, setFade] = useState({ top:false, bottom:false });
   const extra = PANEL_W_REM + PANEL_GAP_REM + (containerOpen !== null ? CONTAINER_W_REM + PANEL_GAP_REM : 0);
   const fitted = usePanelPosition(panelRef, panelPos ? { x:panelPos.x + remPx(extra), y:panelPos.y } : null, !!item);
+  // Back to the top when another item is shown; a refresh of the same item (the grid rebuilt) keeps the place.
+  const itemKey = item ? `${panel}:${item.slot}:${item.name}` : '';
+  useLayoutEffect(() => { if (bodyRef.current) bodyRef.current.scrollTop = 0; }, [itemKey]);
   useLayoutEffect(() => {
     const body = bodyRef.current;
     if (!body) return;
-    body.scrollTop = 0;
     const measure = () => {
       const top = body.scrollTop > 1;
       const bottom = body.scrollTop + body.clientHeight < body.scrollHeight - 1;
