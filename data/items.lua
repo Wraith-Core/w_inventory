@@ -559,6 +559,149 @@ return {
 		},
 		model = "p_lockpick01x",
 	},
+-- ═══ w_jobs: gathering materials and tools (patches/w_inventory_items.txt) ═══
+	["wood"] = {
+		label = { ar = "خشب", en = "Wood" },
+		weight = 500,
+		stack = true,
+		close = true,
+		description = { ar = "خشب مقطوع من الغابة، للصناعة والبيع", en = "Chopped wood for crafting and trade." },
+		client = {
+			image = "wood.png",
+		},
+	},
+	["bark"] = {
+		label = { ar = "لحاء الشجر", en = "Bark" },
+		weight = 200,
+		stack = true,
+		close = true,
+		description = { ar = "لحاء مقشور من الشجر، للصناعة والبيع", en = "Tree bark for crafting and trade." },
+		client = {
+			image = "bark.png",
+		},
+	},
+	["rubber"] = {
+		label = { ar = "مطاط", en = "Rubber" },
+		weight = 200,
+		stack = true,
+		close = true,
+		description = { ar = "مطاط خام من شجر المطاط", en = "Raw rubber from rubber trees." },
+		client = {
+			image = "rubber.png",
+		},
+	},
+	["coal"] = {
+		label = { ar = "فحم", en = "Coal" },
+		weight = 300,
+		stack = true,
+		close = true,
+		description = { ar = "فحم من المنجم، وقود للحدادة والصناعة", en = "Mined coal, fuel for smithing and crafting." },
+		client = {
+			image = "coal.png",
+		},
+	},
+	["copper"] = {
+		label = { ar = "نحاس", en = "Copper" },
+		weight = 300,
+		stack = true,
+		close = true,
+		description = { ar = "خام نحاس من المنجم", en = "Copper ore from the quarry." },
+		client = {
+			image = "copper.png",
+		},
+	},
+	["iron"] = {
+		label = { ar = "حديد", en = "Iron" },
+		weight = 300,
+		stack = true,
+		close = true,
+		description = { ar = "خام حديد من المنجم", en = "Iron ore from the quarry." },
+		client = {
+			image = "iron.png",
+		},
+	},
+	["clay"] = {
+		label = { ar = "طين", en = "Clay" },
+		weight = 200,
+		stack = true,
+		close = true,
+		description = { ar = "طين من المحجر", en = "Clay from the quarry." },
+		client = {
+			image = "clay.png",
+		},
+	},
+	["salt"] = {
+		label = { ar = "ملح", en = "Salt" },
+		weight = 200,
+		stack = true,
+		close = true,
+		description = { ar = "ملح صخري من المحجر", en = "Rock salt from the quarry." },
+		client = {
+			image = "salt.png",
+		},
+	},
+	["rock"] = {
+		label = { ar = "حجر", en = "Rock" },
+		weight = 500,
+		stack = true,
+		close = true,
+		description = { ar = "حجر من المحجر", en = "Stone from the quarry." },
+		client = {
+			image = "rock.png",
+		},
+	},
+	["nitrite"] = {
+		label = { ar = "نترات", en = "Nitrite" },
+		weight = 200,
+		stack = true,
+		close = true,
+		description = { ar = "نترات من المحجر، للبارود والصناعة", en = "Nitrite from the quarry, for powder and crafting." },
+		client = {
+			image = "nitrite.png",
+		},
+	},
+	["goldnugget"] = {
+		label = { ar = "ذهب خام", en = "Gold Nugget" },
+		weight = 300,
+		stack = true,
+		close = true,
+		description = { ar = "قطعة ذهب خام نادرة من المحجر", en = "A rare raw gold nugget from the quarry." },
+		client = {
+			image = "goldnugget.png",
+		},
+	},
+	["raw_silver"] = {
+		label = { ar = "فضة خام", en = "Raw Silver" },
+		weight = 300,
+		stack = true,
+		close = true,
+		description = { ar = "خام فضة من المحجر", en = "Raw silver ore from the quarry." },
+		client = {
+			image = "raw_silver.png",
+		},
+	},
+	["pickaxe"] = {
+		label = { ar = "معول", en = "Pickaxe" },
+		weight = 2000,
+		stack = false,
+		close = true,
+		description = { ar = "أداة للتعدين. تلزمك عشان تضرب عروق المعادن", en = "A mining tool, needed to work the ore veins." },
+		client = {
+			image = "pickaxe.png",
+		},
+		model = "p_pickaxe01x",
+	},
+	["axe"] = {
+		label = { ar = "فأس", en = "Axe" },
+		weight = 1500,
+		stack = false,
+		close = true,
+		description = { ar = "أداة لقطع الشجر. تلزمك عشان تشتغل حطّاب", en = "A woodcutting tool, needed to chop trees." },
+		client = {
+			image = "axe.png",
+		},
+		model = "p_axe02x",
+	},
 	["screwdriver"] = {
 		label = { ar = "مفك براغي", en = "Screwdriver" },
 		weight = 100,
