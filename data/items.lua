@@ -404,21 +404,21 @@ return {
 		label = { ar = 'حقيبة متوسّطة', en = 'Medium Satchel' },
 		description = { ar = 'ترفع ما تحمله ٢٥ كجم — تُستعمل مرّةً واحدة', en = 'Raises your carry weight by 25kg -- used once' },
 		weight = 800, stack = false, close = true,
-		client = { image = 'satchel_nav_all.png' },
+		client = { image = 'satchel_medium.png' },
 		model = "p_satchel01x",
 	},
 	["satchel_large"] = {
 		label = { ar = 'حقيبة كبيرة', en = 'Large Satchel' },
 		description = { ar = 'ترفع ما تحمله ٤٥ كجم — تُستعمل مرّةً واحدة', en = 'Raises your carry weight by 45kg -- used once' },
 		weight = 1200, stack = false, close = true,
-		client = { image = 'satchel_nav_donate.png' },
+		client = { image = 'satchel_large.png' },
 		model = "p_satchel01x",
 	},
 	["satchel_legendary"] = {
 		label = { ar = 'حقيبة الوحوش الأسطوريّة', en = 'Legendary Animal Satchel' },
 		description = { ar = 'ترفع ما تحمله ٧٠ كجم — أكبر ما يُصنع', en = 'Raises your carry weight by 70kg -- the largest there is' },
 		weight = 1500, stack = false, close = true,
-		client = { image = 'satchel_nav_animals.png' },
+		client = { image = 'satchel_legendary.png' },
 		model = "p_satchel01x",
 	},
 
@@ -2552,7 +2552,7 @@ return {
 		category = "tobacco",
 		description = { ar = "سيجارة مفردة — tobacco", en = "Single Cigarette (tobacco)" },
 		client = {
-			image = "consumable_cigarette_box_cheap.png",
+			image = "rdr_cigarette.png",
 			model = "p_cigarette_cs01x",
 		},
 		model = "p_cigarette_cs01x",
@@ -2865,7 +2865,7 @@ return {
 		category = "tonics",
 		description = { ar = "ترياق السموم — tonics", en = "Poison Antidote (tonics)" },
 		client = {
-			image = "consumable_medicine.png",
+			image = "consumable_antidote.png",
 			model = "s_inv_antidote01x",
 		},
 		model = "s_inv_antidote01x",
@@ -3057,7 +3057,7 @@ return {
 		category = "hunting",
 		description = { ar = "مادة صيد تُباع للجزار", en = "Hunting material the butcher buys" },
 		client = {
-			image = "provision_meat_herptile.png",
+			image = "provision_big_game_meat.png",
 		},
 	},
 	["aligatorto"] = {
