@@ -2370,7 +2370,22 @@ end
 ---@param source number
 ---@param data SwapSlotData
 lib.callback.register('w_inventory:swapItems', function(source, data)
-	if data.count < 1 then return end
+	if type(data) ~= 'table' then return end
+	-- ★ NaN fails every comparison, so `count < 1` let it through and every clamp after it too
+	--   (`data.count > fromData.count`, math.min): two stacks merged with 0/0 became NaN, and a NaN
+	--   stack then handed out any count asked of it. Infinity is refused for the same reason.
+	local count = data.count
+	if type(count) ~= 'number' or count ~= count or count == math.huge or count < 1 then return end
+	-- ★ A slot is a whole number from 1 up. A string slot ("1") was stored under a string key, and the
+	--   save's table.sort then threw comparing it with the numbers, which stopped the save loop for
+	--   every inventory after it.
+	--   toSlot 0 is the container buttons' "wherever it fits" ("store in" / "take out"), resolved below.
+	for _, key in ipairs({ 'fromSlot', 'toSlot' }) do
+		local slot = data[key]
+		local least = key == 'toSlot' and 0 or 1
+		if type(slot) ~= 'number' or slot ~= slot or slot < least or slot % 1 ~= 0 or slot > 1000 then return end
+		data[key] = math.tointeger(slot)
+	end
 
 	local playerInventory = Inventory(source)
 
@@ -2385,6 +2400,14 @@ lib.callback.register('w_inventory:swapItems', function(source, data)
 	end
 
     if data.toType == 'inspect' or data.fromType == 'inspect' then return end
+
+	-- the container buttons send toSlot 0: the slot that takes this item (its stack, else the first
+	-- empty one). It used to land in a slot 0 of its own, outside every slot the page draws.
+	if data.toSlot == 0 then
+		local moving = fromInventory.items[data.fromSlot]
+		data.toSlot = moving and Inventory.GetSlotForItem(toInventory, moving.name, moving.metadata) or nil
+		if not data.toSlot then return false end
+	end
 
 	local fromRef = ('%s:%s'):format(fromInventory.id, data.fromSlot)
 	local toRef = ('%s:%s'):format(toInventory.id, data.toSlot)
@@ -3242,7 +3265,12 @@ RegisterServerEvent('w_inventory:giveItem', function(slot, target, count)
 	local fromInventory = Inventories[source]
 	local toInventory = Inventories[target]
 
+	-- ★ NaN passed `count <= 0` and `data.count < count`: the receiver got a NaN copy, the giver's
+	--   RemoveItem(NaN) failed, and nothing rolled the copy back (see swapItems)
+	count = tonumber(count)
+	if not count or count ~= count or count == math.huge or count == -math.huge then return end
 	if count <= 0 then count = 1 end
+	if not fromInventory then return end
 
 	if toInventory?.player then
 		local data = fromInventory.items[slot]

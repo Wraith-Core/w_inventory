@@ -175,6 +175,60 @@ end
 ---@param ignoreSecurityChecks boolean?
 ---@return boolean|table|nil
 ---@return table?
+--- May `left` go through the pockets of player `target`? A lawman may. Anyone else only while that
+--- man is down or cuffed (the core's flags, kept on the server) or holds his hands up (his own
+--- client's word, w_lib essentials -- his consent, so it is his to give).
+---@param left table the searcher's inventory
+---@param target number the searched player's server id
+---@return boolean
+local function canSearchPlayer(left, target)
+	if server.hasGroup(left, shared.police) then return true end
+	local ok, char = pcall(function() return exports.w_lib:FwGetCharacter(target) end)
+	local meta = ok and type(char) == 'table' and (type(char.metadata) == 'table' and char.metadata or char) or {}
+	if meta.isdead == true or meta.inlaststand == true or meta.ishandcuffed == true then return true end
+	local state = Player(target).state
+	return state.handsUp == true or state.isHandcuffed == true
+end
+
+--- May this client open a horse's saddlebag ('glove<horse id>') or a wagon's storage ('trunk<wagon
+--- id>', 'trunktemp:<net id>') through this net id? The net id must be the animal or wagon w_stables
+--- spawned for that very id (exports.w_stables:StorageNetIds -- never its state bags, which the
+--- owning client can write) and stand within reach. Until 2026-10-14 any id opened with any net id:
+--- every stabled horse and wagon could be emptied from anywhere by counting through the ids.
+--- Checked twice in openInventory: before a storage is loaded through a net id, and on the resolved
+--- inventory whatever the route (an id with no net id reaches an already loaded storage too).
+---@param source number
+---@param id any the inventory id
+---@param netid any the net id the client sent (nil = none)
+---@param invType string 'glovebox' | 'trunk' (the id's kind must agree with it)
+---@return boolean
+local function vehicleStorageAllowed(source, id, netid, invType)
+	netid = tonumber(netid)
+	if not netid then return false end
+	id = tostring(id or '')
+	local wantType = id:find('^glove') and 'glovebox' or id:find('^trunk') and 'trunk' or nil
+	if not wantType or wantType ~= invType then return false end
+
+	local entity = NetworkGetEntityFromNetworkId(netid)
+	if not entity or entity == 0 or not DoesEntityExist(entity) then return false end
+	local ped = GetPlayerPed(source)
+	if not ped or ped == 0 or #(GetEntityCoords(entity) - GetEntityCoords(ped)) > 8.0 then return false end
+	if GetEntityRoutingBucket(entity) ~= GetPlayerRoutingBucket(source) then return false end
+
+	local temp = id:match('^trunktemp:(%d+)$')
+	if temp then return tonumber(temp) == netid end
+
+	local kind, key = id:match('^(glove)(%d+)$')
+	if not kind then kind, key = id:match('^(trunk)(%d+)$') end
+	if not kind or GetResourceState('w_stables') ~= 'started' then return false end
+	local ok, ids = pcall(function() return exports.w_stables:StorageNetIds(kind, tonumber(key)) end)
+	if not ok or type(ids) ~= 'table' then return false end
+	for _, n in ipairs(ids) do
+		if tonumber(n) == netid then return true end
+	end
+	return false
+end
+
 local function openInventory(source, invType, data, ignoreSecurityChecks)
 	if Inventory.Lock then return false end
 
@@ -196,6 +250,11 @@ local function openInventory(source, invType, data, ignoreSecurityChecks)
 			if right == false then return false end
 		elseif isDataTable then
 			if data.netid then
+				-- the id decides what it is (loadInventoryData reads 'glove' / 'trunk' from it), so the
+				-- check keys on the id, not on the type the client claims
+				local vid = tostring(data.id or '')
+				if not ignoreSecurityChecks and (vid:find('^glove') or vid:find('^trunk'))
+					and not vehicleStorageAllowed(source, vid, data.netid, invType) then return end
 				data.type = invType
 				right = Inventory(data)
 			elseif invType == 'drop' then
@@ -222,6 +281,11 @@ local function openInventory(source, invType, data, ignoreSecurityChecks)
 
 		if not right then return end
 
+		-- ★ Whatever the route ('stash' with the id, no type with a net id...), a saddlebag or a wagon's
+		--   storage opens only through its own animal or wagon, within reach (vehicleStorageAllowed)
+		if not ignoreSecurityChecks and (right.type == 'glovebox' or right.type == 'trunk')
+			and not vehicleStorageAllowed(source, right.id, isDataTable and data.netid or nil, right.type) then return end
+
 		if not ignoreSecurityChecks and right.groups and not server.hasGroup(left, right.groups) then return end
 
 		local hookPayload = {
@@ -240,11 +304,19 @@ local function openInventory(source, invType, data, ignoreSecurityChecks)
 		if right.player then
 			if right.open then return end
 
-			right.coords = not ignoreSecurityChecks and GetEntityCoords(right.player.ped) or nil
+			-- ★ The search of a player: the searcher's client checks that the man is down, cuffed or
+			--   holding his hands up (canOpenTarget in client.lua), and the server took its word -- any
+			--   player standing within 10 m could be emptied. The server now checks it itself.
+			if not ignoreSecurityChecks and not canSearchPlayer(left, right.id) then return end
+
+			local targetPed = GetPlayerPed(right.id)
+			if not targetPed or targetPed == 0 then targetPed = right.player.ped end
+			right.coords = not ignoreSecurityChecks and GetEntityCoords(targetPed) or nil
 		end
 
 		if not ignoreSecurityChecks and right.coords then
-			closestCoords = getClosestStashCoords(left.player.ped, right.coords)
+			-- a man is searched at arm's length (the client asks 1.8 m), a stash from its own reach
+			closestCoords = getClosestStashCoords(left.player.ped, right.coords, right.player and 4.0 or nil)
 
 			if not closestCoords then return end
 		end
@@ -324,6 +396,11 @@ end)
 RegisterNetEvent('rsg-horses:server:openhorseinventory')
 AddEventHandler('rsg-horses:server:openhorseinventory', function()
     local src = source
+    -- ★ RSG's own horse script only: on this server w_stables owns the horses and their saddlebags,
+    --   and nothing sends this event. Left open it registered 'horse_stash_<server id>' with no
+    --   owner -- a stash anyone could open by guessing the id, and that passed to whoever held the
+    --   same server id after a restart.
+    if GetResourceState('w_stables') ~= 'missing' then return end
     -- A player having a stock means he is loaded, with no tie to a particular framework
     if not Inventory(src) then return end
 
