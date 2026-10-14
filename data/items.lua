@@ -559,6 +559,18 @@ return {
 		},
 		model = "p_lockpick01x",
 	},
+-- ═══ w_stables 4: the barn document (patches/w_inventory_items.txt) ═══
+	["hazira_passport"] = {
+		label = { ar = "جواز حظيرتي", en = "Barn passport" },
+		weight = 50,
+		stack = false,
+		close = true,
+		degrade = 52560000, -- minutes (~100 years): w_inventory gives every item a 7-day decay otherwise
+		description = { ar = "الوثيقة الرسمية لحظيرتك: صاحبها ورقمها وخيلها", en = "Your barn's official document: its owner, its number and its horses." },
+		client = {
+			image = "hazira_passport.png",
+		},
+	},
 -- ═══ w_jobs: gathering materials and tools (patches/w_inventory_items.txt) ═══
 	["wood"] = {
 		label = { ar = "خشب", en = "Wood" },
