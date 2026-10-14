@@ -89,7 +89,7 @@ return {
 		owner = true,
 		slots = 70,
 		weight = 70000,
-		groups = {['ambulance'] = 0}
+		groups = {['doctor'] = 0} -- w_medic's job (was 'ambulance')
 	},
 }
 
