@@ -5549,4 +5549,139 @@ return {
 		},
 		model = "p_letter01x",
 	},
+
+	-- ═══ w_farming (install/w_inventory/items.lua of w_farming): seeds, tools, produce, processed ═══
+    -- ═══ w_farming: seeds ═══
+    ["farm_seed_wheat"] = {
+        label = { ar = "بذور قمح", en = "Wheat Seeds" },
+        weight = 20, stack = true, close = true, category = "produce",
+        description = { ar = "تنزرع في أرض القمح", en = "Planted on a wheat field" },
+        client = { image = "farm_seed_wheat.png" },
+    },
+    ["farm_seed_corn"] = {
+        label = { ar = "بذور ذرة", en = "Corn Seeds" },
+        weight = 20, stack = true, close = true, category = "produce",
+        description = { ar = "تنزرع في أرض الذرة", en = "Planted on a corn field" },
+        client = { image = "farm_seed_corn.png" },
+    },
+    ["farm_seed_potato"] = {
+        label = { ar = "بذور بطاطس", en = "Seed Potatoes" },
+        weight = 40, stack = true, close = true, category = "produce",
+        description = { ar = "تنزرع في أرض البطاطس", en = "Planted on a potato field" },
+        client = { image = "farm_seed_potato.png" },
+    },
+    ["farm_seed_tobacco"] = {
+        label = { ar = "بذور تبغ", en = "Tobacco Seeds" },
+        weight = 10, stack = true, close = true, category = "produce",
+        description = { ar = "تنزرع في أرض التبغ", en = "Planted on a tobacco field" },
+        client = { image = "farm_seed_tobacco.png" },
+    },
+    ["farm_seed_cotton"] = {
+        label = { ar = "بذور قطن", en = "Cotton Seeds" },
+        weight = 20, stack = true, close = true, category = "produce",
+        description = { ar = "تنزرع في أرض القطن", en = "Planted on a cotton field" },
+        client = { image = "farm_seed_cotton.png" },
+    },
+    ["farm_seed_sugarcane"] = {
+        label = { ar = "عُقل قصب السكر", en = "Sugarcane Cuttings" },
+        weight = 60, stack = true, close = true, category = "produce",
+        description = { ar = "تنزرع في أرض قصب السكر", en = "Planted on a sugarcane field" },
+        client = { image = "farm_seed_sugarcane.png" },
+    },
+    ["farm_seed_poppy"] = {
+        label = { ar = "بذور خشخاش", en = "Poppy Seeds" },
+        weight = 10, stack = true, close = true, category = "contraband",
+        description = { ar = "ممنوعة. تنزرع في أرض مخفية", en = "Unlawful. Planted on a hidden field" },
+        client = { image = "farm_seed_poppy.png" },
+    },
+
+    -- ═══ w_farming: tools and supplies ═══
+    ["farm_hoe"] = {
+        label = { ar = "مسحاة", en = "Hoe" },
+        weight = 1500, stack = false, close = true, category = "travel",
+        description = { ar = "لتجهيز التربة وتنظيف القطعة. تخلص مع الاستعمال", en = "Prepares and clears the soil. Wears out with use" },
+        client = { image = "farm_hoe.png" },
+    },
+    ["farm_bucket"] = {
+        label = { ar = "سطل ماء", en = "Water Bucket" },
+        weight = 1200, stack = false, close = true, category = "travel",
+        description = { ar = "تعبّيه من الماء وتسقي فيه الزرع", en = "Fill it at water, then water the crop" },
+        client = { image = "farm_bucket.png" },
+    },
+    ["farm_fertilizer"] = {
+        label = { ar = "سماد", en = "Fertilizer" },
+        weight = 500, stack = true, close = true, category = "produce",
+        description = { ar = "يسرّع نمو الزرع ويحسّن جودته", en = "Makes the crop grow faster and better" },
+        client = { image = "farm_fertilizer.png" },
+    },
+
+    -- ═══ w_farming: produce ═══
+    ["farm_wheat"] = {
+        label = { ar = "قمح", en = "Wheat" },
+        weight = 200, stack = true, close = true, category = "produce",
+        description = { ar = "حزمة قمح من الحصاد", en = "A sheaf of harvested wheat" },
+        client = { image = "farm_wheat.png" },
+    },
+    ["farm_potato"] = {
+        label = { ar = "بطاطس", en = "Potatoes" },
+        weight = 200, stack = true, close = true, category = "produce",
+        description = { ar = "بطاطس من الحصاد", en = "Harvested potatoes" },
+        client = { image = "farm_potato.png" },
+    },
+    ["farm_tobacco_leaf"] = {
+        label = { ar = "ورق تبغ", en = "Tobacco Leaves" },
+        weight = 50, stack = true, close = true, category = "tobacco",
+        description = { ar = "ورق تبغ أخضر، يحتاج تجفيف", en = "Green tobacco leaves, to be dried" },
+        client = { image = "farm_tobacco_leaf.png" },
+    },
+    ["farm_cotton"] = {
+        label = { ar = "قطن خام", en = "Raw Cotton" },
+        weight = 100, stack = true, close = true, category = "produce",
+        description = { ar = "قطن من الحصاد، ينحلج ويصير بالة", en = "Harvested cotton, to be ginned into bales" },
+        client = { image = "farm_cotton.png" },
+    },
+    ["farm_sugarcane"] = {
+        label = { ar = "قصب سكر", en = "Sugarcane" },
+        weight = 300, stack = true, close = true, category = "produce",
+        description = { ar = "قصب من الحصاد، ينعصر ويصير سكر", en = "Harvested cane, to be pressed into sugar" },
+        client = { image = "farm_sugarcane.png" },
+    },
+    ["farm_poppy_resin"] = {
+        label = { ar = "صمغ الخشخاش", en = "Poppy Resin" },
+        weight = 50, stack = true, close = true, category = "contraband",
+        description = { ar = "ممنوع. ينباع عند تاجر مخفي", en = "Unlawful. Sold to a hidden dealer" },
+        client = { image = "farm_poppy_resin.png" },
+    },
+
+    -- ═══ w_farming: processed ═══
+    ["farm_flour"] = {
+        label = { ar = "طحين", en = "Flour" },
+        weight = 500, stack = true, close = true, category = "provisions",
+        description = { ar = "طحين من الطاحونة", en = "Flour from the mill" },
+        client = { image = "farm_flour.png" },
+    },
+    ["farm_sugar"] = {
+        label = { ar = "سكر", en = "Sugar" },
+        weight = 500, stack = true, close = true, category = "provisions",
+        description = { ar = "سكر من معصرة القصب", en = "Sugar from the cane press" },
+        client = { image = "farm_sugar.png" },
+    },
+    ["farm_tobacco_dried"] = {
+        label = { ar = "تبغ مجفف", en = "Dried Tobacco" },
+        weight = 50, stack = true, close = true, category = "tobacco",
+        description = { ar = "تبغ مجفف، ينلف ويصير سيجار", en = "Dried tobacco, to be rolled into cigars" },
+        client = { image = "farm_tobacco_dried.png" },
+    },
+    ["farm_cotton_bale"] = {
+        label = { ar = "بالة قطن", en = "Cotton Bale" },
+        weight = 1500, stack = true, close = true, category = "produce",
+        description = { ar = "بالة قطن من المحلج", en = "A bale from the cotton gin" },
+        client = { image = "farm_cotton_bale.png" },
+    },
+    ["farm_corn_mash"] = {
+        label = { ar = "نقيع الذرة", en = "Corn Mash" },
+        weight = 1000, stack = true, close = true, category = "contraband",
+        description = { ar = "ممنوع. يتقطّر ويصير مونشاين", en = "Unlawful. Distilled into moonshine" },
+        client = { image = "farm_corn_mash.png" },
+    },
 }
