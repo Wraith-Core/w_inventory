@@ -5684,4 +5684,23 @@ return {
         description = { ar = "ممنوع. يتقطّر ويصير مونشاين", en = "Unlawful. Distilled into moonshine" },
         client = { image = "farm_corn_mash.png" },
     },
+    -- ═══ w_livestock ═══
+    ["ls_feed"] = {
+        label = { ar = "كيس علف", en = "Feed Sack" },
+        weight = 2000, stack = true, close = true, category = "produce",
+        description = { ar = "علف للمواشي، يتحط في معلف الحظيرة", en = "Livestock feed for a barn's trough" },
+        client = { image = "ls_feed.png" },
+    },
+    ["ls_milk"] = {
+        label = { ar = "حليب", en = "Milk" },
+        weight = 1000, stack = true, close = true, category = "provisions",
+        description = { ar = "حليب طازج من الحظيرة", en = "Fresh milk from the barn" },
+        client = { image = "ls_milk.png" },
+    },
+    ["ls_eggs"] = {
+        label = { ar = "بيض", en = "Eggs" },
+        weight = 300, stack = true, close = true, category = "provisions",
+        description = { ar = "بيض طازج من الدجاج", en = "Fresh eggs from the hens" },
+        client = { image = "ls_eggs.png" },
+    },
 }
