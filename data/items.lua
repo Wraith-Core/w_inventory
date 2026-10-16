@@ -5703,4 +5703,12 @@ return {
         description = { ar = "بيض طازج من الدجاج", en = "Fresh eggs from the hens" },
         client = { image = "ls_eggs.png" },
     },
+    -- ═══ w_heists ═══
+    ["heist_dynamite"] = {
+        label = { ar = "ديناميت تفجير", en = "Blasting Dynamite" },
+        weight = 400, stack = true, close = true, category = "contraband",
+        description = { ar = "أصابع ديناميت بفتيل، لتفجير الخزنات والأبواب والسكة", en = "Dynamite with a fuse, for safes, doors and tracks" },
+        client = { image = "heist_dynamite.png" },
+        model = "p_dynamite01x",
+    },
 }
