@@ -3204,14 +3204,14 @@ local function createDrop(dropId, data)
 		point.nearby = nearbyDrop
 	end
 
-	-- the walk-up prompt: E opens the dropped bag next to the player's own
+	-- the walk-up prompt: J opens the dropped bag next to the player's own
 	point.prompt = w.prompt.at({
 		coords = data.coords,
 		distance = 1.5,
 		title = false,
 		prompts = {
 			{
-				key = 'E',
+				key = 'J',
 				label = locale('open_drop'),
 				onComplete = function()
 					if cache.vehicle then return end
@@ -3401,7 +3401,7 @@ AddEventHandler('w_lib:setLocale', function()
 
 	if client.drops then
 		for _, point in pairs(client.drops) do
-			if point.prompt then point.prompt.setLabel('E', locale('open_drop')) end
+			if point.prompt then point.prompt.setLabel('J', locale('open_drop')) end
 		end
 	end
 

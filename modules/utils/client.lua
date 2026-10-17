@@ -175,7 +175,7 @@ local function readLabel(value)
 end
 
 ---@class WPlacePrompt
----@field key string keyboard key name ('E', 'G', ...)
+---@field key string keyboard key name ('J', 'G', ...)
 ---@field label string | fun(): string a dictionary reader
 ---@field hold? number | false hold time in ms
 ---@field onComplete fun(place: WPlace)

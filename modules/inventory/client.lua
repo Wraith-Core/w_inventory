@@ -214,7 +214,7 @@ end
 exports('GetItemCount', Inventory.GetItemCount)
 
 
----The walk-up prompt of a police evidence locker: E opens it.
+---The walk-up prompt of a police evidence locker: J opens it.
 ---@param coords vector3
 ---@return WPlace
 local function evidencePlace(coords)
@@ -223,7 +223,7 @@ local function evidencePlace(coords)
 		marker = { r = 242, g = 242, b = 242 }, -- paper: world marks are white, never a hue
 		prompts = {
 			{
-				key = 'E',
+				key = 'J',
 				label = function() return locale('open_police_evidence') end,
 				onComplete = function() client.openInventory('policeevidence') end,
 			},
@@ -262,7 +262,7 @@ local function stashName(label)
 	return text:find('%%') and locale(prefix, number) or ('%s %s'):format(text, number)
 end
 
----The walk-up prompt of a stash: E opens it.
+---The walk-up prompt of a stash: J opens it.
 ---@param stash { name: string, label?: string, coords: vector3 }
 ---@return WPlace
 local function stashPlace(stash)
@@ -271,7 +271,7 @@ local function stashPlace(stash)
 		marker = { r = 242, g = 242, b = 242 }, -- paper: world marks are white, never a hue
 		prompts = {
 			{
-				key = 'E',
+				key = 'J',
 				label = function()
 					local name = stashName(stash.label)
 					return name and locale('open_label', name) or locale('open_stash')

@@ -45,13 +45,13 @@ local function createCraftingBench(id, data)
 			for i = 1, #data.points do
 				local coords = data.points[i]
 
-				-- the walk-up prompt: E opens the bench's recipes
+				-- the walk-up prompt: J opens the bench's recipes
 				Utils.Place({
 					coords = coords,
 					marker = { r = 242, g = 242, b = 242 }, -- paper: world marks are white, never a hue
 					prompts = {
 						{
-							key = 'E',
+							key = 'J',
 							label = function() return locale('open_crafting_bench') end,
 							onComplete = function()
 								client.openInventory('crafting', { id = id, index = i })
