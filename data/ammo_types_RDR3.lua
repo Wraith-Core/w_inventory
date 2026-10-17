@@ -8,37 +8,37 @@ local Families = {
     -- Revolvers
     ammo_revolver = {
         { ammo = 'AMMO_REVOLVER', items = { 'ammo_box_revolver_regular', 'ammo_revolver', 'ammorevolvernormal' }, label = 'رصاص عادي', label_en = 'Normal' },
-        { ammo = 'AMMO_REVOLVER_EXPRESS', items = { 'ammo_box_revolver_express', 'ammo_revolver_express', 'ammorevolverexpress' }, label = 'إكسبريس', label_en = 'Express' },
+        { ammo = 'AMMO_REVOLVER_EXPRESS', items = { 'ammo_box_revolver_express', 'ammo_revolver_express', 'ammorevolverexpress' }, label = 'إكسبرس', label_en = 'Express' },
         { ammo = 'AMMO_REVOLVER_HIGH_VELOCITY', items = { 'ammo_box_revolver_high_velocity', 'ammo_revolver_high_velocity', 'ammorevolvervelocity' }, label = 'سرعة عالية', label_en = 'High Velocity' },
         { ammo = 'AMMO_REVOLVER_SPLIT_POINT', items = { 'ammo_box_revolver_split_point', 'ammo_revolver_split_point', 'ammorevolversplitpoint' }, label = 'سبليت بوينت', label_en = 'Split Point' },
-        { ammo = 'AMMO_REVOLVER_EXPRESS_EXPLOSIVE', items = { 'ammo_box_revolver_express_explosive', 'ammo_revolver_express_explosive', 'ammorevolverexplosive' }, label = 'إكسبريس متفجر', label_en = 'Express Explosive' },
+        { ammo = 'AMMO_REVOLVER_EXPRESS_EXPLOSIVE', items = { 'ammo_box_revolver_express_explosive', 'ammo_revolver_express_explosive', 'ammorevolverexplosive' }, label = 'إكسبرس متفجر', label_en = 'Express Explosive' },
     },
 
     -- Pistols
     ammo_pistol = {
         { ammo = 'AMMO_PISTOL', items = { 'ammo_box_pistol_regular', 'ammo_pistol', 'ammopistolnormal' }, label = 'رصاص عادي', label_en = 'Normal' },
-        { ammo = 'AMMO_PISTOL_EXPRESS', items = { 'ammo_box_pistol_express', 'ammo_pistol_express', 'ammopistolexpress' }, label = 'إكسبريس', label_en = 'Express' },
+        { ammo = 'AMMO_PISTOL_EXPRESS', items = { 'ammo_box_pistol_express', 'ammo_pistol_express', 'ammopistolexpress' }, label = 'إكسبرس', label_en = 'Express' },
         { ammo = 'AMMO_PISTOL_HIGH_VELOCITY', items = { 'ammo_box_pistol_high_velocity', 'ammo_pistol_high_velocity', 'ammopistolvelocity' }, label = 'سرعة عالية', label_en = 'High Velocity' },
         { ammo = 'AMMO_PISTOL_SPLIT_POINT', items = { 'ammo_box_pistol_split_point', 'ammo_pistol_split_point', 'ammopistolsplitpoint' }, label = 'سبليت بوينت', label_en = 'Split Point' },
-        { ammo = 'AMMO_PISTOL_EXPRESS_EXPLOSIVE', items = { 'ammo_box_pistol_express_explosive', 'ammo_pistol_express_explosive', 'ammopistolexplosive' }, label = 'إكسبريس متفجر', label_en = 'Express Explosive' },
+        { ammo = 'AMMO_PISTOL_EXPRESS_EXPLOSIVE', items = { 'ammo_box_pistol_express_explosive', 'ammo_pistol_express_explosive', 'ammopistolexplosive' }, label = 'إكسبرس متفجر', label_en = 'Express Explosive' },
     },
 
     -- Repeaters
     ammo_repeater = {
         { ammo = 'AMMO_REPEATER', items = { 'ammo_box_repeater_regular', 'ammo_repeater', 'ammorepeaternormal' }, label = 'رصاص عادي', label_en = 'Normal' },
-        { ammo = 'AMMO_REPEATER_EXPRESS', items = { 'ammo_box_repeater_express', 'ammo_repeater_express', 'ammorepeaterexpress' }, label = 'إكسبريس', label_en = 'Express' },
+        { ammo = 'AMMO_REPEATER_EXPRESS', items = { 'ammo_box_repeater_express', 'ammo_repeater_express', 'ammorepeaterexpress' }, label = 'إكسبرس', label_en = 'Express' },
         { ammo = 'AMMO_REPEATER_HIGH_VELOCITY', items = { 'ammo_box_repeater_high_velocity', 'ammo_repeater_high_velocity', 'ammorepeatervelocity' }, label = 'سرعة عالية', label_en = 'High Velocity' },
         { ammo = 'AMMO_REPEATER_SPLIT_POINT', items = { 'ammo_box_repeater_split_point', 'ammo_repeater_split_point', 'ammorepeatersplitpoint' }, label = 'سبليت بوينت', label_en = 'Split Point' },
-        { ammo = 'AMMO_REPEATER_EXPRESS_EXPLOSIVE', items = { 'ammo_box_repeater_express_explosive', 'ammo_repeater_express_explosive', 'ammorepeaterexplosive' }, label = 'إكسبريس متفجر', label_en = 'Express Explosive' },
+        { ammo = 'AMMO_REPEATER_EXPRESS_EXPLOSIVE', items = { 'ammo_box_repeater_express_explosive', 'ammo_repeater_express_explosive', 'ammorepeaterexplosive' }, label = 'إكسبرس متفجر', label_en = 'Express Explosive' },
     },
 
     -- Rifles & Snipers & Elephant
     ammo_rifle = {
         { ammo = 'AMMO_RIFLE', items = { 'ammo_box_rifle_regular', 'ammo_rifle', 'ammoriflenormal' }, label = 'رصاص عادي', label_en = 'Normal' },
-        { ammo = 'AMMO_RIFLE_EXPRESS', items = { 'ammo_box_rifle_express', 'ammo_rifle_express', 'ammorifleexpress' }, label = 'إكسبريس', label_en = 'Express' },
+        { ammo = 'AMMO_RIFLE_EXPRESS', items = { 'ammo_box_rifle_express', 'ammo_rifle_express', 'ammorifleexpress' }, label = 'إكسبرس', label_en = 'Express' },
         { ammo = 'AMMO_RIFLE_HIGH_VELOCITY', items = { 'ammo_box_rifle_high_velocity', 'ammo_rifle_high_velocity', 'ammoriflevelocity' }, label = 'سرعة عالية', label_en = 'High Velocity' },
         { ammo = 'AMMO_RIFLE_SPLIT_POINT', items = { 'ammo_box_rifle_split_point', 'ammo_rifle_split_point', 'ammoriflesplitpoint' }, label = 'سبليت بوينت', label_en = 'Split Point' },
-        { ammo = 'AMMO_RIFLE_EXPRESS_EXPLOSIVE', items = { 'ammo_box_rifle_express_explosive', 'ammo_rifle_express_explosive', 'ammorifleexplosive' }, label = 'إكسبريس متفجر', label_en = 'Express Explosive' },
+        { ammo = 'AMMO_RIFLE_EXPRESS_EXPLOSIVE', items = { 'ammo_box_rifle_express_explosive', 'ammo_rifle_express_explosive', 'ammorifleexplosive' }, label = 'إكسبرس متفجر', label_en = 'Express Explosive' },
         { ammo = 'AMMO_RIFLE_ELEPHANT', items = { 'ammo_box_rifle_elephant', 'ammo_rifle_elephant', 'ammoelephant' }, label = 'رصاص الفيل', label_en = 'Elephant' },
     },
 

@@ -335,7 +335,7 @@ return {
         },
         ['WEAPON_SHOTGUN_DOUBLEBARREL'] = {
             label = 'Double-Barreled Shotgun',
-            label_ar = 'شوزن مزدوج السبطانة',
+            label_ar = 'بندقية خرطوش مزدوجة السبطانة',
             label_en = 'Double-Barreled Shotgun',
             weight = 3200,
             durability = 0.05,
@@ -346,7 +346,7 @@ return {
         },
         ['WEAPON_SHOTGUN_SAWEDOFF'] = {
             label = 'Sawed-Off Shotgun',
-            label_ar = 'شوزن قصير',
+            label_ar = 'بندقية خرطوش قصيرة',
             label_en = 'Sawed-Off Shotgun',
             weight = 2300,
             durability = 0.05,
@@ -357,7 +357,7 @@ return {
         },
         ['WEAPON_SHOTGUN_PUMP'] = {
             label = 'Pump-Action Shotgun',
-            label_ar = 'شوزن بمب أكشن',
+            label_ar = 'بندقية خرطوش بالمضخة',
             label_en = 'Pump-Action Shotgun',
             weight = 3200,
             durability = 0.05,
@@ -368,7 +368,7 @@ return {
         },
         ['WEAPON_SHOTGUN_REPEATING'] = {
             label = 'Repeating Shotgun',
-            label_ar = 'شوزن تكراري',
+            label_ar = 'بندقية خرطوش تكرارية',
             label_en = 'Repeating Shotgun',
             weight = 3200,
             durability = 0.05,
@@ -379,7 +379,7 @@ return {
         },
         ['WEAPON_SHOTGUN_SEMIAUTO'] = {
             label = 'Semi-Auto Shotgun',
-            label_ar = 'شوزن شبه آلي',
+            label_ar = 'بندقية خرطوش شبه آلية',
             label_en = 'Semi-Auto Shotgun',
             weight = 3400,
             durability = 0.05,
@@ -390,7 +390,7 @@ return {
         },
         ['WEAPON_SHOTGUN_DOUBLEBARREL_EXOTIC'] = {
             label = 'Rare Shotgun',
-            label_ar = 'شوزن نادر',
+            label_ar = 'بندقية خرطوش نادرة',
             label_en = 'Rare Shotgun',
             weight = 3200,
             durability = 0.05,
@@ -1099,7 +1099,7 @@ return {
         },
         ['ammo_box_shotgun_regular'] = {
             label = 'Shotgun Box — Buckshot',
-            label_ar = 'علبة شوزن — خرطوش عادي',
+            label_ar = 'علبة ذخيرة خرطوش — خرطوش عادي',
             label_en = 'Shotgun Box — Buckshot',
             weight = 200,
             ammocount = 10,
@@ -1109,7 +1109,7 @@ return {
         },
         ['ammo_box_shotgun_slug'] = {
             label = 'Shotgun Box — Slug',
-            label_ar = 'علبة شوزن — سلغ',
+            label_ar = 'علبة ذخيرة خرطوش — سلاق',
             label_en = 'Shotgun Box — Slug',
             weight = 200,
             ammocount = 10,
@@ -1119,7 +1119,7 @@ return {
         },
         ['ammo_box_shotgun_buckshot_incendiary'] = {
             label = 'Shotgun Box — Incendiary Buckshot',
-            label_ar = 'علبة شوزن — خرطوش حارق',
+            label_ar = 'علبة ذخيرة خرطوش — خرطوش حارق',
             label_en = 'Shotgun Box — Incendiary Buckshot',
             weight = 200,
             ammocount = 5,
@@ -1129,7 +1129,7 @@ return {
         },
         ['ammo_box_shotgun_slug_explosive'] = {
             label = 'Shotgun Box — Explosive Slug',
-            label_ar = 'علبة شوزن — سلغ متفجر',
+            label_ar = 'علبة ذخيرة خرطوش — سلاق متفجر',
             label_en = 'Shotgun Box — Explosive Slug',
             weight = 200,
             ammocount = 5,
@@ -1613,7 +1613,7 @@ return {
         },
         ['ammo_shotgun'] = {
             label = 'Shotgun Buckshot',
-            label_ar = 'خرطوش شوزن عادي',
+            label_ar = 'خرطوش بندقية عادي',
             label_en = 'Shotgun Buckshot',
             weight = 5,
             ammocount = 1,
@@ -1623,7 +1623,7 @@ return {
         },
         ['ammo_shotgun_slug'] = {
             label = 'Shotgun Slug Ammo',
-            label_ar = 'خرطوش شوزن سلاق',
+            label_ar = 'خرطوش بندقية سلاق',
             label_en = 'Shotgun Slug Ammo',
             weight = 5,
             ammocount = 1,
@@ -1633,7 +1633,7 @@ return {
         },
         ['ammo_shotgun_buckshot_incendiary'] = {
             label = 'Shotgun Incendiary Ammo',
-            label_ar = 'خرطوش شوزن حارق',
+            label_ar = 'خرطوش بندقية حارق',
             label_en = 'Shotgun Incendiary Ammo',
             weight = 5,
             ammocount = 1,
@@ -1643,7 +1643,7 @@ return {
         },
         ['ammo_shotgun_slug_explosive'] = {
             label = 'Shotgun Explosive Slug',
-            label_ar = 'خرطوش شوزن متفجر',
+            label_ar = 'خرطوش بندقية متفجر',
             label_en = 'Shotgun Explosive Slug',
             weight = 5,
             ammocount = 1,
