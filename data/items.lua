@@ -5691,6 +5691,36 @@ return {
         description = { ar = "علف للمواشي، يوضع في معلف الحظيرة", en = "Livestock feed for a barn's trough" },
         client = { image = "ls_feed.png" },
     },
+    ["ls_feed_cow"] = {
+        label = { ar = "علف بقر", en = "Cattle Feed" },
+        weight = 2000, stack = true, close = true, category = "produce",
+        description = { ar = "علف البقر، يوضع في معلفها في الحظيرة", en = "Feed for cattle, for their trough in a barn" },
+        client = { image = "ls_feed.png" },
+    },
+    ["ls_feed_sheep"] = {
+        label = { ar = "علف غنم", en = "Sheep Feed" },
+        weight = 2000, stack = true, close = true, category = "produce",
+        description = { ar = "علف الغنم، يوضع في معلفها في الحظيرة", en = "Feed for sheep, for their trough in a barn" },
+        client = { image = "ls_feed.png" },
+    },
+    ["ls_feed_goat"] = {
+        label = { ar = "علف ماعز", en = "Goat Feed" },
+        weight = 2000, stack = true, close = true, category = "produce",
+        description = { ar = "علف الماعز، يوضع في معلفها في الحظيرة", en = "Feed for goats, for their trough in a barn" },
+        client = { image = "ls_feed.png" },
+    },
+    ["ls_feed_pig"] = {
+        label = { ar = "علف خنازير", en = "Pig Feed" },
+        weight = 2000, stack = true, close = true, category = "produce",
+        description = { ar = "علف الخنازير، يوضع في معلفها في الحظيرة", en = "Feed for pigs, for their trough in a barn" },
+        client = { image = "ls_feed.png" },
+    },
+    ["ls_feed_chicken"] = {
+        label = { ar = "علف دجاج", en = "Chicken Feed" },
+        weight = 2000, stack = true, close = true, category = "produce",
+        description = { ar = "علف الدجاج، يوضع في معلفها في الحظيرة", en = "Feed for chickens, for their trough in a barn" },
+        client = { image = "ls_feed.png" },
+    },
     ["ls_milk"] = {
         label = { ar = "حليب", en = "Milk" },
         weight = 1000, stack = true, close = true, category = "provisions",
