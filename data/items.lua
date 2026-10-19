@@ -5733,6 +5733,25 @@ return {
         description = { ar = "بيض طازج من الدجاج", en = "Fresh eggs from the hens" },
         client = { image = "ls_eggs.png" },
     },
+    -- w_farming 1.7.0: what Ernest makes (cheese is the game's own consumable_cheese_wedge; sugar is farm_sugar)
+    ["ls_goat_cheese"] = {
+        label = { ar = "جبن ماعز", en = "Goat Cheese" },
+        weight = 300, stack = true, close = true, category = "provisions",
+        description = { ar = "جبن من حليب الماعز، يصنعه إرنست في ورشة الحظيرة", en = "Cheese from a nanny's milk, made by Ernest at the barn's workshop" },
+        client = { image = "ls_goat_cheese.png" },
+    },
+    ["ls_brown_sugar"] = {
+        label = { ar = "سكر بني", en = "Brown Sugar" },
+        weight = 300, stack = true, close = true, category = "provisions",
+        description = { ar = "سكر بني من القصب، يصنعه إرنست في ورشة الحظيرة", en = "Brown sugar from cane, made by Ernest at the barn's workshop" },
+        client = { image = "ls_brown_sugar.png" },
+    },
+    ["ls_syrup"] = {
+        label = { ar = "شراب القصب", en = "Cane Syrup" },
+        weight = 500, stack = true, close = true, category = "provisions",
+        description = { ar = "شراب حلو من القصب، يصنعه إرنست في ورشة الحظيرة", en = "Sweet cane syrup, made by Ernest at the barn's workshop" },
+        client = { image = "ls_syrup.png" },
+    },
     -- ═══ w_heists ═══
     ["heist_dynamite"] = {
         label = { ar = "ديناميت تفجير", en = "Blasting Dynamite" },
