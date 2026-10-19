@@ -5752,6 +5752,20 @@ return {
         description = { ar = "شراب حلو من القصب، يصنعه إرنست في ورشة الحظيرة", en = "Sweet cane syrup, made by Ernest at the barn's workshop" },
         client = { image = "ls_syrup.png" },
     },
+    -- w_farming 1.7.1: Ernest's cream and butter (pictures: USDA's butter (public domain) and a rawpixel bowl of cream
+    -- (CC0), drawn over as the game's white engravings)
+    ["ls_cream"] = {
+        label = { ar = "قشطة", en = "Cream" },
+        weight = 400, stack = true, close = true, category = "provisions",
+        description = { ar = "قشطة من الحليب، يصنعها إرنست في ورشة الحظيرة", en = "Cream from milk, made by Ernest at the barn's workshop" },
+        client = { image = "ls_cream.png" },
+    },
+    ["ls_butter"] = {
+        label = { ar = "زبدة", en = "Butter" },
+        weight = 300, stack = true, close = true, category = "provisions",
+        description = { ar = "زبدة من القشطة، يصنعها إرنست في ورشة الحظيرة", en = "Butter from cream, made by Ernest at the barn's workshop" },
+        client = { image = "ls_butter.png" },
+    },
     -- ═══ w_heists ═══
     ["heist_dynamite"] = {
         label = { ar = "ديناميت تفجير", en = "Blasting Dynamite" },
