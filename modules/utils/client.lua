@@ -196,31 +196,8 @@ end
 ---@field prompt table the w.prompt.at record
 ---@field remove fun()
 
--- The marker is paint, and every interface is RDR's black and white: paper, never a hue.
--- A caller's colour is kept only as a paper tone picked by its luminance (paper, paper-dim,
--- paper-faint), so an old call site that still passes a colour can never draw one.
-local MARKER_PAPER = { r = 242, g = 242, b = 242 }
-local MARKER_TONES = { { 242, 242, 242 }, { 180, 180, 180 }, { 122, 122, 122 } }
-
----@param r? number
----@param g? number
----@param b? number
----@return number, number, number
-local function markerTone(r, g, b)
-	r, g, b = tonumber(r), tonumber(g), tonumber(b)
-	if not (r and g and b) then return 242, 242, 242 end
-
-	local lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
-	local best, bestDist = MARKER_TONES[1], math.huge
-
-	for i = 1, #MARKER_TONES do
-		local tone = MARKER_TONES[i]
-		local dist = math.abs(lum - (0.2126 * tone[1] + 0.7152 * tone[2] + 0.0722 * tone[3]))
-		if dist < bestDist then best, bestDist = tone, dist end
-	end
-
-	return best[1], best[2], best[3]
-end
+-- The marker is the game's own glitter (the owner 2026-10-23: w_lib 4.1.0 lib.glow) in its own colour: a caller's
+-- colour (opts.marker) is not used, so an old call site that still passes one can never draw a hue.
 
 ---A walk-up place: one marker point plus one library prompt record.
 ---@param opts WPlaceOptions
@@ -256,16 +233,13 @@ function Utils.Place(opts)
 	local marker = opts.marker
 
 	if marker ~= false then
-		marker = marker or MARKER_PAPER
-		local r, g, b = markerTone(marker.r or marker[1], marker.g or marker[2], marker.b or marker[3])
-
 		place.point = lib.points.new({
 			coords = opts.coords,
 			distance = opts.markerDistance or 16,
 			nearby = function(point)
 				if opts.canInteract and not opts.canInteract() then return end
-				---@diagnostic disable-next-line: param-type-mismatch
-				DrawMarker(0x07DCE236, point.coords.x, point.coords.y, point.coords.z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, 0.2, 0.15, r, g, b, 222, false, false, 0, true, false, false, false)
+				-- the game's glitter instead of DrawMarker (the owner 2026-10-23: w_lib 4.1.0 lib.glow, a small arrow, look 3)
+				lib.glow.frame(point, 'arrow', point.coords, { look = 3, size = 0.4 })
 			end,
 		})
 	end

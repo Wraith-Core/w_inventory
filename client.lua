@@ -3069,10 +3069,8 @@ end)
 ---@param point CPoint
 local function nearbyDrop(point)
 	if not point.instance or point.instance == currentInstance then
-		-- the drop's marker in the theme's paper (242, 242, 242): RDR's world marks are white, never a hue
-		---@diagnostic disable-next-line: param-type-mismatch
-		DrawMarker(0x07DCE236, point.coords.x, point.coords.y, point.coords.z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, 0.2, 0.15, 242,
-			242, 242, 222, false, false, 0, true, false, false, false)
+		-- the drop's mark: the game's glitter, a small arrow down at it (the owner 2026-10-23: w_lib 4.1.0 lib.glow, look 3)
+		lib.glow.frame(point, 'arrow', point.coords, { look = 3, size = 0.4 })
 	end
 end
 
