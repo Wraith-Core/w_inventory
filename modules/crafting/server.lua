@@ -86,7 +86,7 @@ end)
 
 local TriggerEventHooks = require 'modules.hooks.server'
 
-lib.callback.register('w_inventory:craftItem', function(source, id, index, recipeId, toSlot)
+local function craftItem(source, id, index, recipeId, toSlot)
 	local left, bench = Inventory(source), CraftingBenches[id]
 
 	if not left then return end
@@ -95,6 +95,7 @@ lib.callback.register('w_inventory:craftItem', function(source, id, index, recip
 		local groups = bench.groups
 		local coords = getCraftingCoords(source, bench, index)
 
+		if not coords then return false end
 		if groups and not server.hasGroup(left, groups) then return end
 		if #(GetEntityCoords(GetPlayerPed(source)) - coords) > 10 then return end
 
@@ -173,11 +174,38 @@ lib.callback.register('w_inventory:craftItem', function(source, id, index, recip
 				toSlot = toSlot,
 			}) then return false end
 
-			local success = lib.callback.await('w_inventory:startCrafting', source, id, recipeId)
+            local duration = tonumber(recipe.duration) or 3000
+            if duration ~= duration or duration < 0 or duration > 3600000 then return false end
+            local expected = {}
+            for slot in pairs(tbl) do
+                local item = left.items[slot]
+                if not item then return false end
+                expected[slot] = { name = item.name, metadata = json.encode(item.metadata or {}) }
+            end
+            local startedAt = GetGameTimer()
+            local success = lib.callback.await('w_inventory:startCrafting', source, id, recipeId)
+            -- A client progress bar is presentation, never proof that the recipe's time elapsed.
+            if success and GetGameTimer() - startedAt < duration then return false end
+            if Inventory(source) ~= left or not getCraftingCoords(source, bench, index)
+                or #(GetEntityCoords(GetPlayerPed(source)) - getCraftingCoords(source, bench, index)) > 10
+                or (groups and not server.hasGroup(left, groups)) then return false end
+            for slot, original in pairs(expected) do
+                local item = left.items[slot]
+                if not item or item.name ~= original.name or json.encode(item.metadata or {}) ~= original.metadata then return false end
+                if tbl[slot] >= 1 and item.count < tbl[slot] then return false end
+            end
 
 			if success then
 				for name, needs in pairs(recipe.ingredients) do
-					if Inventory.GetItem(left, name, nil, true) < needs then return end
+                    if Inventory.GetItem(left, name, nil, true) < math.max(needs, 1) then return false end
+                    if needs == 0 then
+                        local usable = false
+                        for _, slot in pairs(Inventory.Search(left, 'slots', name) or {}) do
+                            local durability=slot.metadata and slot.metadata.durability
+                            if not durability or (durability<=100 and durability>0) or durability>os.time() then usable = true break end
+                        end
+                        if not usable then return false end
+                    end
 				end
 
 				for slot, count in pairs(tbl) do
@@ -224,4 +252,18 @@ lib.callback.register('w_inventory:craftItem', function(source, id, index, recip
 			return success
 		end
 	end
+end
+
+local craftingBusy, lastCraft = {}, {}
+lib.callback.register('w_inventory:craftItem', function(source, id, index, recipeId, toSlot)
+    local now = GetGameTimer()
+    if craftingBusy[source] or (lastCraft[source] and now - lastCraft[source] < 500) then return false end
+    if type(recipeId) ~= 'number' or recipeId % 1 ~= 0 or recipeId < 1 then return false end
+    if toSlot ~= nil and (type(toSlot) ~= 'number' or toSlot % 1 ~= 0 or toSlot < 1 or toSlot > 1000) then return false end
+    craftingBusy[source], lastCraft[source] = true, now
+    local result = table.pack(pcall(craftItem, source, id, index, recipeId, toSlot))
+    craftingBusy[source] = nil
+    if not result[1] then print('^1[w_inventory] Craft request failed safely^0'); return false end
+    return table.unpack(result, 2, result.n)
 end)
+AddEventHandler('playerDropped', function() craftingBusy[source], lastCraft[source] = nil, nil end)

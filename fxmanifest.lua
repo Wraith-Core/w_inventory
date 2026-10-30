@@ -5,7 +5,7 @@ games { 'rdr3' }
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'
 name 'w_inventory'
 author 'Initial Commit made by younNGG97 on Discord'
-version '2.0.2'
+version '2.0.3'
 repository ''
 description 'Slot-based inventory with item metadata support'
 
