@@ -2367,6 +2367,20 @@ function Inventory.HasForeignSlotTransfer(inv)
     return false
 end
 
+--- A lawman on duty: in a police job (inventory:police, the same check as searching a bag and the
+--- evidence lockers) and on duty by the core's own job record. VORP keeps no duty record, so there
+--- the job alone counts.
+---@param source number
+---@param inv table the actor's inventory
+---@return boolean
+local function lawOnDuty(source, inv)
+	if not server.hasGroup(inv, shared.police) then return false end
+	if shared.framework == 'vorp' then return true end
+	local ok, core = pcall(server.GetPlayerFromId, source)
+	local job = ok and type(core) == 'table' and type(core.PlayerData) == 'table' and core.PlayerData.job
+	return type(job) == 'table' and job.onduty == true
+end
+
 ---@param source number
 ---@param data SwapSlotData
 lib.callback.register('w_inventory:swapItems', function(source, data)
@@ -2490,6 +2504,12 @@ lib.callback.register('w_inventory:swapItems', function(source, data)
             or toData and (toData.name == 'money' or toData.name == 'cash' or toData.name == 'gold')) then
             if fromData.name == 'gold' or toData and toData.name ~= fromData.name then return false, 'cannot_perform' end
             if fromData.name ~= 'money' and fromData.name ~= 'cash' then return false, 'cannot_perform' end
+            -- ★ Cash leaves another player's bag only in a lawman's hands. A searched bag (hands up,
+            --   cuffed, down) let anyone drag the whole cash row out, past w_policejob's robbery cap
+            --   (RobPlayer: a share of it, a ceiling, a cooldown). Lawmen on duty seize as before.
+            if fromOtherPlayer and not lawOnDuty(source, playerInventory) then
+                return false, server.hasGroup(playerInventory, shared.police) and 'cash_seize_off_duty' or 'cash_rob_only'
+            end
             if not TriggerEventHooks('swapItems', {source=source, fromInventory=fromInventory.id, fromSlot=fromData,
                 fromType=fromInventory.type, toInventory=toInventory.id, toSlot=toData or data.toSlot,
                 toType=toInventory.type, count=data.count, action='move'}) then return false end

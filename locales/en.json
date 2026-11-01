@@ -114,6 +114,8 @@
   "no_durability": "%s durability is depleted",
   "cannot_give": "Unable to give %s %s to the target",
   "evidence_cannot_take": "You are not authorised to withdraw evidence",
+  "cash_rob_only": "You cannot take the money from his bag; money is taken only by robbing him",
+  "cash_seize_off_duty": "You are off duty; only lawmen on duty can seize money",
   "crafting_item": "Crafting %s",
   "crafting_bench": "Crafting Bench",
   "open_crafting_bench": "Open Crafting Bench",
