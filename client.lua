@@ -120,8 +120,19 @@ local function canOpenInventory()
 	return true
 end
 
+--- w_lib's X surrender: its clip on the ped, or the handsUp state bag his own client replicates
+--- (a clip on a remote ped is not always seen). A named BOOL native answers 1 / false here.
+---@param ped number
+---@return boolean
+local function hasHandsUp(ped)
+	local playing = IsEntityPlayingAnim(ped, 'script_proc@robberies@homestead@lonnies_shack@deception', 'hands_up_loop', 3)
+	if playing == true or playing == 1 then return true end
+	local serverId = GetPlayerServerId(NetworkGetPlayerIndexFromPed(ped))
+	return serverId > 0 and Player(serverId).state.handsUp == true
+end
+
 --- A player can be searched when he is down, cuffed or holding his hands up (the arrest
---- animation w_policejob plays).
+--- animation w_policejob plays, or w_lib's X surrender).
 ---@param ped number
 ---@return boolean
 local function canOpenTarget(ped)
@@ -129,6 +140,7 @@ local function canOpenTarget(ped)
 		or IsPedDeadOrDying(ped, true)
 		or IsPedCuffed(ped)
 		or IsEntityPlayingAnim(ped, 'mech_busted@arrest', 'hands_up_transition', 3)
+		or hasHandsUp(ped)
 end
 
 local defaultInventory = {
@@ -1258,6 +1270,13 @@ end)
 
 local restoreGeneration = 0
 
+-- Wraith host: setPlayerInventory arrives at character login while w_creators is still rendering
+-- and placing the ped, so the saved weapons wait for w_core's post-spawn signal. Not the
+-- isLoggedIn bag alone: w_hud's probe sets it at login. True at load = w_inventory restarted in the world.
+local worldReady = LocalPlayer.state.isLoggedIn == true
+RegisterNetEvent('WCore:Client:OnPlayerLoaded', function() worldReady = true end)
+RegisterNetEvent('WCore:Client:OnPlayerUnload', function() worldReady = false end)
+
 local function isUsageFlag(value)
 	return value == true or value == 1 or value == '1'
 end
@@ -1305,8 +1324,21 @@ local function restoreUsedWeapons()
 	end
 
 	CreateThread(function()
+		local wcore = shared.backend == 'wcore'
+		if wcore then
+			while not worldReady do
+				Wait(250)
+				if generation ~= restoreGeneration or not PlayerData.loaded then return end
+			end
+		end
 		Wait(500)
 		if generation ~= restoreGeneration or not PlayerData.loaded then return end
+
+		-- the bag and hotkeys work in the short gap before w_core's signal: a weapon the player
+		-- drew himself there is kept as it is, never equipped a second time
+		if wcore and (currentWeapon or Weapon.DualWield.Count() > 0) then
+			return Weapon.SyncUsage(currentWeapon)
+		end
 
 		for i = 1, #order do
 			local ref = order[i]
