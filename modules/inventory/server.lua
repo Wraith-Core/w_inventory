@@ -166,6 +166,8 @@ local function loadInventoryData(data, player)
 
 			if not inventory then
 				inventory = Inventory.Create(stash.name, stash.label or stash.name, 'stash', stash.slots, 0, stash.maxWeight, owner, nil, stash.groups)
+				-- 2.0.6: a stash reloaded after its idle unload keeps the distance check of its registration
+				if inventory then inventory.coords = stash.coords end
 			end
 		end
 	end
