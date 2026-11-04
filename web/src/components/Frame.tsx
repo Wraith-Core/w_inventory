@@ -17,7 +17,7 @@ export default function Frame({
 }) {
   const style = {
     ...(color ? { '--fr-c': color } : null),
-    ...(px ? { '--fr-px': `${px}px` } : null),
+    ...(px ? { '--fr-px': `calc(${px} * var(--ws-px))` } : null),
     ...(opacity !== undefined ? { '--fr-o': opacity } : null),
   } as CSSProperties;
   return (

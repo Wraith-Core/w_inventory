@@ -5508,6 +5508,18 @@ function useToast() {
   return { toasts, addToast };
 }
 
+function wsScale() {
+  const h = window.innerHeight || 1080;
+  const w = window.innerWidth || 1920;
+  return Math.max(0.6667, Math.min(h / 1080, w / 1920));
+}
+const wsPx = (n) => n * wsScale();
+function wsGutter() {
+  const h = window.innerHeight || 1080;
+  const w = window.innerWidth || 1920;
+  return Math.max(0, (w - h * 16 / 9) / 2);
+}
+
 function usePanelPosition(ref, preferred, active, extraWidth = 0) {
   const [size, setSize] = reactExports.useState({ width: 0, height: 0, screenW: window.innerWidth, screenH: window.innerHeight });
   reactExports.useLayoutEffect(() => {
@@ -5529,9 +5541,10 @@ function usePanelPosition(ref, preferred, active, extraWidth = 0) {
   }, [active, ref]);
   if (!preferred)
     return null;
+  const m = wsPx(8);
   return {
-    x: Math.max(8, Math.min(preferred.x, size.screenW - size.width - extraWidth - 8)),
-    y: Math.max(8, Math.min(preferred.y, size.screenH - size.height - 8))
+    x: Math.max(m, Math.min(preferred.x, size.screenW - size.width - extraWidth - m)),
+    y: Math.max(m, Math.min(preferred.y, size.screenH - size.height - m))
   };
 }
 
@@ -5542,6 +5555,29 @@ const PANEL_GAP_REM = 0.75;
 function remPx(n = 1) {
   const base = parseFloat(getComputedStyle(document.documentElement).fontSize);
   return n * (Number.isFinite(base) && base > 0 ? base : 16);
+}
+function savePanelPos(key, p) {
+  const s = wsScale();
+  try {
+    localStorage.setItem(key, JSON.stringify({ x: (p.x - wsGutter()) / s, y: p.y / s, u: "design" }));
+  } catch {
+  }
+}
+function loadPanelPos(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw)
+      return null;
+    const p = JSON.parse(raw);
+    if (typeof p.x !== "number" || typeof p.y !== "number")
+      return null;
+    if (p.u !== "design")
+      return { x: p.x, y: p.y };
+    const s = wsScale();
+    return { x: p.x * s + wsGutter(), y: p.y * s };
+  } catch {
+  }
+  return null;
 }
 
 const HOTBAR_SIZE = 5;
@@ -5832,7 +5868,7 @@ function Frame({
 }) {
   const style = {
     ...color ? { "--fr-c": color } : null,
-    ...px ? { "--fr-px": `${px}px` } : null,
+    ...px ? { "--fr-px": `calc(${px} * var(--ws-px))` } : null,
     ...opacity !== void 0 ? { "--fr-o": opacity } : null
   };
   return /* @__PURE__ */ jsx("span", { className: "wc-frame wst-frame", style, "aria-hidden": "true", children: PIECES.map((p) => /* @__PURE__ */ jsx("span", { className: `wc-fr-${p} wst-fr-${p}` }, p)) });
@@ -6091,16 +6127,7 @@ const RIGHT_POS_KEY = "w_inv_right_pos";
 const SVG_SHOP = /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "currentColor", children: /* @__PURE__ */ jsx("path", { d: "M12 2a5 5 0 0 0-5 5H4l-1 13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2L20 7h-3a5 5 0 0 0-5-5zm0 2a3 3 0 0 1 3 3H9a3 3 0 0 1 3-3zm-3 7a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm6 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" }) });
 const SVG_CRAFT = /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "currentColor", children: /* @__PURE__ */ jsx("path", { d: "M13.7 8.3 6.4 15.6l-1.4-1.4a2 2 0 0 0-2.8 2.8l4.8 4.8a2 2 0 0 0 2.8-2.8l-1.4-1.4 7.3-7.3-2-2zM22 5.6 18.4 2l-2.1 2.1-1-1a1 1 0 0 0-1.5 0l-1.6 1.6a1 1 0 0 0 0 1.4l5.7 5.7a1 1 0 0 0 1.4 0l1.6-1.6a1 1 0 0 0 0-1.5l-1-1L22 5.6z" }) });
 function loadRightPos() {
-  try {
-    const raw = localStorage.getItem(RIGHT_POS_KEY);
-    if (raw) {
-      const p = JSON.parse(raw);
-      if (typeof p.x === "number" && typeof p.y === "number")
-        return p;
-    }
-  } catch {
-  }
-  return null;
+  return loadPanelPos(RIGHT_POS_KEY);
 }
 function RightInventoryPanel({
   rightInventory,
@@ -6154,12 +6181,8 @@ function RightInventoryPanel({
       document.removeEventListener("mousemove", onMove);
       document.removeEventListener("mouseup", onUp);
       setRightPos((cur) => {
-        if (cur) {
-          try {
-            localStorage.setItem(RIGHT_POS_KEY, JSON.stringify(cur));
-          } catch {
-          }
-        }
+        if (cur)
+          savePanelPos(RIGHT_POS_KEY, cur);
         return cur;
       });
       dragRef.current = null;
@@ -6313,8 +6336,9 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
   reactExports.useEffect(() => {
     if (visible && ref.current) {
       ref.current.style.opacity = "0";
-      ref.current.style.left = `${Math.max(8, Math.min(x, window.innerWidth - ref.current.offsetWidth - 8))}px`;
-      ref.current.style.top = `${Math.max(8, Math.min(y, window.innerHeight - ref.current.offsetHeight - 8))}px`;
+      const m = wsPx(8);
+      ref.current.style.left = `${Math.max(m, Math.min(x, window.innerWidth - ref.current.offsetWidth - m))}px`;
+      ref.current.style.top = `${Math.max(m, Math.min(y, window.innerHeight - ref.current.offsetHeight - m))}px`;
       requestAnimationFrame(() => {
         if (ref.current)
           ref.current.style.opacity = "1";
@@ -6503,11 +6527,12 @@ function Tooltip({ item, anchorRect }) {
       if (anchorRect) {
         const width = ref.current.offsetWidth;
         const height = ref.current.offsetHeight;
-        const center = Math.max(width / 2 + 8, Math.min(anchorRect.x + anchorRect.width / 2, window.innerWidth - width / 2 - 8));
-        const above = anchorRect.y - height - 8 >= 8;
-        const top = above ? anchorRect.y - 8 : Math.min(anchorRect.bottom + 8, window.innerHeight - height - 8);
+        const m = wsPx(8);
+        const center = Math.max(width / 2 + m, Math.min(anchorRect.x + anchorRect.width / 2, window.innerWidth - width / 2 - m));
+        const above = anchorRect.y - height - m >= m;
+        const top = above ? anchorRect.y - m : Math.min(anchorRect.bottom + m, window.innerHeight - height - m);
         ref.current.style.left = `${center}px`;
-        ref.current.style.top = `${Math.max(8, top)}px`;
+        ref.current.style.top = `${Math.max(m, top)}px`;
         ref.current.style.transform = above ? "translate(-50%,-100%)" : "translateX(-50%)";
         ref.current.dataset.placement = above ? "above" : "below";
       }
@@ -6531,7 +6556,7 @@ function Tooltip({ item, anchorRect }) {
       style: {
         display: "block",
         left: anchorRect.x + anchorRect.width / 2,
-        top: anchorRect.y - 8,
+        top: anchorRect.y - wsPx(8),
         transform: "translate(-50%,-100%)",
         opacity: 0
       },
@@ -7259,18 +7284,7 @@ function App() {
   }, [state.isBusy, dispatch]);
   const wrapperRef = reactExports.useRef(null);
   const PANEL_POS_KEY = "w_inv_panel_pos";
-  const loadSavedPos = reactExports.useCallback(() => {
-    try {
-      const raw = localStorage.getItem(PANEL_POS_KEY);
-      if (raw) {
-        const p = JSON.parse(raw);
-        if (typeof p.x === "number" && typeof p.y === "number")
-          return p;
-      }
-    } catch {
-    }
-    return null;
-  }, []);
+  const loadSavedPos = reactExports.useCallback(() => loadPanelPos(PANEL_POS_KEY), []);
   const [panelPos, setPanelPos] = reactExports.useState(loadSavedPos);
   const attachedWidth = (state.containerOpen !== null ? CONTAINER_W_REM + PANEL_GAP_REM : 0) + (state.selected !== null ? DETAIL_W_REM + PANEL_GAP_REM : 0);
   const fittedPanelPos = usePanelPosition(wrapperRef, panelPos, visible, remPx(attachedWidth));
@@ -7303,10 +7317,7 @@ function App() {
       document.removeEventListener("mouseup", onUp);
       setPanelPos((cur) => {
         if (cur) {
-          try {
-            localStorage.setItem(PANEL_POS_KEY, JSON.stringify(cur));
-          } catch {
-          }
+          savePanelPos(PANEL_POS_KEY, cur);
         }
         return cur;
       });

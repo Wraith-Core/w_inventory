@@ -3,6 +3,7 @@ import { SVG_BAG, SVG_EYE } from '../utils/items';
 import { InventoryItem } from '../typings';
 import { tr } from '../i18n';
 import Frame from './Frame';
+import { wsPx } from '../utils/wsScale';
 
 const SVG_USE = <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>;
 const SVG_SPLIT = <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 4l2.29 2.29-2.88 2.88 1.42 1.42 2.88-2.88L20 10V4h-6zm-4 0H4v6l2.29-2.29 4.71 4.7V20h2v-8.41l-5.29-5.3L10 4z"/></svg>;
@@ -49,8 +50,9 @@ export default function ContextMenu({ visible, x, y, item, idx, panel, container
   useEffect(() => {
     if (visible && ref.current) {
       ref.current.style.opacity = '0';
-      ref.current.style.left = `${Math.max(8, Math.min(x, window.innerWidth - ref.current.offsetWidth - 8))}px`;
-      ref.current.style.top = `${Math.max(8, Math.min(y, window.innerHeight - ref.current.offsetHeight - 8))}px`;
+      const m = wsPx(8);
+      ref.current.style.left = `${Math.max(m, Math.min(x, window.innerWidth - ref.current.offsetWidth - m))}px`;
+      ref.current.style.top = `${Math.max(m, Math.min(y, window.innerHeight - ref.current.offsetHeight - m))}px`;
       requestAnimationFrame(() => {
         if (ref.current) ref.current.style.opacity = '1';
       });

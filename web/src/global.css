@@ -84,8 +84,8 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  /* Keep the 1080p proportions on wide displays; 720p retains readable controls. */
-  font-size: clamp(16px, 1.688889vh, 36.48px);
+  /* 1 rem = 18.24 design px (ui-scale): follows the screen by height, width-limited on 4:3, never below the 720p text floor. */
+  font-size: calc(18.24 * var(--ws-fpx));
   font-family: var(--font-main);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

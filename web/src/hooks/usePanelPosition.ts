@@ -1,4 +1,5 @@
 import { RefObject, useLayoutEffect, useState } from 'react';
+import { wsPx } from '../utils/wsScale';
 
 /** Fit a saved position to the current viewport without changing the saved preference. */
 export default function usePanelPosition(ref: RefObject<HTMLDivElement>, preferred: { x:number; y:number } | null | undefined, active:boolean, extraWidth = 0) {
@@ -17,8 +18,9 @@ export default function usePanelPosition(ref: RefObject<HTMLDivElement>, preferr
     return () => { observer.disconnect(); window.removeEventListener('resize', measure); };
   }, [active, ref]);
   if (!preferred) return null;
+  const m = wsPx(8);
   return {
-    x:Math.max(8, Math.min(preferred.x, size.screenW - size.width - extraWidth - 8)),
-    y:Math.max(8, Math.min(preferred.y, size.screenH - size.height - 8)),
+    x:Math.max(m, Math.min(preferred.x, size.screenW - size.width - extraWidth - m)),
+    y:Math.max(m, Math.min(preferred.y, size.screenH - size.height - m)),
   };
 }

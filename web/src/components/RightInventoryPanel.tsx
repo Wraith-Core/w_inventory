@@ -6,6 +6,7 @@ import { formatCompact } from '../utils/formatNumber';
 import { tr, trf } from '../i18n';
 import Frame from './Frame';
 import usePanelPosition from '../hooks/usePanelPosition';
+import { loadPanelPos, savePanelPos } from '../utils/layout';
 
 const RIGHT_POS_KEY = 'w_inv_right_pos';
 
@@ -13,15 +14,9 @@ const RIGHT_POS_KEY = 'w_inv_right_pos';
 const SVG_SHOP = <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a5 5 0 0 0-5 5H4l-1 13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2L20 7h-3a5 5 0 0 0-5-5zm0 2a3 3 0 0 1 3 3H9a3 3 0 0 1 3-3zm-3 7a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm6 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" /></svg>;
 const SVG_CRAFT = <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.7 8.3 6.4 15.6l-1.4-1.4a2 2 0 0 0-2.8 2.8l4.8 4.8a2 2 0 0 0 2.8-2.8l-1.4-1.4 7.3-7.3-2-2zM22 5.6 18.4 2l-2.1 2.1-1-1a1 1 0 0 0-1.5 0l-1.6 1.6a1 1 0 0 0 0 1.4l5.7 5.7a1 1 0 0 0 1.4 0l1.6-1.6a1 1 0 0 0 0-1.5l-1-1L22 5.6z" /></svg>;
 
+// saved in design px (ui-scale), so it lands at the same place on every resolution
 function loadRightPos(): { x: number; y: number } | null {
-  try {
-    const raw = localStorage.getItem(RIGHT_POS_KEY);
-    if (raw) {
-      const p = JSON.parse(raw);
-      if (typeof p.x === 'number' && typeof p.y === 'number') return p;
-    }
-  } catch {}
-  return null;
+  return loadPanelPos(RIGHT_POS_KEY);
 }
 
 interface RightInventoryPanelProps {
@@ -96,7 +91,7 @@ export default function RightInventoryPanel({
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
       setRightPos((cur) => {
-        if (cur) { try { localStorage.setItem(RIGHT_POS_KEY, JSON.stringify(cur)); } catch {} }
+        if (cur) savePanelPos(RIGHT_POS_KEY, cur);
         return cur;
       });
       dragRef.current = null;

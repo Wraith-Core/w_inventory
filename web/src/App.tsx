@@ -5,7 +5,7 @@ import useNui from './hooks/useNui';
 import useSound from './hooks/useSound';
 import { useToast } from './hooks/useToast';
 import usePanelPosition from './hooks/usePanelPosition';
-import { remPx, CONTAINER_W_REM, DETAIL_W_REM, PANEL_GAP_REM } from './utils/layout';
+import { remPx, CONTAINER_W_REM, DETAIL_W_REM, PANEL_GAP_REM, loadPanelPos, savePanelPos } from './utils/layout';
 import { useHotbar } from './hooks/useHotbar';
 import { fetchNui } from './utils/nui';
 import { N } from './utils/items';
@@ -108,16 +108,8 @@ export default function App() {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const PANEL_POS_KEY = 'w_inv_panel_pos';
-  const loadSavedPos = useCallback((): { x: number; y: number } | null => {
-    try {
-      const raw = localStorage.getItem(PANEL_POS_KEY);
-      if (raw) {
-        const p = JSON.parse(raw);
-        if (typeof p.x === 'number' && typeof p.y === 'number') return p;
-      }
-    } catch {}
-    return null;
-  }, []);
+  // saved in design px (ui-scale), so it lands at the same place on every resolution
+  const loadSavedPos = useCallback((): { x: number; y: number } | null => loadPanelPos(PANEL_POS_KEY), []);
 
   const [panelPos, setPanelPos] = useState<{ x: number; y: number } | null>(loadSavedPos);
   const attachedWidth = (state.containerOpen !== null ? CONTAINER_W_REM + PANEL_GAP_REM : 0) + (state.selected !== null ? DETAIL_W_REM + PANEL_GAP_REM : 0);
@@ -151,7 +143,7 @@ export default function App() {
       document.removeEventListener('mouseup', onUp);
       setPanelPos((cur) => {
         if (cur) {
-          try { localStorage.setItem(PANEL_POS_KEY, JSON.stringify(cur)); } catch {}
+          savePanelPos(PANEL_POS_KEY, cur);
         }
         return cur;
       });

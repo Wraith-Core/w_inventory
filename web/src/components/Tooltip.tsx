@@ -3,6 +3,7 @@ import { rarity, N, fmtWeight } from '../utils/items';
 import { InventoryItem } from '../typings';
 import { tr } from '../i18n';
 import Frame from './Frame';
+import { wsPx } from '../utils/wsScale';
 
 interface TooltipProps {
   item: InventoryItem | null;
@@ -19,11 +20,12 @@ export default function Tooltip({ item, anchorRect }: TooltipProps) {
       if (anchorRect) {
         const width = ref.current.offsetWidth;
         const height = ref.current.offsetHeight;
-        const center = Math.max(width / 2 + 8, Math.min(anchorRect.x + anchorRect.width / 2, window.innerWidth - width / 2 - 8));
-        const above = anchorRect.y - height - 8 >= 8;
-        const top = above ? anchorRect.y - 8 : Math.min(anchorRect.bottom + 8, window.innerHeight - height - 8);
+        const m = wsPx(8);
+        const center = Math.max(width / 2 + m, Math.min(anchorRect.x + anchorRect.width / 2, window.innerWidth - width / 2 - m));
+        const above = anchorRect.y - height - m >= m;
+        const top = above ? anchorRect.y - m : Math.min(anchorRect.bottom + m, window.innerHeight - height - m);
         ref.current.style.left = `${center}px`;
-        ref.current.style.top = `${Math.max(8, top)}px`;
+        ref.current.style.top = `${Math.max(m, top)}px`;
         ref.current.style.transform = above ? 'translate(-50%,-100%)' : 'translateX(-50%)';
         ref.current.dataset.placement = above ? 'above' : 'below';
       }
@@ -47,7 +49,7 @@ export default function Tooltip({ item, anchorRect }: TooltipProps) {
       style={{
         display: 'block',
         left: anchorRect.x + anchorRect.width / 2,
-        top: anchorRect.y - 8,
+        top: anchorRect.y - wsPx(8),
         transform: 'translate(-50%,-100%)',
         opacity: 0,
       }}
