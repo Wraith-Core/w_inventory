@@ -1360,6 +1360,12 @@ function Weapon.Equip(item, data, _, options)
 			usageSynced = Weapon.SyncUsage(item)
 		end
 
+		if not dualHandled and data.storyOnly then
+			-- 2026-11-04: a story-mode weapon RedM online never loads: say so, never a silent failure
+			Utils.Notify({ id = 'weapon_story_only', type = 'error', description = locale('weapon_story_only') })
+			return nil, nil, 'story_only_weapon'
+		end
+
 		if not dualHandled and not HasPedGotWeapon(playerPed, data.hash, 0, false) then
 			-- Without streaming the assets a patch-pack weapon does not show in the hand and is not usable
 			requestWeaponAsset(data.hash)

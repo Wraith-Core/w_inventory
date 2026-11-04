@@ -1498,6 +1498,8 @@ function Inventory.AddItem(inv, item, count, metadata, slot, cb)
     end
 
 	if not item then return false, 'invalid_item' end
+    -- 2026-11-04: a story-mode weapon RedM online never loads is never given (shops, loot, admin give)
+    if item.storyOnly then return false, 'story_only_weapon' end
 
 	inv = Inventory(inv) --[[@as WInventory]]
 
@@ -1923,6 +1925,7 @@ exports('RemoveItem', Inventory.RemoveItem)
 ---@param metadata? table | string
 function Inventory.CanCarryItem(inv, item, count, metadata)
 	if type(item) ~= 'table' then item = Items(item) end
+    if item and item.storyOnly then return false end -- never carried new (a shop asks this before it charges)
 
 	if item then
 		inv = Inventory(inv) --[[@as WInventory]]

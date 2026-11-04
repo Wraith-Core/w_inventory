@@ -3,6 +3,9 @@
 -- 85 Weapons/Tools (75 Standalone Collectibles + 10 Thrown Helpers)
 -- 50 Ammunition Items (34 Boxes/Bundles + 16 Thrown Units)
 -- ============================================================
+-- storyOnly (2026-11-04, the owner): a story-mode weapon RedM online never loads (the game refuses to give it:
+-- WEAPON_MELEE_HATCHET_VIKING). Kept so a bag that holds one still loads, but never given, bought or sold
+-- (Inventory.AddItem / CanCarryItem refuse it, w_store leaves it off its shelves) and equipping it says why.
 return {
     Weapons = {
         ['WEAPON_REVOLVER_CATTLEMAN'] = {
@@ -71,6 +74,7 @@ return {
             client = { image = 'weapon_revolver_doubleaction_gambler.png' },
         },
         ['WEAPON_REVOLVER_CATTLEMAN_JOHN'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'John\'s Cattleman Revolver',
             label_ar = 'ريفولفر جون',
             label_en = 'John\'s Cattleman Revolver',
@@ -93,6 +97,7 @@ return {
             client = { image = 'weapon_revolver_cattleman_mexican.png' },
         },
         ['WEAPON_REVOLVER_CATTLEMAN_PIG'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Granger\'s Revolver',
             label_ar = 'ريفولفر غرانجر',
             label_en = 'Granger\'s Revolver',
@@ -104,6 +109,7 @@ return {
             client = { image = 'weapon_revolver_cattleman_pig.png' },
         },
         ['WEAPON_REVOLVER_DOUBLEACTION_EXOTIC'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Algernon\'s Revolver',
             label_ar = 'ريفولفر ألجرنون',
             label_en = 'Algernon\'s Revolver',
@@ -115,6 +121,7 @@ return {
             client = { image = 'weapon_revolver_doubleaction_exotic.png' },
         },
         ['WEAPON_REVOLVER_DOUBLEACTION_MICAH'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Micah\'s Revolver',
             label_ar = 'ريفولفر مايكا',
             label_en = 'Micah\'s Revolver',
@@ -126,6 +133,7 @@ return {
             client = { image = 'weapon_revolver_doubleaction_micah.png' },
         },
         ['WEAPON_REVOLVER_SCHOFIELD_CALLOWAY'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Calloway\'s Revolver',
             label_ar = 'ريفولفر كالاواي',
             label_en = 'Calloway\'s Revolver',
@@ -137,6 +145,7 @@ return {
             client = { image = 'weapon_revolver_schofield_calloway.png' },
         },
         ['WEAPON_REVOLVER_SCHOFIELD_GOLDEN'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Otis Miller\'s Revolver',
             label_ar = 'ريفولفر أوتيس ميلر',
             label_en = 'Otis Miller\'s Revolver',
@@ -202,6 +211,7 @@ return {
             client = { image = 'weapon_pistol_m1899.png' },
         },
         ['WEAPON_PISTOL_MAUSER_DRUNK'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Midnight\'s Pistol',
             label_ar = 'مسدس ميدنايت',
             label_en = 'Midnight\'s Pistol',
@@ -323,6 +333,7 @@ return {
             client = { image = 'weapon_sniperrifle_carcano.png' },
         },
         ['WEAPON_SNIPERRIFLE_ROLLINGBLOCK_EXOTIC'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Rare Rolling Block Rifle',
             label_ar = 'بندقية رولينغ بلوك النادرة',
             label_en = 'Rare Rolling Block Rifle',
@@ -442,6 +453,7 @@ return {
             client = { image = 'weapon_melee_knife_jawbone.png' },
         },
         ['WEAPON_MELEE_KNIFE_BEAR'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Antler Knife',
             label_ar = 'سكين بمقبض قرن',
             label_en = 'Antler Knife',
@@ -452,6 +464,7 @@ return {
             client = { image = 'weapon_melee_knife_bear.png' },
         },
         ['WEAPON_MELEE_KNIFE_CIVIL_WAR'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Civil War Knife',
             label_ar = 'سكين الحرب الأهلية',
             label_en = 'Civil War Knife',
@@ -462,6 +475,7 @@ return {
             client = { image = 'weapon_melee_knife_civil_war.png' },
         },
         ['WEAPON_MELEE_KNIFE_MINER'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Wide-Blade Knife',
             label_ar = 'سكين ذو نصل عريض',
             label_en = 'Wide-Blade Knife',
@@ -472,6 +486,7 @@ return {
             client = { image = 'weapon_melee_knife_miner.png' },
         },
         ['WEAPON_MELEE_KNIFE_VAMPIRE'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Ornate Dagger',
             label_ar = 'خنجر مزخرف',
             label_en = 'Ornate Dagger',
@@ -482,6 +497,7 @@ return {
             client = { image = 'weapon_melee_knife_vampire.png' },
         },
         ['WEAPON_MELEE_KNIFE_JOHN'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'John\'s Knife',
             label_ar = 'سكين جون',
             label_en = 'John\'s Knife',
@@ -548,6 +564,7 @@ return {
             client = { image = 'weapon_melee_machete_horror.png' },
         },
         ['WEAPON_MELEE_BROKEN_SWORD'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Broken Pirate Sword',
             label_ar = 'سيف قرصان مكسور',
             label_en = 'Broken Pirate Sword',
@@ -587,6 +604,7 @@ return {
             client = { image = 'weapon_melee_cleaver.png' },
         },
         ['WEAPON_MELEE_ANCIENT_HATCHET'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Stone Hatchet',
             label_ar = 'فأس حجري',
             label_en = 'Stone Hatchet',
@@ -597,6 +615,7 @@ return {
             client = { image = 'weapon_melee_ancient_hatchet.png' },
         },
         ['WEAPON_MELEE_HATCHET_VIKING'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Viking Hatchet',
             label_ar = 'فأس الفايكنغ',
             label_en = 'Viking Hatchet',
@@ -607,6 +626,7 @@ return {
             client = { image = 'weapon_melee_hatchet_viking.png' },
         },
         ['WEAPON_MELEE_HATCHET_HEWING'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Hewing Hatchet',
             label_ar = 'فأس نحت الخشب',
             label_en = 'Hewing Hatchet',
@@ -627,6 +647,7 @@ return {
             client = { image = 'weapon_melee_hatchet_double_bit.png' },
         },
         ['WEAPON_MELEE_HATCHET_DOUBLE_BIT_RUSTED'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Rusted Double Bit Hatchet',
             label_ar = 'فأس صدئ ذو حدين',
             label_en = 'Rusted Double Bit Hatchet',
@@ -647,6 +668,7 @@ return {
             client = { image = 'weapon_melee_hatchet_hunter.png' },
         },
         ['WEAPON_MELEE_HATCHET_HUNTER_RUSTED'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Rusted Hunter Hatchet',
             label_ar = 'فأس صياد صدئ',
             label_en = 'Rusted Hunter Hatchet',
@@ -800,6 +822,7 @@ return {
             client = { image = 'weapon_melee_davy_lantern.png' },
         },
         ['WEAPON_MELEE_LANTERN_ELECTRIC'] = {
+            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
             label = 'Electric Lantern',
             label_ar = 'فانوس كهربائي أصلي',
             label_en = 'Electric Lantern',

@@ -155,6 +155,7 @@
   "dual_holster_required": "You need a left holster to dual wield",
   "dual_hands_full": "Both weapon hands are already occupied",
   "dual_equip_failed": "RDR could not equip this weapon. Holster your weapons and try again",
+  "weapon_story_only": "This is a story-mode weapon that RedM online does not load, so it cannot be equipped.",
   "weapon_broke_repair": "Your weapon broke. Use a weapon repair kit",
   "repair_hold_weapon": "You must hold a weapon first",
   "repair_not_needed": "This weapon does not need repairs",
