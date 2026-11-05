@@ -286,8 +286,8 @@
     inset: 0;
     pointer-events: none;
     background:
-        radial-gradient(120% 100% at 22% 50%, rgba(10, 10, 10, .22), rgba(10, 10, 10, 0) 62%),
-        rgba(10, 10, 10, .42);
+        radial-gradient(120% 100% at 22% 50%, rgba(11, 10, 10, .22), rgba(11, 10, 10, 0) 62%),
+        rgba(11, 10, 10, .42);
     animation: invScrimIn .35s ease-out both
 }
 
@@ -762,6 +762,10 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     position: relative;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
+    /* rows keep the square slot height and the grid scrolls: with auto rows a long stash (more rows than
+       max-height holds) shrank every row to fit, and the squares (aspect-ratio, min-height 0) overlapped */
+    grid-auto-rows: max-content;
+    align-content: start;
     gap: .45rem;
     max-height: min(26rem, 46vh);
     overflow-y: auto;
@@ -1315,7 +1319,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     align-items: center;
     justify-content: center;
     gap: .5rem;
-    background: linear-gradient(to top, rgba(10, 10, 10, .82), rgba(10, 10, 10, 0));
+    background: linear-gradient(to top, rgba(11, 10, 10, .82), rgba(11, 10, 10, 0));
     color: var(--wc-text-dim);
     font-family: var(--font-main);
     font-size: calc(.78rem * var(--w-k-label));
@@ -1340,7 +1344,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
 #inv-ground-zone.active { display: flex }
 
 #inv-ground-zone.hover {
-    background: linear-gradient(to top, rgba(203, 1, 1, .34), rgba(10, 10, 10, .2));
+    background: linear-gradient(to top, rgba(208, 22, 27, .34), rgba(11, 10, 10, .2));
     color: var(--wc-text)
 }
 
@@ -1938,7 +1942,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     background: rgba(0, 0, 0, .55)
 }
 
-#container-panel .cp-bar-marker.warn { background: rgba(203, 1, 1, .55) }
+#container-panel .cp-bar-marker.warn { background: rgba(208, 22, 27, .55) }
 #container-panel .cp-metric.warn .cp-bar-fill { background: var(--gauge-mid) }
 #container-panel .cp-metric.critical .cp-bar-fill { background: var(--gauge-low) }
 #container-panel .cp-metric.critical .cp-metric-value { color: var(--wc-text) }
@@ -2319,7 +2323,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     position: absolute;
     inset: 0;
     z-index: -1;
-    background-color: rgba(10, 10, 10, .96);
+    background-color: rgba(11, 10, 10, .96);
     -webkit-mask: var(--tex-toast_bg) center / 100% 100% no-repeat;
     mask: var(--tex-toast_bg) center / 100% 100% no-repeat
 }
@@ -2717,7 +2721,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     display: block;
     height: 100%;
     border-radius: 0;
-    background: var(--w-paper);
+    background: var(--w-red, #D0161B); /* 2026-11-05: the site's look, bars fill red */
     box-shadow: none;
     transition: width .25s ease
 }
@@ -3064,7 +3068,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     inset: 5%;
     z-index: -1;
     pointer-events: none;
-    background-color: rgba(10, 10, 10, .88);
+    background-color: rgba(11, 10, 10, .88);
     -webkit-mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
     mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
     transition: background-color .2s
@@ -3085,12 +3089,12 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
 
 .hb-slot.hb-filled { cursor: pointer }
 .hb-slot.hb-filled::before { opacity: .58 }
-.hb-slot.hb-filled::after { background-color: rgba(17, 17, 17, .9) }
+.hb-slot.hb-filled::after { background-color: rgba(21, 19, 19, .9) }
 .hb-slot.hb-filled:hover { transform: translateY(-3px) }
 .hb-slot.hb-filled:hover::before { opacity: 1; background-color: var(--w-paper) }
-.hb-slot.hb-filled:hover::after { background-color: rgba(34, 34, 34, .92) }
+.hb-slot.hb-filled:hover::after { background-color: rgba(36, 32, 32, .92) }
 .hb-slot.hb-equipped::before { opacity: 1; background-color: var(--w-paper) }
-.hb-slot.hb-equipped::after { background-color: rgba(51, 51, 51, .92) }
+.hb-slot.hb-equipped::after { background-color: rgba(58, 53, 52, .92) }
 
 /* The slot's number on a counter_bg_1a disc */
 .hb-key {
@@ -3529,7 +3533,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     width: 0;
     height: 100%;
     border-radius: 0;
-    background: var(--w-paper);
+    background: var(--w-red, #D0161B); /* 2026-11-05: the site's look, progress fills red */
     animation: tradeBarFill 2.4s ease-in-out forwards
 }
 

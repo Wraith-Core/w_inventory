@@ -269,7 +269,7 @@ const InventorySlot: React.ForwardRefRenderFunction<HTMLDivElement, SlotProps> =
                           color:
                             item.currency === 'money' || !item.currency
                               ? '#d2d2d2'
-                              : '#cb0101',
+                              : '#d0161b',
                         }}
                       >
                         <p>

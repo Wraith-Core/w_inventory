@@ -21,15 +21,15 @@
   --wc-red-deep: var(--w-red-deep);
   --wc-red-soft: var(--w-red-soft);
   --wc-hover: rgba(242, 242, 242, 0.12);
-  --wc-ok: var(--w-paper);
+  --wc-ok: var(--w-green, #9FC79A); /* 2026-11-05: ok states in the site's soft green */
   --wc-accent: var(--w-paper);
   --wc-accent-soft: rgba(242, 242, 242, 0.08);
   --wc-glow: rgba(242, 242, 242, 0.05);
 
   /* w_inventory's old names, bound to the same tokens so nothing breaks */
-  --glass: radial-gradient(130% 90% at 50% 0%, rgba(25, 25, 25, 0.94) 0%, rgba(17, 17, 17, 0.96) 42%, rgba(10, 10, 10, 0.97) 100%);
-  --glass-solid: rgba(10, 10, 10, 0.96);
-  --glass-light: rgba(25, 25, 25, 0.94);
+  --glass: radial-gradient(130% 90% at 50% 0%, rgba(28, 25, 25, 0.94) 0%, rgba(21, 19, 19, 0.96) 42%, rgba(11, 10, 10, 0.97) 100%);
+  --glass-solid: rgba(11, 10, 10, 0.96);
+  --glass-light: rgba(28, 25, 25, 0.94);
   /* The stacked surfaces (menus/dialogs/tooltips) are drawn opaque so the panel does not show through them */
   --glass-modal: radial-gradient(130% 90% at 50% 0%, var(--w-ink-3) 0%, var(--w-ink-2) 42%, var(--w-ink) 100%);
   --border: var(--wc-line);
