@@ -5,6 +5,7 @@ local Items = require 'modules.items.server'
 local db = require 'modules.mysql.server'
 local NativeVorp = shared.framework == 'vorp' and require 'modules.mysql.vorp'
 local Catalog = require 'modules.items.catalog'
+local Losses = require 'modules.losses.server' -- 2026-11-06: offline removals go into the loss journal too
 local function online(owner)
     for _, inv in pairs(Inventory.GetPersistenceInventories()) do
         if inv.player and tostring(inv.owner) == tostring(owner) then return inv end
@@ -62,6 +63,7 @@ local function mutate(owner, action, name, count, id, ammo)
         local rowId = db.playerRowId(owner)
         local rows = db.loadPlayer(owner) or {}
         local item = name and Items(name)
+        local lost = {}
         if action == 'add' then
             if not item or item.nativeSource ~= (shared.backend == 'wcore' and 'wcore' or shared.framework) or item.nativeCurrency or item.nativeGunbelt then return false, 'Invalid native item' end
             count = tonumber(count) or 1
@@ -109,6 +111,7 @@ local function mutate(owner, action, name, count, id, ammo)
             if (not item and id == nil) or available < count then return false, 'Item not found' end
             for _, match in ipairs(matches) do
                 local take = math.min(count, match.row.count)
+                lost[#lost + 1] = { name = match.row.name, count = take, metadata = match.row.metadata }
                 match.row.count = match.row.count - take; count = count - take
                 if match.row.count == 0 then rows[match.index] = nil end
                 if count == 0 then break end
@@ -122,12 +125,21 @@ local function mutate(owner, action, name, count, id, ammo)
                 if row.name == 'money' or row.name == 'gold'
                     or definition and (definition.nativeCurrency or definition.nativeGunbelt) then
                     kept[#kept + 1] = row
+                else
+                    lost[#lost + 1] = row
                 end
             end
             rows = kept
         else return false, 'Invalid operation' end
         if online(owner) then return false, 'Character is online' end
-        return db.savePlayer(owner, json.encode(rows), nil, rowId) == true
+        local saved = db.savePlayer(owner, json.encode(rows), nil, rowId) == true
+        if saved then
+            for _, l in ipairs(lost) do
+                Losses.record(owner, l.name, l.count, l.metadata, action == 'clear' and 'cleared' or 'admin',
+                    GetInvokingResource() or 'w_inventory', 'offline')
+            end
+        end
+        return saved
     end, debug.traceback)
     server.nativeOfflineLocks[owner] = nil
     if not ok then return false, result end

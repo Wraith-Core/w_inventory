@@ -3,6 +3,7 @@ if not lib then return end
 local CraftingBenches = {}
 local Items = require 'modules.items.server'
 local Inventory = require 'modules.inventory.server'
+local Losses = require 'modules.losses.server'
 
 ---@param id number
 ---@param data table
@@ -240,6 +241,7 @@ local function craftItem(source, id, index, recipeId, toSlot)
                             Items.UpdateDurability(left, invSlot, item, durability < 0 and 0 or durability)
 						end
 					else
+						if invSlot then Losses.reason('craft', Losses.actor(left), 'crafting') end
 						local removed = invSlot and Inventory.RemoveItem(left, invSlot.name, count, nil, slot)
 						-- Failed to remove item (inventory state unexpectedly changed?)
 						if not removed then return end

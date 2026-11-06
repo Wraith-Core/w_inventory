@@ -13,6 +13,7 @@ local TriggerEventHooks = require 'modules.hooks.server'
 local db = require 'modules.mysql.server'
 local Items = require 'modules.items.server'
 local Inventory = require 'modules.inventory.server'
+local Losses = require 'modules.losses.server'
 db.setInventoryResolver(Inventory.GetPersistenceInventories)
 
 require 'modules.crafting.server'
@@ -618,6 +619,7 @@ lib.callback.register('w_inventory:useItem', function(source, itemName, slot, me
 				end
 
 				if not durability then
+					Losses.reason('used', Losses.actor(inventory), 'self')
 					Inventory.RemoveItem(inventory.id, data.name, consume < 1 and 1 or consume, nil, data.slot)
 				else
 					inventory.changed = true
@@ -823,6 +825,7 @@ lib.addCommand('removeitem', {
 
 		local inventory = liveInventory(source, target)
 		if not inventory then return end
+		Losses.reason('admin', source > 0 and Losses.actor(Inventory(source)) or 'console', 'command')
 		local success, response = Inventory.RemoveItem(inventory, item.name, args.count, args.type and { type = tonumber(args.type) or args.type }, nil, true)
 
 		if not success then

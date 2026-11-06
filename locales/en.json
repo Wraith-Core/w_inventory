@@ -123,6 +123,8 @@
   "storage": "Storage",
   "pickup": "Pick up",
   "received_from_player": "Received %sx %s | From player: %s",
+  "loss_restored": "Staff gave you back %sx %s (compensation)",
+  "loss_refunded": "Staff gave you back $%s (compensation)",
   "evidence_location": "Evidence - Location %s",
   "personal_locker": "Personal Locker",
   "trash": "Trash",

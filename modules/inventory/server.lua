@@ -404,6 +404,7 @@ function Inventory.SetSlot(inv, item, count, metadata, slot)
 end
 
 local Items = require 'modules.items.server'
+local Losses = require 'modules.losses.server' -- 2026-11-06: the loss journal (w_losses)
 require('modules.inventory.economy')(Inventory, Inventories, Items)
 
 CreateThread(function()
@@ -1816,6 +1817,7 @@ exports('GetItemSlots', Inventory.GetItemSlots)
 ---@param ignoreTotal? boolean
 ---@return boolean? success, string? response
 function Inventory.RemoveItem(inv, item, count, metadata, slot, ignoreTotal)
+	local lossReason = Losses.take() -- set by the caller just before this call (modules/losses/server.lua)
 	if type(item) ~= 'table' then item = Items(item) end
 
 	if not item then return false, 'invalid_item' end
@@ -1843,6 +1845,7 @@ function Inventory.RemoveItem(inv, item, count, metadata, slot, ignoreTotal)
 			count = totalCount
 		end
 
+		local lossSnap = Losses.snapshot(inv, itemSlots, slot)
 		local removed, total, slots = 0, count, {}
 		local removedUsageSlots = {}
 		local function rememberUsage(slotId, slotData)
@@ -1885,6 +1888,7 @@ function Inventory.RemoveItem(inv, item, count, metadata, slot, ignoreTotal)
 
 		if removed > 0 then
 			inv.changed = true
+			Losses.afterRemove(inv, lossSnap, lossReason, GetInvokingResource())
 
 			if next(removedUsageSlots) and inv.player then
 				for usedSlot in pairs(removedUsageSlots) do
@@ -2014,6 +2018,7 @@ exports('CanSwapItem', Inventory.CanSwapItem)
 ---@param metadata { [string]: any }
 ---@param slot number
 RegisterServerEvent('w_inventory:removeItem', function(name, count, metadata, slot)
+	Losses.reason('discarded', Losses.actor(Inventory(source)), 'self')
 	Inventory.RemoveItem(source, name, count, metadata, slot)
 end)
 
@@ -2321,6 +2326,8 @@ local function dropItem(source, playerInventory, fromData, data)
 	local slot = data.fromSlot
 	playerInventory.weight -= toData.weight
 	playerInventory.items[slot] = fromData
+	-- loss journal: written as soon as the bag gave it up (a drop that fails to be created can be given back)
+	Losses.record(playerInventory, toData.name, toData.count, toData.metadata, 'drop', Losses.actor(playerInventory), 'ground')
 
 	if wasUsed then
 		TriggerClientEvent('w_inventory:disarmSlot', playerInventory.id, slot, true)
@@ -2741,6 +2748,24 @@ lib.callback.register('w_inventory:swapItems', function(source, data)
 			if fromInventory.changed ~= nil then fromInventory.changed = true end
 			if toInventory.changed ~= nil then toInventory.changed = true end
 
+			-- loss journal: an item that left a player's bag for ANOTHER player's hands (given, taken from
+			-- him while down/searched/robbed, or by a lawman). Moving one's own items into a stash is not a loss.
+			if not sameInventory and (fromOtherPlayer or toOtherPlayer) then
+				local actor = Losses.actor(playerInventory)
+				local taker = server.hasGroup(playerInventory, shared.police) and 'police' or 'taken'
+				local moved = hookPayload.action == 'swap' and toData or hookPayload.fromSlot
+				local movedCount = hookPayload.action == 'swap' and (toData and toData.count) or data.count
+				if fromInventory.player and moved then
+					Losses.record(fromInventory, moved.name, movedCount, moved.metadata,
+						fromOtherPlayer and taker or 'give', fromOtherPlayer and actor or Losses.actor(toInventory), tostring(toInventory.id))
+				end
+				-- a swap also sends the other slot's item back the other way
+				if hookPayload.action == 'swap' and fromData and toInventory.player then
+					Losses.record(toInventory, fromData.name, fromData.count, fromData.metadata,
+						toOtherPlayer and taker or 'give', toOtherPlayer and actor or Losses.actor(fromInventory), tostring(fromInventory.id))
+				end
+			end
+
 			if sameInventory and fromInventory.player then
 				-- Slot numbers changed but the exact weapon instances and hands did not.
 				Inventory.RebuildWeaponUsage(fromInventory, false)
@@ -2839,6 +2864,7 @@ local function nativeCustody(inv, returning)
         local name = '__w_confiscated'
         local stored = Inventory.Load(name, 'stash', inv.owner)
         local playerRows, stashRows = {}, {}
+        local taken = {} -- loss journal: what goes into custody (written once it is saved)
         local function append(rows, item, keepSlot)
             local copy = json.decode(json.encode(item))
             local slot = keepSlot and tonumber(copy.slot) or nil
@@ -2865,11 +2891,15 @@ local function nativeCustody(inv, returning)
                     append(playerRows, row, true)
                 else
                     append(stashRows, row, false)
+                    taken[#taken + 1] = row
                 end
             end
         end
         if not db.saveNativeTransfer(inv.owner, name, json.encode(playerRows), json.encode(stashRows)) then
             return false, 'native_transfer_failed'
+        end
+        for _, row in ipairs(taken) do
+            Losses.record(inv, row.name, row.count, row.metadata, 'confiscated', GetInvokingResource() or 'w_inventory', name)
         end
         inv.items, inv.weight, inv.changed = playerRows, Inventory.CalculateWeight(playerRows), false
         inv.weapon, inv.weaponUsage = nil, { count = 0, hands = {}, primary = nil }
@@ -2971,6 +3001,7 @@ function Inventory.Clear(inv, keep)
 	local updateSlots = {}
 	local newWeight = 0
 	local inc = 0
+	local lossSnap = Losses.snapshot(inv, inv.items)
 
 	if keep then
 		local keptItems = {}
@@ -3020,6 +3051,7 @@ function Inventory.Clear(inv, keep)
 
 	inv.weight = newWeight
 	inv.changed = true
+	Losses.afterRemove(inv, lossSnap, { how = 'cleared', place = GetInvokingResource() or 'w_inventory' }, GetInvokingResource())
     Inventory.ReflectCash(inv)
 
 	inv:syncSlotsWithClients(updateSlots, true)
@@ -3338,6 +3370,7 @@ RegisterServerEvent('w_inventory:giveItem', function(slot, target, count)
             if item.name == 'money' or item.name == 'cash' then Inventory.TransferCash(fromInventory, toInventory, count); return end
 			---@todo manually call swapItems or something?
 			if Inventory.AddItem(toInventory, item, count, data.metadata, toSlot) then
+				Losses.reason('give', Losses.actor(toInventory), 'player')
 				if Inventory.RemoveItem(fromInventory, item, count, data.metadata, slot) then
 					if server.loglevel > 0 then
 						-- the receiver is picked by proximity (his server id); the log names him by his
@@ -3818,6 +3851,7 @@ local function updateWeapon(source, action, value, slot, specialAmmo, ammoRevisi
 				end
 
 				-- Every loadable item = one round
+				Losses.reason('skip') -- the rounds stay in his own weapon
 				if not Inventory.RemoveItem(inventory, ammo, diff, removeMeta) then return false, currentRevision end
 
 				weapon.metadata.ammo = value
@@ -3840,6 +3874,7 @@ local function updateWeapon(source, action, value, slot, specialAmmo, ammoRevisi
 				end
 			elseif action == 'throw' then
 				if not item.throwable then return false end
+				Losses.reason('thrown', Losses.actor(inventory), 'self')
 				if not Inventory.RemoveItem(inventory, weapon.name, 1, weapon.metadata, weapon.slot) then return false end
 			elseif action == 'ammo' then
 				if value <= (tonumber(weapon.metadata.ammo) or 0) then
@@ -4016,6 +4051,7 @@ local function cleanMaintenanceWeapon(source, slot, name, serial, observed)
 	if not state.needsCleaning then return { ok = false, reason = 'not_needed', state = state } end
 	if not state.canClean then return { ok = false, reason = 'missing_oil', state = state } end
 
+	Losses.reason('used', Losses.actor(inventory), 'gun_oil')
 	local removed = Inventory.RemoveItem(inventory, config.item, config.consume)
 	if not removed then
 		state = maintenanceState(inventory, weapon, config)

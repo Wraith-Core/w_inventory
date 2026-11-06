@@ -123,6 +123,8 @@
   "storage": "التخزين",
   "pickup": "التقاط من الأرض",
   "received_from_player": "استلمت %sx %s | من اللاعب: %s",
+  "loss_restored": "أعاد لك الطاقم %sx %s (تعويض)",
+  "loss_refunded": "أعاد لك الطاقم %s$ (تعويض)",
   "evidence_location": "الأدلة - الموقع %s",
   "personal_locker": "الخزنة الشخصية",
   "trash": "سلة المهملات",

@@ -2,6 +2,7 @@ if not lib then return end
 
 local Items = require 'modules.items.server'
 local Inventory = require 'modules.inventory.server'
+local Losses = require 'modules.losses.server'
 local Shops = {}
 
 ---@class WShopItem
@@ -395,6 +396,7 @@ lib.callback.register('w_inventory:buyItem', function(source, data)
 					end)
 					if not ok or removed ~= true then return false end
 				else
+					Losses.reason('shop', Losses.actor(playerInv), 'shop')
 					if not Inventory.RemoveItem(playerInv, currency, price) then return false end
 				end
 
