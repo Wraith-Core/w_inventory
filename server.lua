@@ -47,6 +47,11 @@ local function initializePlayerInventory(player, data)
 		data = db.loadPlayer(player.identifier)
 	end
 
+	-- story-only weapons (data/story_only_weapons.lua) are no longer items: they leave the bag here
+	-- and the bag is saved without them (inv.changed below)
+	local storyStripped
+	data, storyStripped = Inventory.StripStoryOnly(data, ('the bag of %s'):format(tostring(player.identifier)))
+
 	-- Cash is a UI/account proxy, never part of native item storage.
     if server.nativeCashBalance then
         local nativeRows = {}
@@ -128,6 +133,11 @@ local function initializePlayerInventory(player, data)
 
 		if server.syncInventory then server.syncInventory(inv) end
 		TriggerClientEvent('w_inventory:setPlayerInventory', player.source, Inventory.Drops, inventory, totalWeight, inv.player)
+
+		if storyStripped > 0 then
+			inv.changed = true
+			TriggerClientEvent('w_inventory:notify', player.source, { type = 'inform', key = 'story_weapons_removed', args = { storyStripped } })
+		end
 	end
 end
 server.nativeOfflineLocks = {}

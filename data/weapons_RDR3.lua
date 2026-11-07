@@ -3,9 +3,9 @@
 -- 85 Weapons/Tools (75 Standalone Collectibles + 10 Thrown Helpers)
 -- 50 Ammunition Items (34 Boxes/Bundles + 16 Thrown Units)
 -- ============================================================
--- storyOnly (2026-11-04, the owner): a story-mode weapon RedM online never loads (the game refuses to give it:
--- WEAPON_MELEE_HATCHET_VIKING). Kept so a bag that holds one still loads, but never given, bought or sold
--- (Inventory.AddItem / CanCarryItem refuse it, w_store leaves it off its shelves) and equipping it says why.
+-- Story-mode weapons RedM online never loads (the game refuses to give them: WEAPON_MELEE_HATCHET_VIKING)
+-- are NOT in this catalog (2026-11-08, the owner: "remove them from the bag and from the players").
+-- Their names live in data/story_only_weapons.lua; any bag or stash that still holds one drops it on load.
 return {
     Weapons = {
         ['WEAPON_REVOLVER_CATTLEMAN'] = {
@@ -73,18 +73,6 @@ return {
             tier = 'rare',
             client = { image = 'weapon_revolver_doubleaction_gambler.png' },
         },
-        ['WEAPON_REVOLVER_CATTLEMAN_JOHN'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'John\'s Cattleman Revolver',
-            label_ar = 'ريفولفر جون',
-            label_en = 'John\'s Cattleman Revolver',
-            weight = 1200,
-            durability = 0.05,
-            ammoname = 'ammo_revolver',
-            model = 'w_revolver_cattleman01',
-            tier = 'rare',
-            client = { image = 'weapon_revolver_cattleman_john.png' },
-        },
         ['WEAPON_REVOLVER_CATTLEMAN_MEXICAN'] = {
             label = 'Flaco\'s Revolver',
             label_ar = 'ريفولفر فلاكو',
@@ -95,66 +83,6 @@ return {
             model = 'w_revolver_cattleman02',
             tier = 'rare',
             client = { image = 'weapon_revolver_cattleman_mexican.png' },
-        },
-        ['WEAPON_REVOLVER_CATTLEMAN_PIG'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Granger\'s Revolver',
-            label_ar = 'ريفولفر غرانجر',
-            label_en = 'Granger\'s Revolver',
-            weight = 1200,
-            durability = 0.05,
-            ammoname = 'ammo_revolver',
-            model = 'w_revolver_cattleman03',
-            tier = 'rare',
-            client = { image = 'weapon_revolver_cattleman_pig.png' },
-        },
-        ['WEAPON_REVOLVER_DOUBLEACTION_EXOTIC'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Algernon\'s Revolver',
-            label_ar = 'ريفولفر ألجرنون',
-            label_en = 'Algernon\'s Revolver',
-            weight = 1200,
-            durability = 0.05,
-            ammoname = 'ammo_revolver',
-            model = 'w_revolver_doubleaction02',
-            tier = 'rare',
-            client = { image = 'weapon_revolver_doubleaction_exotic.png' },
-        },
-        ['WEAPON_REVOLVER_DOUBLEACTION_MICAH'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Micah\'s Revolver',
-            label_ar = 'ريفولفر مايكا',
-            label_en = 'Micah\'s Revolver',
-            weight = 1200,
-            durability = 0.05,
-            ammoname = 'ammo_revolver',
-            model = 'w_revolver_doubleaction06',
-            tier = 'rare',
-            client = { image = 'weapon_revolver_doubleaction_micah.png' },
-        },
-        ['WEAPON_REVOLVER_SCHOFIELD_CALLOWAY'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Calloway\'s Revolver',
-            label_ar = 'ريفولفر كالاواي',
-            label_en = 'Calloway\'s Revolver',
-            weight = 1200,
-            durability = 0.05,
-            ammoname = 'ammo_revolver',
-            model = 'w_revolver_schofield04',
-            tier = 'rare',
-            client = { image = 'weapon_revolver_schofield_calloway.png' },
-        },
-        ['WEAPON_REVOLVER_SCHOFIELD_GOLDEN'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Otis Miller\'s Revolver',
-            label_ar = 'ريفولفر أوتيس ميلر',
-            label_en = 'Otis Miller\'s Revolver',
-            weight = 1200,
-            durability = 0.05,
-            ammoname = 'ammo_revolver',
-            model = 'w_revolver_schofield03',
-            tier = 'rare',
-            client = { image = 'weapon_revolver_schofield_golden.png' },
         },
         ['WEAPON_REVOLVER_NAVY_CROSSOVER'] = {
             label = 'Lowry\'s Revolver',
@@ -209,18 +137,6 @@ return {
             model = 'w_pistol_m189901',
             tier = 'standard',
             client = { image = 'weapon_pistol_m1899.png' },
-        },
-        ['WEAPON_PISTOL_MAUSER_DRUNK'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Midnight\'s Pistol',
-            label_ar = 'مسدس ميدنايت',
-            label_en = 'Midnight\'s Pistol',
-            weight = 1100,
-            durability = 0.05,
-            ammoname = 'ammo_pistol',
-            model = 'w_pistol_mauser01',
-            tier = 'rare',
-            client = { image = 'weapon_pistol_mauser_drunk.png' },
         },
         ['WEAPON_REPEATER_CARBINE'] = {
             label = 'Carbine Repeater',
@@ -332,18 +248,6 @@ return {
             tier = 'standard',
             client = { image = 'weapon_sniperrifle_carcano.png' },
         },
-        ['WEAPON_SNIPERRIFLE_ROLLINGBLOCK_EXOTIC'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Rare Rolling Block Rifle',
-            label_ar = 'بندقية رولينغ بلوك النادرة',
-            label_en = 'Rare Rolling Block Rifle',
-            weight = 4000,
-            durability = 0.05,
-            ammoname = 'ammo_rifle',
-            model = 'w_rifle_rollingblock01',
-            tier = 'rare',
-            client = { image = 'weapon_sniperrifle_rollingblock_exotic.png' },
-        },
         ['WEAPON_SHOTGUN_DOUBLEBARREL'] = {
             label = 'Double-Barreled Shotgun',
             label_ar = 'بندقية خرطوش مزدوجة السبطانة',
@@ -452,61 +356,6 @@ return {
             tier = 'rare',
             client = { image = 'weapon_melee_knife_jawbone.png' },
         },
-        ['WEAPON_MELEE_KNIFE_BEAR'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Antler Knife',
-            label_ar = 'سكين بمقبض قرن',
-            label_en = 'Antler Knife',
-            weight = 400,
-            durability = 0.05,
-            model = 'w_melee_knife17',
-            tier = 'rare',
-            client = { image = 'weapon_melee_knife_bear.png' },
-        },
-        ['WEAPON_MELEE_KNIFE_CIVIL_WAR'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Civil War Knife',
-            label_ar = 'سكين الحرب الأهلية',
-            label_en = 'Civil War Knife',
-            weight = 400,
-            durability = 0.05,
-            model = 'w_melee_knife16',
-            tier = 'rare',
-            client = { image = 'weapon_melee_knife_civil_war.png' },
-        },
-        ['WEAPON_MELEE_KNIFE_MINER'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Wide-Blade Knife',
-            label_ar = 'سكين ذو نصل عريض',
-            label_en = 'Wide-Blade Knife',
-            weight = 400,
-            durability = 0.05,
-            model = 'w_melee_knife14',
-            tier = 'rare',
-            client = { image = 'weapon_melee_knife_miner.png' },
-        },
-        ['WEAPON_MELEE_KNIFE_VAMPIRE'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Ornate Dagger',
-            label_ar = 'خنجر مزخرف',
-            label_en = 'Ornate Dagger',
-            weight = 400,
-            durability = 0.05,
-            model = 'w_melee_knife18',
-            tier = 'rare',
-            client = { image = 'weapon_melee_knife_vampire.png' },
-        },
-        ['WEAPON_MELEE_KNIFE_JOHN'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'John\'s Knife',
-            label_ar = 'سكين جون',
-            label_en = 'John\'s Knife',
-            weight = 400,
-            durability = 0.05,
-            model = 'w_melee_knife01',
-            tier = 'rare',
-            client = { image = 'weapon_melee_knife_john.png' },
-        },
         ['WEAPON_MELEE_KNIFE_HORROR'] = {
             label = 'Horror Knife',
             label_ar = 'سكين الرعب',
@@ -563,17 +412,6 @@ return {
             tier = 'specialist',
             client = { image = 'weapon_melee_machete_horror.png' },
         },
-        ['WEAPON_MELEE_BROKEN_SWORD'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Broken Pirate Sword',
-            label_ar = 'سيف قرصان مكسور',
-            label_en = 'Broken Pirate Sword',
-            weight = 400,
-            durability = 0.05,
-            model = 'w_melee_brokenSword01',
-            tier = 'rare',
-            client = { image = 'weapon_melee_broken_sword.png' },
-        },
         ['WEAPON_MELEE_HAMMER'] = {
             label = 'Hammer',
             label_ar = 'مطرقة',
@@ -603,39 +441,6 @@ return {
             tier = 'standard',
             client = { image = 'weapon_melee_cleaver.png' },
         },
-        ['WEAPON_MELEE_ANCIENT_HATCHET'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Stone Hatchet',
-            label_ar = 'فأس حجري',
-            label_en = 'Stone Hatchet',
-            weight = 800,
-            durability = 0.05,
-            model = 'w_melee_hatchet03',
-            tier = 'rare',
-            client = { image = 'weapon_melee_ancient_hatchet.png' },
-        },
-        ['WEAPON_MELEE_HATCHET_VIKING'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Viking Hatchet',
-            label_ar = 'فأس الفايكنغ',
-            label_en = 'Viking Hatchet',
-            weight = 800,
-            durability = 0.05,
-            model = 'w_melee_hatchet04',
-            tier = 'rare',
-            client = { image = 'weapon_melee_hatchet_viking.png' },
-        },
-        ['WEAPON_MELEE_HATCHET_HEWING'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Hewing Hatchet',
-            label_ar = 'فأس نحت الخشب',
-            label_en = 'Hewing Hatchet',
-            weight = 800,
-            durability = 0.05,
-            model = 'w_melee_hatchet05',
-            tier = 'rare',
-            client = { image = 'weapon_melee_hatchet_hewing.png' },
-        },
         ['WEAPON_MELEE_HATCHET_DOUBLE_BIT'] = {
             label = 'Double Bit Hatchet',
             label_ar = 'فأس ذو حدين',
@@ -646,17 +451,6 @@ return {
             tier = 'rare',
             client = { image = 'weapon_melee_hatchet_double_bit.png' },
         },
-        ['WEAPON_MELEE_HATCHET_DOUBLE_BIT_RUSTED'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Rusted Double Bit Hatchet',
-            label_ar = 'فأس صدئ ذو حدين',
-            label_en = 'Rusted Double Bit Hatchet',
-            weight = 800,
-            durability = 0.05,
-            model = 'w_melee_hatchet06',
-            tier = 'rare',
-            client = { image = 'weapon_melee_hatchet_double_bit_rusted.png' },
-        },
         ['WEAPON_MELEE_HATCHET_HUNTER'] = {
             label = 'Hunter Hatchet',
             label_ar = 'فأس الصياد',
@@ -666,17 +460,6 @@ return {
             model = 'w_melee_hatchet07',
             tier = 'standard',
             client = { image = 'weapon_melee_hatchet_hunter.png' },
-        },
-        ['WEAPON_MELEE_HATCHET_HUNTER_RUSTED'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Rusted Hunter Hatchet',
-            label_ar = 'فأس صياد صدئ',
-            label_en = 'Rusted Hunter Hatchet',
-            weight = 800,
-            durability = 0.05,
-            model = 'w_melee_hatchet07',
-            tier = 'rare',
-            client = { image = 'weapon_melee_hatchet_hunter_rusted.png' },
         },
         ['WEAPON_THROWN_THROWING_KNIVES'] = {
             label = 'Throwing Knives',
@@ -820,17 +603,6 @@ return {
             durability = 0.05,
             tier = 'standard',
             client = { image = 'weapon_melee_davy_lantern.png' },
-        },
-        ['WEAPON_MELEE_LANTERN_ELECTRIC'] = {
-            storyOnly = true, -- story mode only: RedM online does not load it (rdr3_discoveries weapons.lua)
-            label = 'Electric Lantern',
-            label_ar = 'فانوس كهربائي أصلي',
-            label_en = 'Electric Lantern',
-            weight = 600,
-            durability = 0.05,
-            model = 's_interact_lantern03x_pickup',
-            tier = 'rare',
-            client = { image = 'weapon_melee_electric_lantern.png' },
         },
         ['WEAPON_MELEE_LANTERN_HALLOWEEN'] = {
             label = 'Halloween Lantern',

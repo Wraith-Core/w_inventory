@@ -647,7 +647,15 @@ local function useItem(data, cb, noAnim)
 
 	usingItem = true
 	---@type boolean?
-	result = lib.callback.await('w_inventory:useItem', 200, data.name, data.slot, slotData.metadata, noAnim)
+	-- protected: an await that throws (w_lib rejects a callback after its timeout) used to skip the
+	-- reset below and leave usingItem on for good - combat blocked, no item usable, until a relog
+	local called
+	called, result = pcall(lib.callback.await, 'w_inventory:useItem', 200, data.name, data.slot, slotData.metadata, noAnim)
+
+	if not called then
+		warn(('w_inventory: using "%s" failed: %s'):format(tostring(slotData.name), tostring(result)))
+		result = nil
+	end
 
 	if result and cb then
 		local success, response = pcall(cb, result and slotData)
@@ -2337,11 +2345,13 @@ local function openAmmoBox(boxSlot)
 	return slot, not slot and 'invalid' or nil
 end
 
---- Reloading a particular weapon - exclusively from the 'reload' button in the bag's menu.
+--- Reloading a particular weapon from the bag's rounds: the 'reload' button in the bag's menu, the
+--- wheel, and the game's reload key with the weapon in hand (reloadFromKey below).
 --- It works with the weapon holstered, since the bow is holstered automatically when the arrows run out.
 ---@param weaponSlot number the weapon's slot in the bag
 ---@param forcedAmmoSlot? number a particular ammunition slot the React picker inside the bag returned
-reloadWeapon = function(weaponSlot, forcedAmmoSlot)
+---@param quiet? boolean the reload key: no 'full' / 'no ammo' / 'loaded' toasts (the animation says it)
+reloadWeapon = function(weaponSlot, forcedAmmoSlot, quiet)
     if NativeWeapons then return false, 'native_weapon_engine' end
 	if reloadInProgress[weaponSlot] then rtrace('slot %s: a reload is under way', tostring(weaponSlot)) return end
 	if not canUseItem(true) then rtrace('canUseItem = false (busy/dead/restricted)') return end
@@ -2438,6 +2448,7 @@ reloadWeapon = function(weaponSlot, forcedAmmoSlot)
 	local ammoSlot = PlayerData.inventory[ammoSlotId]
     local ammoItem = ammoSlot and Items[ammoSlot.name]
     if not ammoItem or not ammoItem.ammo or ammoItem.ammoFamily ~= weaponItem.ammoFamily then
+        if quiet then return end
         return Utils.Notify({id='no_ammo',title=locale('ammo_title'),type='error',
             description=locale('no_ammo_for_weapon',weaponItem.label or '')})
     end
@@ -2511,6 +2522,7 @@ reloadWeapon = function(weaponSlot, forcedAmmoSlot)
 
 	if missing <= 0 then
 		finishReload()
+		if quiet then return end
 		return Utils.Notify({
 			id = 'weapon_full',
 			title = locale('ammo_title'),
@@ -2682,11 +2694,99 @@ reloadWeapon = function(weaponSlot, forcedAmmoSlot)
 		end
 	end
 
+	if quiet then return end
+
 	Utils.Notify({
 		title = locale('weapon_loaded_title'),
 		type = 'success',
 		description = ('%s: %d'):format(weaponItem.label or '', loaded + add)
 	})
+end
+
+-- ── The game's reload key ───────────────────────────────────────────────────────
+-- The owner (2026-11-08): with the weapon in hand and rounds for it in the bag, the reload key
+-- reloads it from the bag; with no rounds, or the weapon not in hand, the key does nothing.
+-- The engine's own reload stays disabled (client.tick: there is no engine reserve to draw from,
+-- the rounds are items); this reads the disabled key and runs the bag's own reload transaction,
+-- so the server still checks the capacity and takes the rounds out of the bag.
+local reloadFromKey
+
+do
+	local keyReloadUntil = 0
+
+	--- The ammunition slot the key loads from: the loaded type first (another type is refused while
+	--- rounds are in the weapon), then the type bookmarked in the bag's picker, then the first owned.
+	---@return number? slot
+	local function keyReloadAmmoSlot(slotData, weaponItem)
+		local owned = ownedAmmoTypes(weaponItem)
+		if #owned == 0 then return end
+
+		local loaded = math.max(0, math.floor(tonumber(slotData.metadata and slotData.metadata.ammo) or 0))
+		local current = slotData.metadata and slotData.metadata.specialAmmo or weaponItem.ammoname
+		local preferred = getPreferredAmmo(slotData)
+		local pick
+
+		for i = 1, #owned do
+			if owned[i].item == current then pick = owned[i] break end
+		end
+
+		if not pick and loaded > 0 then return end
+
+		if not pick and preferred then
+			for i = 1, #owned do
+				if owned[i].item == preferred then pick = owned[i] break end
+			end
+		end
+
+		return (pick or owned[1]).slot
+	end
+
+	reloadFromKey = function()
+		if NativeWeapons or invOpen or invBusy or usingItem or reloadTransaction then return end
+
+		local weapon = currentWeapon
+		if not weapon or weapon.melee or weapon.throwable or not weapon.slot then return end
+		if weapon.reloadBusy or weapon._ammoPersistBusy or IsPedReloading(cache.ped) or IsPedCuffed(cache.ped) then return end
+		-- the wheel, the chat or any page holding the focus reads the key as its own
+		local focused, paused = IsNuiFocused(), IsPauseMenuActive()
+		if focused == true or focused == 1 or paused == true or paused == 1 then return end
+
+		local now = GetGameTimer()
+		if now < keyReloadUntil then return end
+		keyReloadUntil = now + 600
+
+		-- In the hand, not in the holster: RDR keeps a holstered weapon as the current one.
+		local held = Citizen.InvokeNative(0x8425C5F057012DAB, cache.ped) -- _GET_PED_CURRENT_HELD_WEAPON
+		if held ~= weapon.hash and not Weapon.DualWield.HasHash(held) then return end
+
+		-- Two pistols in the hands: both are filled, one transaction each (reloadWeapon allows one at a time).
+		local slots = Weapon.DualWield.Count() > 1 and Weapon.HeldSlots() or { weapon.slot }
+		local jobs = {}
+
+		for i = 1, #slots do
+			local slotData = PlayerData.inventory and PlayerData.inventory[slots[i]]
+			local weaponItem = slotData and Items[slotData.name]
+
+			if weaponItem and weaponItem.weapon and weaponItem.ammoname and not weaponItem.throwable
+				and math.max(0, math.floor(tonumber(slotData.metadata and slotData.metadata.ammo) or 0))
+					< getWeaponCapacity(weaponItem) then
+				local ammoSlot = keyReloadAmmoSlot(slotData, weaponItem)
+				if ammoSlot then jobs[#jobs + 1] = slots[i] end
+			end
+		end
+
+		if #jobs == 0 then return end -- nothing to load from the bag: the key does nothing
+
+		CreateThread(function()
+			for i = 1, #jobs do
+				local slotData = PlayerData.inventory and PlayerData.inventory[jobs[i]]
+				local weaponItem = slotData and Items[slotData.name]
+				-- read again: the previous hand's reload may have opened a box or used the last rounds
+				local ammoSlot = weaponItem and keyReloadAmmoSlot(slotData, weaponItem)
+				if ammoSlot then reloadWeapon(jobs[i], ammoSlot, true) end
+			end
+		end)
+	end
 end
 
 -- Reloading a weapon with a particular ammunition type the player owns (the bag's interface or a trusted integration).
@@ -3599,6 +3699,26 @@ RegisterNetEvent('w_inventory:setPlayerInventory', function(currentDrops, invent
 	local IsPedShooting = IsPedShooting
 	local IsControlJustReleased = IsControlJustReleased
 
+	-- ── The shot, never the aim ────────────────────────────────────────────────────
+	-- The owner (2026-11-08): "sometimes I cannot aim or scope, it gets stuck". DISABLE_PLAYER_FIRING
+	-- inhibits every kind of combat in RDR3, the aim and the scope with it, and it ran on every frame a
+	-- weapon was busy or empty: after each burst the ammo save waits for the server (seconds when the
+	-- database is slow), during a reload, with an empty clip (the one-round rifles after every shot).
+	-- Those states only need the trigger blocked, so they disable the attack inputs and leave the aim.
+	local SHOT_CONTROLS = {
+		`INPUT_ATTACK`, `INPUT_ATTACK2`, `INPUT_HORSE_ATTACK`, `INPUT_HORSE_ATTACK2`,
+		`INPUT_VEH_ATTACK`, `INPUT_VEH_ATTACK2`, `INPUT_VEH_PASSENGER_ATTACK`,
+	}
+	local function blockShot()
+		for i = 1, #SHOT_CONTROLS do DisableControlAction(0, SHOT_CONTROLS[i], true) end
+	end
+
+	-- A busy flag must never outlive its job: a callback that never answers (w_lib waits five minutes)
+	-- or a thread that died left combat blocked until the weapon was re-equipped. Past these limits the
+	-- block is dropped and the console says which flag was stuck.
+	local COMBAT_BLOCK_MAX, WEAPON_BUSY_MAX = 15000, 10000
+	local combatBlockSince, weaponBusySince
+
 	client.tick = SetInterval(function()
 		if invOpen then
 			DisableAllControlActions(0)
@@ -3620,25 +3740,62 @@ RegisterNetEvent('w_inventory:setPlayerInventory', function(currentDrops, invent
 				DisableControlAction(0, `INPUT_DUCK`, true)
 			end
 
-			if usingItem or invBusy == true or IsPedCuffed(playerPed) then
+			if usingItem or invBusy == true then
+				local now = GetGameTimer()
+				combatBlockSince = combatBlockSince or now
+
+				-- a long progress bar (crafting, eating) is a real job: it keeps the block
+				if now - combatBlockSince < COMBAT_BLOCK_MAX or lib.progressActive() then
+					DisablePlayerFiring(playerId, true)
+				elseif combatBlockSince > 0 then
+					combatBlockSince = -1 -- warned once for this stretch
+					warn(('w_inventory: combat stayed blocked over %d s (usingItem=%s invBusy=%s); the block was dropped')
+						:format(COMBAT_BLOCK_MAX // 1000, tostring(usingItem), tostring(invBusy)))
+				end
+			else
+				combatBlockSince = nil
+			end
+
+			if IsPedCuffed(playerPed) then
 				DisablePlayerFiring(playerId, true)
 			end
 
 			if currentWeapon and currentWeapon.timer then
 				DisableControlAction(0, `INPUT_MELEE_ATTACK`, true)
-				-- Stop the engine's own free loading. There is no listener for the letter R;
-				-- the reload passes exclusively through the weapon's button inside the bag and is verified on the server.
+				-- Stop the engine's own free loading (there is no engine reserve: the rounds are bag items).
+				-- The key itself still reloads, from the bag, through reloadFromKey (server-checked).
 				DisableControlAction(0, `INPUT_RELOAD`, true)
+
+				if IsDisabledControlJustPressed(0, `INPUT_RELOAD`) then reloadFromKey() end
 
 				-- (The old 'ammunition pinning clamp' was removed: it used to pin GetAmmoInPedWeapon at metadata.ammo
 				--  so it stopped the consumption gate detecting the shot (10<10 forever). The consumption is now by an edge counter below.)
 
 				if currentWeapon.reloadBusy or currentWeapon._ammoPersistBusy then
-					DisablePlayerFiring(playerId, true)
-				elseif (currentWeapon.metadata.durability or 100) <= 0 then
-					DisablePlayerFiring(playerId, true)
-				elseif client.aimedfiring and not currentWeapon.melee and not IsPlayerFreeAiming(playerId) then
-					DisablePlayerFiring(playerId, true)
+					local now = GetGameTimer()
+					weaponBusySince = weaponBusySince or now
+
+					if now - weaponBusySince < WEAPON_BUSY_MAX then
+						blockShot()
+					else
+						warn(('w_inventory: weapon in slot %s blocked its shot over %d s (reload=%s save=%s); cleared')
+							:format(tostring(currentWeapon.slot), WEAPON_BUSY_MAX // 1000,
+								tostring(currentWeapon.reloadBusy), tostring(currentWeapon._ammoPersistBusy)))
+						currentWeapon.reloadBusy, currentWeapon._ammoPersistBusy = nil, nil
+						-- a reload whose thread died never ran finishReload: the next one must not wait on it
+						if reloadTransaction == currentWeapon.slot then
+							reloadTransaction, reloadInProgress[currentWeapon.slot] = nil, nil
+						end
+						weaponBusySince = nil
+					end
+				else
+					weaponBusySince = nil
+
+					if (currentWeapon.metadata.durability or 100) <= 0 then
+						DisablePlayerFiring(playerId, true)
+					elseif client.aimedfiring and not currentWeapon.melee and not IsPlayerFreeAiming(playerId) then
+						blockShot()
+					end
 				end
 
 				-- Detecting the firing edge (every frame): in RDR3 the ammunition is pooled by type and
@@ -3651,10 +3808,11 @@ RegisterNetEvent('w_inventory:setPlayerInventory', function(currentDrops, invent
 
 				local weaponAmmo = currentWeapon.metadata.ammo
 
-				-- A safety net: stop the firing when the loaded ammunition runs out (the weapon is really empty)
+				-- A safety net: stop the firing when the loaded ammunition runs out (the weapon is really empty).
+				-- The trigger only: an empty weapon still aims and scopes, and R reloads it from the bag.
 				if weaponAmmo == 0 and not Weapon.HasUsableHeldAmmo(currentWeapon)
 					and not currentWeapon.melee and not currentWeapon.throwable then
-					DisablePlayerFiring(playerId, true)
+					blockShot()
 				end
 
 				if not invBusy and currentWeapon.timer ~= 0 and currentWeapon.timer < GetGameTimer() then

@@ -1360,7 +1360,7 @@ function Weapon.Equip(item, data, _, options)
 			usageSynced = Weapon.SyncUsage(item)
 		end
 
-		if not dualHandled and data.storyOnly then
+		if not dualHandled and shared.isStoryOnlyWeapon(data.name or item.name) then
 			-- 2026-11-04: a story-mode weapon RedM online never loads: say so, never a silent failure
 			Utils.Notify({ id = 'weapon_story_only', type = 'error', description = locale('weapon_story_only') })
 			return nil, nil, 'story_only_weapon'

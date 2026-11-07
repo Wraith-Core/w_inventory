@@ -8,6 +8,16 @@ local ItemList = {}
 local isServer = IsDuplicityVersion()
 local ItemAliases = lib.load('data.item_aliases')
 
+-- Story-mode weapons RedM online never loads (data/story_only_weapons.lua): not items at all, on
+-- any framework. The name is checked where saved rows load (Inventory.StripStoryOnly) and where a
+-- native catalogue could still define one (Catalog.build, AddItem, equip).
+local StoryOnly = {}
+for _, name in ipairs(lib.load('data.story_only_weapons') or {}) do StoryOnly[name:upper()] = true end
+
+function shared.isStoryOnlyWeapon(name)
+    return type(name) == 'string' and StoryOnly[name:upper()] == true
+end
+
 -- Translate only names from the recent catalog migration. Existing saved stacks
 -- keep their quantities/metadata and acquire the canonical name when loaded.
 function shared.resolveItemName(name)

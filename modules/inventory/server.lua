@@ -580,7 +580,10 @@ function Inventory.Create(id, label, invType, slots, weight, maxWeight, owner, i
 	end
 
 	if not items then
-		self.items, self.weight = Inventory.Load(self.dbId, invType, owner)
+		local stripped
+		self.items, self.weight, stripped = Inventory.Load(self.dbId, invType, owner)
+		-- story-only weapons were dropped while loading: the next save writes the row clean
+		if stripped and stripped > 0 and not self.datastore then self.changed = true end
 	elseif weight == 0 and next(items) then
 		self.weight = Inventory.CalculateWeight(items)
 	end
@@ -789,9 +792,38 @@ local function generateItems(inv, invType, items)
 	return returnData, totalWeight
 end
 
+--- Drop every saved row of a story-mode weapon RedM online never loads (data/story_only_weapons.lua,
+--- 2026-11-08 the owner: "remove them from the bag and from the players"). They are no longer item
+--- definitions, so a row of one would otherwise fail the load. Rows go before anything reads them;
+--- the caller marks the inventory changed so its next save writes it without them. Not a loss
+--- (modules/losses): the item can never exist again, so there is nothing to give back.
+---@param rows table? saved rows (an array or a slot-keyed table)
+---@param where? string what is loading, for the console line
+---@return table? rows the same table when nothing was dropped, else a new array
+---@return number removed
+function Inventory.StripStoryOnly(rows, where)
+	if type(rows) ~= 'table' then return rows, 0 end
+
+	local kept, removed = {}, 0
+
+	for _, row in pairs(rows) do
+		if type(row) == 'table' and shared.isStoryOnlyWeapon(row.name) then
+			removed += (tonumber(row.count) or 1)
+		else
+			kept[#kept + 1] = row
+		end
+	end
+
+	if removed == 0 then return rows, 0 end
+
+	lib.print.info(('[w_inventory] removed %d story-only weapon(s) from %s'):format(removed, tostring(where or 'an inventory')))
+	return kept, removed
+end
+
 ---@param id string|number
 ---@param invType string
 ---@param owner string | number | boolean
+---@return table items, number weight, number stripped story-only weapons dropped from the saved rows
 function Inventory.Load(id, invType, owner)
     if not invType then return end
 
@@ -804,11 +836,13 @@ function Inventory.Load(id, invType, owner)
 		result = db.loadStash(owner or '', id)
 	end
 
-	local returnData, weight = {}, 0
+	local returnData, weight, stripped = {}, 0, 0
 
 	if result and type(result) == 'string' then
 		result = json.decode(result)
 	end
+
+	result, stripped = Inventory.StripStoryOnly(result, ('%s %s'):format(tostring(invType), tostring(id)))
 
 	if result then
 		local ostime = os.time()
@@ -828,7 +862,7 @@ function Inventory.Load(id, invType, owner)
 		end
 	end
 
-	return returnData, weight
+	return returnData, weight, stripped
 end
 
 local function assertMetadata(metadata)
@@ -1499,8 +1533,9 @@ function Inventory.AddItem(inv, item, count, metadata, slot, cb)
     end
 
 	if not item then return false, 'invalid_item' end
-    -- 2026-11-04: a story-mode weapon RedM online never loads is never given (shops, loot, admin give)
-    if item.storyOnly then return false, 'story_only_weapon' end
+    -- a story-mode weapon RedM online never loads is never given (shops, loot, admin give); w_core's
+    -- catalogue no longer defines one, this guards a native catalogue that still does
+    if shared.isStoryOnlyWeapon(item.name) then return false, 'story_only_weapon' end
 
 	inv = Inventory(inv) --[[@as WInventory]]
 
@@ -1929,7 +1964,7 @@ exports('RemoveItem', Inventory.RemoveItem)
 ---@param metadata? table | string
 function Inventory.CanCarryItem(inv, item, count, metadata)
 	if type(item) ~= 'table' then item = Items(item) end
-    if item and item.storyOnly then return false end -- never carried new (a shop asks this before it charges)
+    if item and shared.isStoryOnlyWeapon(item.name) then return false end -- never carried new (a shop asks this before it charges)
 
 	if item then
 		inv = Inventory(inv) --[[@as WInventory]]

@@ -13,6 +13,8 @@ local function online(owner)
 end
 local function publicRows(rows)
     local items, weapons = {}, {}
+    -- a story-only weapon is no item any more (data/story_only_weapons.lua): never shown
+    rows = Inventory.StripStoryOnly(rows, 'an offline view')
     for _, row in pairs(rows) do
         local item = assert(Items(row.name), 'Unknown native item: ' .. tostring(row.name))
         if not item.nativeCurrency and not item.nativeGunbelt and row.name ~= 'money' and row.name ~= 'gold' then
@@ -61,7 +63,8 @@ local function mutate(owner, action, name, count, id, ammo)
         -- the row read here is the one written below: a character w_core moves to another number
         -- meanwhile (its number handed on) must not have its edit land on the next holder
         local rowId = db.playerRowId(owner)
-        local rows = db.loadPlayer(owner) or {}
+        -- story-only weapons leave the row with this edit's save (data/story_only_weapons.lua)
+        local rows = Inventory.StripStoryOnly(db.loadPlayer(owner) or {}, 'the offline bag of ' .. owner)
         local item = name and Items(name)
         local lost = {}
         if action == 'add' then

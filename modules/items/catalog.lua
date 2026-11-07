@@ -90,7 +90,8 @@ function Catalog.build(framework, definitions, nativeWeapons, fallback, backend)
     for index, raw in pairs(definitions) do
         if type(raw) == 'table' then
             local originalName = framework == 'vorp' and (raw.item or raw.name) or (raw.name or index)
-            if type(originalName) == 'string' and originalName ~= '' then
+            -- a story-mode weapon RedM online never loads is never an item (data/story_only_weapons.lua)
+            if type(originalName) == 'string' and originalName ~= '' and not shared.isStoryOnlyWeapon(originalName) then
                 local name = Catalog.name(originalName)
                 local row = backend == 'wcore' and copy(fallback and fallback[name]) or nil
                 row = row or baseDefinition(name, fallback and fallback[name])
@@ -154,7 +155,7 @@ function Catalog.build(framework, definitions, nativeWeapons, fallback, backend)
     if framework == 'vorp' then
         -- Native weapon definitions are separate from the SQL items catalog.
         for key, raw in pairs(nativeWeapons or {}) do
-            if type(raw) == 'table' then
+            if type(raw) == 'table' and not shared.isStoryOnlyWeapon(raw.HashName or raw.name or key) then
                 local name = Catalog.name(raw.HashName or raw.name or key)
                 local row = baseDefinition(name, fallback and fallback[name])
                 row.weapon, row.stack, row.close = true, false, false

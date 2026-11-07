@@ -38,9 +38,12 @@ Config.WeaponMaintenance = {
 -- no firearm exceeds ClipCap, and whatever is under it keeps its own capacity (the Cattleman 6,
 -- the Springfield 1). And the bow alone is on its own cap.
 --
+-- 2026-11-08 (the owner: "a weapon takes only a few rounds"): 26, so every firearm holds its own real
+-- clip (Litchfield 16, Lancaster and Varmint 14, Evans 26). At 10 the long repeaters were cut short.
+--
 -- ! Both sides read from here - the server validates the reload and the client computes what is missing, so if
 -- they disagreed the reload was refused with no visible reason. Do not change one of them alone.
 Config.Ammo = {
-    ClipCap = 10, -- every firearm's cap
+    ClipCap = 26, -- every firearm's cap (the largest real clip: the Evans repeater)
     BowCap  = 25, -- bow arrows per magazine
 }
