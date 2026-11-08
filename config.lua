@@ -34,16 +34,27 @@ Config.WeaponMaintenance = {
 
 -- ── The magazine cap ───────────────────────────────────────────────────────────
 --
--- The real weapon capacity in RDR3 ranges from 1 to 26 (the Evans). The rule here caps it:
--- no firearm exceeds ClipCap, and whatever is under it keeps its own capacity (the Cattleman 6,
--- the Springfield 1). And the bow alone is on its own cap.
+-- The real engine clip in RDR3 ranges from 1 to 26 (the Evans); no engine clip is written above ClipCap.
+-- The bow alone is on its own cap.
 --
--- 2026-11-08 (the owner: "a weapon takes only a few rounds"): 26, so every firearm holds its own real
--- clip (Litchfield 16, Lancaster and Varmint 14, Evans 26). At 10 the long repeaters were cut short.
+-- 2026-11-08 (the owner): how many rounds a weapon holds loaded, by its kind (Categories). This is
+-- the weapon's clip plus its own spare rounds: the engine clip stays the weapon's real size (a revolver 6,
+-- a Springfield 1) and the rest waits in the engine reserve of its bullet type, so the game reloads by
+-- itself with its own animation until the loaded rounds are spent. R tops the weapon up from the bag.
+-- A firearm of no listed kind takes ClipCap. Names: WEAPON_REVOLVER_* / WEAPON_PISTOL_* = sidearm,
+-- WEAPON_SHOTGUN* = shotgun, WEAPON_RIFLE_* = rifle, WEAPON_SNIPERRIFLE_* = sniper, WEAPON_REPEATER_* = repeater
+-- (shared.weaponLoadCap in modules/items/shared.lua).
 --
 -- ! Both sides read from here - the server validates the reload and the client computes what is missing, so if
 -- they disagreed the reload was refused with no visible reason. Do not change one of them alone.
 Config.Ammo = {
-    ClipCap = 26, -- every firearm's cap (the largest real clip: the Evans repeater)
+    ClipCap = 26, -- the largest engine clip (the Evans) and the load of a firearm of no listed kind
     BowCap  = 25, -- bow arrows per magazine
+    Categories = {
+        sidearm  = 16, -- revolvers and pistols
+        shotgun  = 8,
+        rifle    = 12, -- Varmint, Springfield, bolt-action, elephant rifle
+        sniper   = 6,
+        repeater = 26, -- the owner: "keep 26"
+    },
 }

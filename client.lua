@@ -493,71 +493,18 @@ local usingItem = false
 local AMMO_CAPACITY = math.max(1, math.floor(tonumber(Config.Ammo and Config.Ammo.ClipCap) or 10))
 local BOW_CAPACITY = math.max(1, math.floor(tonumber(Config.Ammo and Config.Ammo.BowCap) or 25))
 
--- Reliable RDR3 clip capacities. GetMaxAmmoInClip may return 0 before the
--- weapon entity exists, so known weapons must not fall back to a generic ten
--- rounds (which overfills revolvers and underfills repeaters).
-local RDR_CLIP_CAPACITY = {
-	[`WEAPON_REVOLVER_CATTLEMAN`] = 6,
-	[`WEAPON_REVOLVER_CATTLEMAN_MEXICAN`] = 6,
-	[`WEAPON_REVOLVER_CATTLEMAN_JOHN`] = 6,
-	[`WEAPON_REVOLVER_CATTLEMAN_PIG`] = 6,
-	[`WEAPON_REVOLVER_DOUBLEACTION`] = 6,
-	[`WEAPON_REVOLVER_DOUBLEACTION_GAMBLER`] = 6,
-	[`WEAPON_REVOLVER_DOUBLEACTION_EXOTIC`] = 6,
-	[`WEAPON_REVOLVER_DOUBLEACTION_MICAH`] = 6,
-	[`WEAPON_REVOLVER_SCHOFIELD`] = 6,
-	[`WEAPON_REVOLVER_SCHOFIELD_CALLOWAY`] = 6,
-	[`WEAPON_REVOLVER_SCHOFIELD_GOLDEN`] = 6,
-	[`WEAPON_REVOLVER_LEMAT`] = 9,
-	[`WEAPON_REVOLVER_NAVY`] = 6,
-	[`WEAPON_REVOLVER_NAVY_CROSSOVER`] = 6,
-	[`WEAPON_PISTOL_VOLCANIC`] = 8,
-	[`WEAPON_PISTOL_M1899`] = 8,
-	[`WEAPON_PISTOL_MAUSER`] = 10,
-	[`WEAPON_PISTOL_MAUSER_DRUNK`] = 10,
-	[`WEAPON_PISTOL_SEMIAUTO`] = 8,
-	[`WEAPON_REPEATER_CARBINE`] = 7,
-	[`WEAPON_REPEATER_WINCHESTER`] = 14,
-	[`WEAPON_REPEATER_HENRY`] = 16,
-	[`WEAPON_REPEATER_EVANS`] = 26,
-	[`WEAPON_RIFLE_VARMINT`] = 14,
-	[`WEAPON_RIFLE_SPRINGFIELD`] = 1,
-	[`WEAPON_RIFLE_BOLTACTION`] = 5,
-	[`WEAPON_RIFLE_ELEPHANT`] = 2,
-	[`WEAPON_SHOTGUN_DOUBLEBARREL`] = 2,
-	[`WEAPON_SHOTGUN_DOUBLEBARREL_EXOTIC`] = 2,
-	[`WEAPON_SHOTGUN_SAWEDOFF`] = 2,
-	[`WEAPON_SHOTGUN04`] = 5,
-	[`WEAPON_SHOTGUN05`] = 5,
-	[`WEAPON_SHOTGUN_SEMIAUTO`] = 5,
-	[`WEAPON_SHOTGUN_PUMP`] = 5,
-	[`WEAPON_SHOTGUN_REPEATING`] = 6,
-	[`WEAPON_SNIPERRIFLE_ROLLINGBLOCK`] = 1,
-	[`WEAPON_SNIPERRIFLE_ROLLINGBLOCK_EXOTIC`] = 1,
-	[`WEAPON_SNIPERRIFLE_CARCANO`] = 6,
-}
-
---- The weapon's capacity after capping.
---- * The cap is the server's rule too (Config.Ammo) - so the client does not compute a shortfall it refuses.
+--- How many rounds the weapon holds loaded (its clip + its own spare rounds), by its kind
+--- (Config.Ammo.Categories). The engine clip stays the weapon's real size (modules/weapon/client.lua
+--- clipCapacity); the rest waits in the type's reserve so the game reloads by itself.
+--- * The cap is the server's rule too (weaponCapacity reads the same helper) - so the client does not
+--- compute a shortfall it refuses.
 local function getWeaponCapacity(weaponItem)
 	if not weaponItem then return AMMO_CAPACITY end
 	if weaponItem.hash == `WEAPON_BOW` or weaponItem.hash == `WEAPON_BOW_IMPROVED` then
 		return BOW_CAPACITY
 	end
 
-	local configured = tonumber(weaponItem.clipSize)
-		or RDR_CLIP_CAPACITY[weaponItem.hash]
-
-	if configured and configured > 0 then
-		return math.min(math.floor(configured), AMMO_CAPACITY)
-	end
-
-	local ok, clip = pcall(GetMaxAmmoInClip, cache.ped, weaponItem.hash, true)
-	if ok and type(clip) == 'number' and clip > 0 and clip <= 500 then
-		return math.min(math.floor(clip), AMMO_CAPACITY)
-	end
-
-	return AMMO_CAPACITY
+	return shared.weaponLoadCap(weaponItem.name)
 end
 
 ---@param data { name: string, label: string, count: number, slot: number, metadata: table<string, any>, weight: number }
@@ -2706,9 +2653,10 @@ end
 -- ── The game's reload key ───────────────────────────────────────────────────────
 -- The owner (2026-11-08): with the weapon in hand and rounds for it in the bag, the reload key
 -- reloads it from the bag; with no rounds, or the weapon not in hand, the key does nothing.
--- The engine's own reload stays disabled (client.tick: there is no engine reserve to draw from,
--- the rounds are items); this reads the disabled key and runs the bag's own reload transaction,
--- so the server still checks the capacity and takes the rounds out of the bag.
+-- The engine's reload key stays disabled (client.tick); this reads the disabled key and runs the bag's
+-- own reload transaction, so the server still checks the capacity and takes the rounds out of the bag.
+-- 2026-11-08: a weapon holds more than its clip (Config.Ammo.Categories), the rest in the engine reserve;
+-- with nothing to take from the bag, the key reloads a lone weapon's clip from those spare rounds.
 local reloadFromKey
 
 do
@@ -2775,7 +2723,25 @@ do
 			end
 		end
 
-		if #jobs == 0 then return end -- nothing to load from the bag: the key does nothing
+		if #jobs == 0 then
+			-- Nothing to load from the bag. A lone weapon of its type whose clip is down reloads from its
+			-- own spare rounds (the game's reload: it moves reserve -> clip, the total stays the balance).
+			-- Two weapons sharing the type have no reserve (their clips are rewritten after every shot).
+			local slotData = #slots == 1 and PlayerData.inventory and PlayerData.inventory[slots[1]]
+			local weaponItem = slotData and Items[slotData.name]
+			local typeHash = weaponItem and Weapon.AmmoTypeForSlot(slots[1]) or 0
+
+			if typeHash ~= 0 and #Weapon.HeldSlotsForAmmo(typeHash) == 1 then
+				local balance = math.max(0, math.floor(tonumber(slotData.metadata and slotData.metadata.ammo) or 0))
+				local _, inClip = GetAmmoInClip(cache.ped, weaponItem.hash)
+
+				if math.floor(tonumber(inClip) or 0) < math.min(balance, Weapon.ClipCapacity(weaponItem)) then
+					N_0x79e1e511ff7efb13(cache.ped) -- _MAKE_PED_RELOAD
+				end
+			end
+
+			return
+		end
 
 		CreateThread(function()
 			for i = 1, #jobs do
@@ -3762,8 +3728,9 @@ RegisterNetEvent('w_inventory:setPlayerInventory', function(currentDrops, invent
 
 			if currentWeapon and currentWeapon.timer then
 				DisableControlAction(0, `INPUT_MELEE_ATTACK`, true)
-				-- Stop the engine's own free loading (there is no engine reserve: the rounds are bag items).
-				-- The key itself still reloads, from the bag, through reloadFromKey (server-checked).
+				-- The engine's reload key is ours: reloadFromKey tops the weapon up from the bag (server-checked)
+				-- or reloads a lone weapon's clip from its own spare rounds. The game still reloads an empty
+				-- clip by itself from those spare rounds (applyAmmoSeparation keeps them in the reserve).
 				DisableControlAction(0, `INPUT_RELOAD`, true)
 
 				if IsDisabledControlJustPressed(0, `INPUT_RELOAD`) then reloadFromKey() end

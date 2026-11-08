@@ -3597,51 +3597,6 @@ RegisterNetEvent('w_inventory:recordWeaponShot', function(firedSlot, ownerSlot,
 	end
 end)
 
-local RDR_WEAPON_CAPACITY = {
-	[`WEAPON_REVOLVER_CATTLEMAN`] = 6,
-	[`WEAPON_REVOLVER_CATTLEMAN_MEXICAN`] = 6,
-	[`WEAPON_REVOLVER_CATTLEMAN_JOHN`] = 6,
-	[`WEAPON_REVOLVER_CATTLEMAN_PIG`] = 6,
-	[`WEAPON_REVOLVER_DOUBLEACTION`] = 6,
-	[`WEAPON_REVOLVER_DOUBLEACTION_GAMBLER`] = 6,
-	[`WEAPON_REVOLVER_DOUBLEACTION_EXOTIC`] = 6,
-	[`WEAPON_REVOLVER_DOUBLEACTION_MICAH`] = 6,
-	[`WEAPON_REVOLVER_SCHOFIELD`] = 6,
-	[`WEAPON_REVOLVER_SCHOFIELD_CALLOWAY`] = 6,
-	[`WEAPON_REVOLVER_SCHOFIELD_GOLDEN`] = 6,
-	[`WEAPON_REVOLVER_LEMAT`] = 9,
-	[`WEAPON_REVOLVER_NAVY`] = 6,
-	[`WEAPON_REVOLVER_NAVY_CROSSOVER`] = 6,
-	[`WEAPON_PISTOL_VOLCANIC`] = 8,
-	[`WEAPON_PISTOL_M1899`] = 8,
-	[`WEAPON_PISTOL_MAUSER`] = 10,
-	[`WEAPON_PISTOL_MAUSER_DRUNK`] = 10,
-	[`WEAPON_PISTOL_SEMIAUTO`] = 8,
-	[`WEAPON_REPEATER_CARBINE`] = 7,
-	[`WEAPON_REPEATER_WINCHESTER`] = 14,
-	[`WEAPON_REPEATER_HENRY`] = 16,
-	[`WEAPON_REPEATER_EVANS`] = 26,
-	[`WEAPON_RIFLE_VARMINT`] = 14,
-	[`WEAPON_RIFLE_SPRINGFIELD`] = 1,
-	[`WEAPON_RIFLE_BOLTACTION`] = 5,
-	[`WEAPON_RIFLE_ELEPHANT`] = 2,
-	[`WEAPON_SHOTGUN_DOUBLEBARREL`] = 2,
-	[`WEAPON_SHOTGUN_DOUBLEBARREL_EXOTIC`] = 2,
-	[`WEAPON_SHOTGUN_SAWEDOFF`] = 2,
-	[`WEAPON_SHOTGUN04`] = 5,
-	[`WEAPON_SHOTGUN05`] = 5,
-	[`WEAPON_SHOTGUN_SEMIAUTO`] = 5,
-	[`WEAPON_SHOTGUN_PUMP`] = 5,
-	[`WEAPON_SHOTGUN_REPEATING`] = 6,
-	[`WEAPON_SNIPERRIFLE_ROLLINGBLOCK`] = 1,
-	[`WEAPON_SNIPERRIFLE_ROLLINGBLOCK_EXOTIC`] = 1,
-	[`WEAPON_SNIPERRIFLE_CARCANO`] = 6,
-	-- The bow does not pass through here: weaponCapacity settles it from Config.Ammo.BowCap before
-	-- asking this table. The two entries were kept matching the cap so a later reader is not misled.
-	[`WEAPON_BOW`] = 25,
-	[`WEAPON_BOW_IMPROVED`] = 25,
-}
-
 RDR_DUAL_CAPABLE = {
 	[`WEAPON_REVOLVER_CATTLEMAN`] = true,
 	[`WEAPON_REVOLVER_CATTLEMAN_MEXICAN`] = true,
@@ -3666,9 +3621,9 @@ RDR_DUAL_CAPABLE = {
 	[`WEAPON_SHOTGUN_SAWEDOFF`] = true,
 }
 
--- The magazine cap - the very rule the client reads from the shared config.lua.
+-- How many rounds a weapon may hold loaded - the very rule the client reads (Config.Ammo through
+-- shared.weaponLoadCap: by the weapon's kind, its clip + its own spare rounds; the bow on BowCap).
 -- ! Their disagreeing means the reload is refused with no reason visible to the player.
-local AMMO_CLIP_CAP = math.max(1, math.floor(tonumber(Config.Ammo and Config.Ammo.ClipCap) or 10))
 local AMMO_BOW_CAP  = math.max(1, math.floor(tonumber(Config.Ammo and Config.Ammo.BowCap) or 25))
 
 local function weaponCapacity(item)
@@ -3678,10 +3633,7 @@ local function weaponCapacity(item)
 		return AMMO_BOW_CAP
 	end
 
-	local configured = math.max(1, math.floor(tonumber(item and item.clipSize)
-		or RDR_WEAPON_CAPACITY[hash] or AMMO_CLIP_CAP))
-
-	return math.min(configured, AMMO_CLIP_CAP)
+	return shared.weaponLoadCap(item and item.name)
 end
 
 --- Require a two-slot ammo transaction to match the exact server-authoritative

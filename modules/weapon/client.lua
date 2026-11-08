@@ -628,6 +628,51 @@ function Weapon.ApplyDamageModifier(item, reset)
     end)
 end
 
+-- Reliable RDR3 clip capacities (the engine clip, not how many rounds the weapon holds loaded:
+-- that is Config.Ammo.Categories). GetMaxAmmoInClip may return 0 before the
+-- weapon entity exists, so known weapons must not fall back to a generic ten
+-- rounds (which overfills revolvers and underfills repeaters).
+local RDR_CLIP_CAPACITY = {
+	[`WEAPON_REVOLVER_CATTLEMAN`] = 6,
+	[`WEAPON_REVOLVER_CATTLEMAN_MEXICAN`] = 6,
+	[`WEAPON_REVOLVER_CATTLEMAN_JOHN`] = 6,
+	[`WEAPON_REVOLVER_CATTLEMAN_PIG`] = 6,
+	[`WEAPON_REVOLVER_DOUBLEACTION`] = 6,
+	[`WEAPON_REVOLVER_DOUBLEACTION_GAMBLER`] = 6,
+	[`WEAPON_REVOLVER_DOUBLEACTION_EXOTIC`] = 6,
+	[`WEAPON_REVOLVER_DOUBLEACTION_MICAH`] = 6,
+	[`WEAPON_REVOLVER_SCHOFIELD`] = 6,
+	[`WEAPON_REVOLVER_SCHOFIELD_CALLOWAY`] = 6,
+	[`WEAPON_REVOLVER_SCHOFIELD_GOLDEN`] = 6,
+	[`WEAPON_REVOLVER_LEMAT`] = 9,
+	[`WEAPON_REVOLVER_NAVY`] = 6,
+	[`WEAPON_REVOLVER_NAVY_CROSSOVER`] = 6,
+	[`WEAPON_PISTOL_VOLCANIC`] = 8,
+	[`WEAPON_PISTOL_M1899`] = 8,
+	[`WEAPON_PISTOL_MAUSER`] = 10,
+	[`WEAPON_PISTOL_MAUSER_DRUNK`] = 10,
+	[`WEAPON_PISTOL_SEMIAUTO`] = 8,
+	[`WEAPON_REPEATER_CARBINE`] = 7,
+	[`WEAPON_REPEATER_WINCHESTER`] = 14,
+	[`WEAPON_REPEATER_HENRY`] = 16,
+	[`WEAPON_REPEATER_EVANS`] = 26,
+	[`WEAPON_RIFLE_VARMINT`] = 14,
+	[`WEAPON_RIFLE_SPRINGFIELD`] = 1,
+	[`WEAPON_RIFLE_BOLTACTION`] = 5,
+	[`WEAPON_RIFLE_ELEPHANT`] = 2,
+	[`WEAPON_SHOTGUN_DOUBLEBARREL`] = 2,
+	[`WEAPON_SHOTGUN_DOUBLEBARREL_EXOTIC`] = 2,
+	[`WEAPON_SHOTGUN_SAWEDOFF`] = 2,
+	[`WEAPON_SHOTGUN04`] = 5,
+	[`WEAPON_SHOTGUN05`] = 5,
+	[`WEAPON_SHOTGUN_SEMIAUTO`] = 5,
+	[`WEAPON_SHOTGUN_PUMP`] = 5,
+	[`WEAPON_SHOTGUN_REPEATING`] = 6,
+	[`WEAPON_SNIPERRIFLE_ROLLINGBLOCK`] = 1,
+	[`WEAPON_SNIPERRIFLE_ROLLINGBLOCK_EXOTIC`] = 1,
+	[`WEAPON_SNIPERRIFLE_CARCANO`] = 6,
+}
+
 --- One weapon's store capacity (not the two hands' total).
 local clipCapacityCache = {}
 
@@ -644,7 +689,7 @@ local function clipCapacity(itemData)
 		return AMMO_BOW_CAP
 	end
 
-	local configured = tonumber(itemData.clipSize)
+	local configured = tonumber(itemData.clipSize) or RDR_CLIP_CAPACITY[itemData.hash]
 	if configured and configured > 0 then
 		return math.min(math.floor(configured), AMMO_CLIP_CAP)
 	end
@@ -748,14 +793,29 @@ end
 
 Weapon.ReconcileAmmoFamily = reconcileFamily
 
+--- * The weapon's own spare rounds (2026-11-08, the owner: a revolver holds 16, a shotgun 8 ...).
+---
+--- A weapon may hold more loaded rounds than its real clip (Config.Ammo.Categories). With **one** weapon
+--- of this type in the hands the type's reserve is that weapon's alone, so its rounds beyond the clip are
+--- kept there and the game reloads by itself (its own animation) until they are spent: the engine total
+--- (clip + reserve) = the weapon's balance. After a shot (keepClip) the clip the engine already counted
+--- down is kept, so the empty clip reloads instead of being refilled for free.
+---
+--- With **two** weapons sharing the type the reserve cannot tell whose round it is (an emptied hand would
+--- reload from its companion's rounds), so it is drained as before: every clip = min(its balance, its real
+--- clip), rewritten after every shot. Weapons whose balance fits their clip behave exactly as before.
 ---@param ammoTypeHash number
+---@param keepClip boolean? after a shot: keep the engine's counted-down clip (one weapon of the type only)
 ---@return number total
-local function applyAmmoSeparation(ammoTypeHash)
+local function applyAmmoSeparation(ammoTypeHash, keepClip)
 	if not ammoTypeHash or ammoTypeHash == 0 then return 0 end
 
 	local slots = heldSlotsForAmmo(ammoTypeHash)
+	local ownReserve = #slots == 1
 	local total = 0
 	local clipByHash = {}
+	-- an emptied clip is left to the engine: a written 0 reads back as 1 (a free round, no reload)
+	local engineReloads = {}
 
 	for i = 1, #slots do
 		local slotData = PlayerData.inventory and PlayerData.inventory[slots[i]]
@@ -767,6 +827,13 @@ local function applyAmmoSeparation(ammoTypeHash)
 			local capacity = clipCapacity(itemData)
 			local clip = capacity > 0 and math.min(balance, capacity) or balance
 
+			if ownReserve and keepClip then
+				local read, inClip = GetAmmoInClip(cache.ped, itemData.hash)
+				inClip = math.floor(tonumber(inClip) or -1)
+				if read and read ~= 0 and inClip >= 0 then clip = math.min(clip, inClip) end
+				if inClip == 0 then engineReloads[itemData.hash] = true end
+			end
+
 			total = total + balance
 			clipByHash[itemData.hash] = math.max(clipByHash[itemData.hash] or 0, clip)
 		end
@@ -777,7 +844,7 @@ local function applyAmmoSeparation(ammoTypeHash)
 	-- The order matters: setting the reserve may refill the stores, so we write them after it.
 	local chambered = 0
 	for hash, clip in pairs(clipByHash) do
-		pcall(SetAmmoInClip, cache.ped, hash, clip)
+		if not engineReloads[hash] then pcall(SetAmmoInClip, cache.ped, hash, clip) end
 		chambered = chambered + clip
 	end
 
@@ -794,15 +861,17 @@ local function applyAmmoSeparation(ammoTypeHash)
 	-- ! With _REMOVE_AMMO_FROM_PED_BY_TYPE and not with SetPedAmmoByType(0): the first
 	-- subtracts from the reserve, and the second rewrites it so it messes with the stores along with it. Then we rewrite
 	-- the stores as insurance - if the removal touched them they come back to their balance.
+	-- GET_PED_AMMO_BY_TYPE reads clip + reserve. One weapon of the type: keep its balance (clip + its
+	-- spare rounds). Two: keep only what is in the clips (see above).
 	local live = math.max(0, math.floor(tonumber(GetPedAmmoByType(cache.ped, ammoTypeHash)) or 0))
-	local spare = live - chambered
+	local spare = live - (ownReserve and total or chambered)
 
 	if spare > 0 then
 		Citizen.InvokeNative(0xB6CFEC32E3742779, cache.ped, ammoTypeHash, spare,
 			GetHashKey('REMOVE_REASON_DROPPED')) -- _REMOVE_AMMO_FROM_PED_BY_TYPE
 
 		for hash, clip in pairs(clipByHash) do
-			pcall(SetAmmoInClip, cache.ped, hash, clip)
+			if not engineReloads[hash] then pcall(SetAmmoInClip, cache.ped, hash, clip) end
 		end
 	end
 
@@ -814,6 +883,7 @@ local function applyAmmoSeparation(ammoTypeHash)
 end
 
 Weapon.ApplyAmmoSeparation = applyAmmoSeparation
+Weapon.ClipCapacity = clipCapacity
 
 -- ! Do not add a periodic watchdog that matches the engine against the bag. It was tried and it produced an endless
 -- loading loop, and the reason is measured in numbers:
@@ -1011,7 +1081,8 @@ function Weapon.ObserveFiring(fallbackWeapon, shootingNow, shotEdge)
 
 				-- A redistribution: the reserve = the sum of the balances, and every weapon's store =
 				-- its own balance. So the weapon that emptied stops alone with no touching its companion.
-				applyAmmoSeparation(ammoTypeHash)
+				-- keepClip: a lone weapon keeps its counted-down clip and reloads from its own spare rounds.
+				applyAmmoSeparation(ammoTypeHash, true)
 
 				local drain = math.max(0, tonumber(firedData.durability) or 0)
 				fired.metadata.durability = math.max(0, (tonumber(fired.metadata.durability) or 100) - drain)
@@ -1093,7 +1164,8 @@ function Weapon.ReassignAmmoPool(ownerSlot)
 	if #matchingSlots == 1 then
 		local liveAmmo = math.max(0, math.floor(tonumber(GetPedAmmoByType(cache.ped, ammoTypeHash)) or 0))
 
-		if liveAmmo ~= ownAmmo then
+		-- Only an unseen shot makes it differ, so it may only lower the balance (the server refuses more).
+		if liveAmmo < ownAmmo then
 			ownAmmo = liveAmmo
 			ownerItem.metadata.ammo = ownAmmo
 			syncAmmoOwners({ [ownerSlot] = ownAmmo })
@@ -1639,9 +1711,9 @@ function Weapon.Disarm(currentWeapon, noAnim, keepHolstered, skipUsageSync, sile
 			-- have fired a moment before the holstering), so we take it. With a carried companion: the reserve
 			-- is the sum of the two so it will not do, and we rely on its accounting balance that
 			-- ObserveFiring updates with every shot.
-			local ownBalance = #remaining > 0
-				and math.max(0, math.floor(tonumber(currentWeapon.metadata.ammo) or 0))
-				or livePool
+			local accounted = math.max(0, math.floor(tonumber(currentWeapon.metadata.ammo) or 0))
+			-- The live pool holds the weapon's spare rounds too now; it may only lower the balance.
+			local ownBalance = #remaining > 0 and accounted or math.min(livePool, accounted)
 
 			currentWeapon.metadata.ammo = ownBalance
 			persistWeaponAmmo(currentWeapon, ownBalance)

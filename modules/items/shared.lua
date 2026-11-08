@@ -18,6 +18,35 @@ function shared.isStoryOnlyWeapon(name)
     return type(name) == 'string' and StoryOnly[name:upper()] == true
 end
 
+-- How many rounds a firearm holds loaded, by its kind (Config.Ammo.Categories). The client's reload
+-- and the server's check both read this one function, so they can never disagree. The bow is not here
+-- (Config.Ammo.BowCap, settled by the callers).
+local LOAD_KINDS = {
+    { 'WEAPON_REVOLVER_', 'sidearm' },
+    { 'WEAPON_PISTOL_', 'sidearm' },
+    { 'WEAPON_SHOTGUN', 'shotgun' },
+    { 'WEAPON_SNIPERRIFLE_', 'sniper' },
+    { 'WEAPON_RIFLE_', 'rifle' },
+    { 'WEAPON_REPEATER_', 'repeater' },
+}
+
+function shared.weaponLoadCap(name)
+    local ammo = Config.Ammo or {}
+    local fallback = math.max(1, math.floor(tonumber(ammo.ClipCap) or 26))
+    if type(name) ~= 'string' then return fallback end
+
+    name = name:upper()
+    for i = 1, #LOAD_KINDS do
+        local prefix = LOAD_KINDS[i][1]
+        if name:sub(1, #prefix) == prefix then
+            local cap = tonumber(ammo.Categories and ammo.Categories[LOAD_KINDS[i][2]])
+            return cap and cap >= 1 and math.floor(cap) or fallback
+        end
+    end
+
+    return fallback
+end
+
 -- Translate only names from the recent catalog migration. Existing saved stacks
 -- keep their quantities/metadata and acquire the canonical name when loaded.
 function shared.resolveItemName(name)
