@@ -206,6 +206,8 @@ end
 --- spawned for that very id (exports.w_stables:StorageNetIds -- never its state bags, which the
 --- owning client can write) and stand within reach. Until 2026-10-14 any id opened with any net id:
 --- every stabled horse and wagon could be emptied from anywhere by counting through the ids.
+--- The opener goes with the ids (2026-11-08, owner): w_stables answers its ids to the owner only, so a
+--- saddlebag or a wagon's storage no longer opens for any player standing beside it.
 --- Checked twice in openInventory: before a storage is loaded through a net id, and on the resolved
 --- inventory whatever the route (an id with no net id reaches an already loaded storage too).
 ---@param source number
@@ -232,7 +234,7 @@ local function vehicleStorageAllowed(source, id, netid, invType)
 	local kind, key = id:match('^(glove)(%d+)$')
 	if not kind then kind, key = id:match('^(trunk)(%d+)$') end
 	if not kind or GetResourceState('w_stables') ~= 'started' then return false end
-	local ok, ids = pcall(function() return exports.w_stables:StorageNetIds(kind, tonumber(key)) end)
+	local ok, ids = pcall(function() return exports.w_stables:StorageNetIds(kind, tonumber(key), source) end)
 	if not ok or type(ids) ~= 'table' then return false end
 	for _, n in ipairs(ids) do
 		if tonumber(n) == netid then return true end
