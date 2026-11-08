@@ -32,7 +32,7 @@ export default function CategoryBar({ active, onChange, grid }: CategoryBarProps
         return (
           <div
             key={c.id}
-            className={`wst-tab category${c.id === active ? ' active' : ''}${c.id !== 'all' && count === 0 ? ' dim' : ''}`}
+            className={`category${c.id === active ? ' active' : ''}${c.id !== 'all' && count === 0 ? ' dim' : ''}`}
             onClick={() => onChange(c.id)}
             onMouseEnter={() => setHovered(c.id)}
             onMouseLeave={() => setHovered(null)}

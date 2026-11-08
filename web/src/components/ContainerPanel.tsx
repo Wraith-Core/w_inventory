@@ -3,7 +3,6 @@ import InventoryGrid from './InventoryGrid';
 import { N, SVG_BAG, SVG_X, fmtWeight } from '../utils/items';
 import { InventoryItem } from '../typings';
 import { tr, trf } from '../i18n';
-import Frame from './Frame';
 import usePanelPosition from '../hooks/usePanelPosition';
 import { PANEL_W_REM, PANEL_GAP_REM, remPx } from '../utils/layout';
 
@@ -66,17 +65,16 @@ export default function ContainerPanel({ containerOpen, containerGrid, container
     : {};
 
   return (
-    <div id="container-panel" ref={panelRef} className={'wst-panel ' + (entered ? 'cp-entered' : '')} style={{ display: 'flex', ...cpPosStyle }}>
-      <Frame px={12} opacity={0.45} />
-      <div className="wst-header cp-header">
+    <div id="container-panel" ref={panelRef} className={'wf-shell' + (entered ? ' cp-entered' : '')} style={{ display: 'flex', ...cpPosStyle }}>
+      <div className="cp-header">
         <div className="cp-title-area">
           <div className="cp-icon">{SVG_BAG}</div>
           <div className="cp-title-text">
-            <div className="wst-title cp-title">{containerLabel}</div>
-            <div className="wst-sub cp-subtitle">{itemCount === 0 ? tr('ui_empty_container', 'Empty container') : trf('ui_stored_items', '%s stored item(s)', itemCount)}</div>
+            <div className="cp-title">{containerLabel}</div>
+            <div className="cp-subtitle">{itemCount === 0 ? tr('ui_empty_container', 'Empty container') : trf('ui_stored_items', '%s stored item(s)', itemCount)}</div>
           </div>
         </div>
-        <div className="wst-close cp-close" onClick={onClose}>{SVG_X}</div>
+        <div className="cp-close" onClick={onClose}>{SVG_X}</div>
       </div>
 
       <div className="cp-metrics">
@@ -104,7 +102,7 @@ export default function ContainerPanel({ containerOpen, containerGrid, container
         </div>
       </div>
 
-      <div className="wst-rule cp-divider" />
+      <div className="cp-divider" />
 
       {itemCount === 0 ? (
         <div className="cp-empty">

@@ -1,9 +1,48 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+// The board kit first (a verbatim copy of w_train's), then the shop parts shared with w_store / w_marketplace
+// (shop-kit.css, a byte-identical copy), then the bag's own layout and skin; the later sheet wins the ties.
+import './kit.css';
+import './shop-kit.css';
 import './index.scss';
 import './global.css';
+import './skin.css';
 import { isEnvBrowser } from './utils/misc';
+
+/* The kit's faces and textures, injected from here like w_crafting does: their path must be relative to the build
+   page (nui://w_inventory/web/build/), and Vite writes absolute CSS paths that break under nui://.
+     EB Garamond    Latin text, titles, labels   (SIL OFL 1.1)
+     Lalezar        every Arabic face            (SIL OFL 1.1) -- one Arabic face server-wide (owner, 2026-10-22)
+     RDR Lino       the wordmark
+     RDR Catalogue  the big figures (money)
+   The torn edge, the grain and the selection band are the game's own art (copies of w_train's). */
+try {
+  const base = new URL('./', window.location.href).href;
+  const FONTS = `${base}fonts/`;
+  const AR = 'U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+200C-200E,U+2010-2011,U+0660-0669';
+  const style = document.createElement('style');
+  style.textContent = `
+    @font-face { font-family: "EB Garamond"; font-style: normal; font-weight: 400 800; src: url("${FONTS}EBGaramond-latin.woff2") format("woff2"); font-display: swap; }
+    @font-face { font-family: "EB Garamond"; font-style: italic; font-weight: 400 800; src: url("${FONTS}EBGaramond-Italic-latin.woff2") format("woff2"); font-display: swap; }
+    @font-face { font-family: "Amiri"; font-weight: 400; src: url("${FONTS}Lalezar-400-arabic.woff2") format("woff2"); unicode-range: ${AR}; font-display: swap; }
+    @font-face { font-family: "Amiri"; font-weight: 700; src: url("${FONTS}Lalezar-400-arabic.woff2") format("woff2"); unicode-range: ${AR}; font-display: swap; }
+    @font-face { font-family: "Lalezar"; font-weight: 100 900; src: url("${FONTS}Lalezar-400-arabic.woff2") format("woff2"); unicode-range: ${AR}; font-display: swap; }
+    @font-face { font-family: "RDR Lino"; font-weight: 100 900; src: url("${FONTS}RDRLino-Regular.woff2") format("woff2"); font-display: swap; }
+    @font-face { font-family: "RDR Catalogue"; font-weight: 100 900; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); font-display: swap; }
+    @font-face { font-family: "Noto Sans Arabic"; src: url("${FONTS}Lalezar-400-arabic.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+    @font-face { font-family: "Tajawal"; font-weight: 400; src: url("${FONTS}Lalezar-400-arabic.woff2") format("woff2"); unicode-range: ${AR}; font-display: swap; }
+    @font-face { font-family: "Tajawal"; font-weight: 700; src: url("${FONTS}Lalezar-400-arabic.woff2") format("woff2"); unicode-range: ${AR}; font-display: swap; }
+  `;
+  document.head.appendChild(style);
+  const rs = document.documentElement.style;
+  rs.setProperty('--tex-tear', `url("${base}tex/ui/tear.png")`);
+  rs.setProperty('--tex-grain', `url("${base}tex/ui/grain.png")`);
+  rs.setProperty('--tex-band', `url("${base}tex/ui/band.png")`);
+  rs.setProperty('--tex-band-sm', `url("${base}tex/ui/band-sm.png")`);
+} catch {
+  /* a fallback face is enough: the page is not dropped for a font */
+}
 
 // ── The foundation of w_crafting's art: RDR2 textures as CSS variables with an absolute path (NUI-safe) ──
 // A relative url() inside a CSS variable is drawn empty in CEF, so we emit an absolute path (BASE relative to baseURI).
@@ -49,7 +88,7 @@ import { isEnvBrowser } from './utils/misc';
     return t && typeof t.closest === 'function' &&
       t.closest(
         'button,[role="button"],[role="menuitem"],[class*="menu" i] li,.context-menu-list li,' +
-        // The interface elements that are not <button className="wst-button"> but behave like one - so they give the crafting's own sound
+        // The interface elements that are not a <button> but behave like one - so they give the crafting's own sound
         '.slot.filled,.hb-slot.hb-filled,#inv-close-btn,.inv-toolbar .tb-btn,#inventory .category,' +
         '#inventory-options .option,.split-btn,.split-adj,.trade-btn,.trade-req-btn,' +
         '#container-panel .cp-close,.trade-close,.trade-slot-filled'
@@ -68,4 +107,3 @@ createRoot(root!).render(
   </React.StrictMode>
 );
 
-import './store-adapter.css';

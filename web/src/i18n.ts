@@ -17,6 +17,8 @@ export function installLocale(dictionary?: LocaleDictionary, lang?: string, dir?
   root.lang = language;
   root.dir = direction;
   document.body.dir = direction;
+  // the kit's Arabic tweaks key on .is-rtl (weights, no letter-spacing, no small caps)
+  document.body.classList.toggle('is-rtl', direction === 'rtl');
   document.title = Locale.ui_inventory || 'Inventory';
 }
 

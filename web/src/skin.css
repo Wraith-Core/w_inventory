@@ -1,0 +1,238 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   w_inventory · skin.css - the bag on the board kit (wave 1A, 2026-11-08).
+   index.scss keeps the bag's layout, geometry, drag and motion; this sheet (loaded last) gives every
+   panel the kit's torn ink card (.wf-shell, shop-kit.css) and settles the parts the retired w_lib store
+   theme used to draw. Owner's rules: the cursor is the white paper band only, the CHOSEN thing is red,
+   gauges are paper on a thin track and red only when critical.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── The panels: the torn card is the shell's ::before, so the old glass and box shadow go ── */
+#inventory-wrapper.wf-shell,
+#right-inventory-panel.wf-shell,
+#container-panel.wf-shell,
+#inventory-detail.wf-shell,
+#trade-panel.wf-shell,
+#inv-ammo-picker.wf-shell,
+#inv-split-dialog.wf-shell,
+#inventory-options.wf-shell,
+#inventory-tooltip.wf-shell {
+  background: none;
+  box-shadow: none;
+  border: 0;
+}
+#inventory-wrapper.wf-shell::after,
+#right-inventory-panel.wf-shell::after,
+#container-panel.wf-shell::after,
+#inventory-detail.wf-shell::after,
+#trade-panel.wf-shell::after,
+#inv-split-dialog.wf-shell::after,
+#inventory-options.wf-shell::after,
+#inventory-tooltip.wf-shell::after,
+#inv-ammo-picker.wf-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--tex-grain);
+  background-size: 256px 256px;
+  opacity: 0.1;
+  mix-blend-mode: screen;
+  filter: invert(1);
+}
+/* the ammunition picker drew its grain on ::before: give it back the torn ink */
+#inv-ammo-picker.wf-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  opacity: 1;
+  mix-blend-mode: normal;
+  filter: none;
+  background-color: var(--ink-2);
+  background-image: linear-gradient(160deg, rgba(242, 242, 242, 0.035), rgba(242, 242, 242, 0) 55%);
+  box-shadow: inset 0 0 1.2rem rgba(242, 242, 242, 0.12), inset 0 0 0 1px rgba(242, 242, 242, 0.05);
+}
+
+/* Height: vertical space decides the scale on 21:9 and 32:9 too */
+:is(#inventory-wrapper, #right-inventory-panel, #container-panel, #inventory-detail) { max-height: calc(100vh - 2rem); }
+/* the torn backing would make a scroll container show a bar on a panel that fits: only the grids and the
+   detail body scroll, with no bar */
+:is(#inventory-detail, #right-inventory-panel) { overflow: visible; }
+:is(#inventory-options, #inv-split-dialog, #inv-ammo-picker) { max-height: calc(100vh - 2rem); overflow: visible !important; }
+#inventory-tooltip {
+  max-width: min(16.5rem, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  overflow: visible !important;
+  overflow-wrap: anywhere;
+}
+#inventory-tooltip[data-placement=below] .tt-arrow { top: -.28rem; bottom: auto; }
+#inventory-tooltip .tt-arrow { background: var(--ink-2); }
+#inventory-detail.positioned { animation-name: detailSlidePositioned; }
+@keyframes detailSlidePositioned { from { opacity: 0; transform: translateX(-8px) } to { opacity: 1; transform: none } }
+
+/* No scrollbars anywhere in the bag */
+.wf-inv ::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.wf-inv :is(#inventory-tooltip, #inventory-options, #inv-split-dialog, #inv-ammo-picker, .inv-grid) { scrollbar-width: none; }
+
+/* Arabic is never letter-spaced or set in small caps */
+[dir='rtl'] .wf-inv *, .wf-inv[dir='rtl'] * { letter-spacing: 0 !important; font-variant-caps: normal !important; }
+
+/* ── The close crosses: the paper band under the cursor ── */
+:is(#inv-close-btn, #container-panel .cp-close, .trade-close, .ammo-picker-close) { position: relative; isolation: isolate; }
+:is(#inv-close-btn, #container-panel .cp-close, .trade-close, .ammo-picker-close)::after {
+  content: '';
+  position: absolute;
+  inset: 12%;
+  z-index: -1;
+  background: var(--paper);
+  opacity: 0;
+  -webkit-mask: var(--tex-band-sm) center / 100% 100% no-repeat;
+  transition: opacity 120ms var(--ease);
+}
+:is(#inv-close-btn, #container-panel .cp-close, .trade-close, .ammo-picker-close):hover { color: var(--ink); background: none; }
+:is(#inv-close-btn, #container-panel .cp-close, .trade-close, .ammo-picker-close):hover::after { opacity: 1; }
+:is(#container-panel .cp-close, .trade-close) { width: 2.1rem; }
+
+/* ── Buttons: the kit's band. A dark band at rest, the paper band under the cursor; the main action of a
+   dialog (split, trade confirm, load ammo) is the red mark band ── */
+.wf-inv :is(.inv-toolbar .tb-btn, #inv-split-dialog .split-btn, #inv-split-dialog .split-adj, .trade-btn, .ammo-picker-actions button) {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+  border: 0;
+  color: var(--paper-dim);
+  transition: color 120ms var(--ease);
+}
+.wf-inv :is(.inv-toolbar .tb-btn, #inv-split-dialog .split-btn, #inv-split-dialog .split-adj, .trade-btn, .ammo-picker-actions button)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 1;
+  background: var(--ink-3);
+  -webkit-mask: var(--tex-band-sm) center / 100% 100% no-repeat;
+  mask: var(--tex-band-sm) center / 100% 100% no-repeat;
+  transition: background-color 120ms var(--ease);
+}
+.wf-inv :is(.inv-toolbar .tb-btn, #inv-split-dialog .split-btn, #inv-split-dialog .split-adj, .trade-btn, .ammo-picker-actions button)::after { content: none; }
+.wf-inv :is(.inv-toolbar .tb-btn, #inv-split-dialog .split-btn, #inv-split-dialog .split-adj, .trade-btn, .ammo-picker-actions button):hover:not(:disabled) { color: var(--ink); background: transparent; }
+.wf-inv :is(.inv-toolbar .tb-btn, #inv-split-dialog .split-btn, #inv-split-dialog .split-adj, .trade-btn, .ammo-picker-actions button):hover:not(:disabled)::before { background: var(--paper); }
+.wf-inv :is(.inv-toolbar .tb-btn, .ammo-picker-actions button):hover:not(:disabled) svg { filter: none; }
+.wf-inv .inv-toolbar .tb-btn:hover .tb-key { color: inherit; border-color: currentColor; }
+/* the main action */
+.wf-inv :is(#inv-split-dialog .split-btn.confirm, .trade-btn.confirm, .ammo-picker-actions .ammo-picker-confirm) { color: var(--mark-ink); }
+.wf-inv :is(#inv-split-dialog .split-btn.confirm, .trade-btn.confirm, .ammo-picker-actions .ammo-picker-confirm)::before { background: var(--mark); }
+.wf-inv :is(#inv-split-dialog .split-btn.confirm, .trade-btn.confirm, .ammo-picker-actions .ammo-picker-confirm):hover:not(:disabled) { color: var(--mark-ink); }
+.wf-inv :is(#inv-split-dialog .split-btn.confirm, .trade-btn.confirm, .ammo-picker-actions .ammo-picker-confirm):hover:not(:disabled)::before { background: var(--mark-lit); }
+.wf-inv :is(#inv-split-dialog .split-btn.confirm, .trade-btn.confirm, .ammo-picker-actions .ammo-picker-confirm):active:not(:disabled)::before { background: var(--mark-deep); }
+/* my side is confirmed: the band goes quiet, a green word says so */
+.wf-inv .trade-btn.confirm.confirmed { color: var(--green); opacity: 1; }
+.wf-inv .trade-btn.confirm.confirmed::before, .wf-inv .trade-btn.confirm.confirmed:hover::before { background: var(--ink-3); }
+.wf-inv :is(.trade-btn, .ammo-picker-actions button):disabled { opacity: 0.38; cursor: default; }
+.wf-inv .trade-btn.confirm.confirmed:disabled { opacity: 1; }
+
+/* ── The ammunition list: a row is the paper band under the cursor, the red band when it is the chosen type ── */
+#inv-ammo-picker .ammo-picker-rail { display: none; }
+#inv-ammo-picker .ammo-picker-option { isolation: isolate; }
+#inv-ammo-picker .ammo-picker-option::before {
+  inset: 0;
+  width: auto;
+  z-index: -1;
+  background: transparent;
+  -webkit-mask: var(--tex-band) center / 100% 100% no-repeat;
+  mask: var(--tex-band) center / 100% 100% no-repeat;
+  transition: background-color 120ms var(--ease);
+}
+#inv-ammo-picker .ammo-picker-option:hover:not(:disabled)::before { background: var(--paper); }
+#inv-ammo-picker .ammo-picker-option.selected::before { background: var(--mark); }
+#inv-ammo-picker .ammo-picker-option.selected:hover:not(:disabled)::before { background: var(--mark-lit); }
+#inv-ammo-picker .ammo-picker-option:is(:hover:not(:disabled), .selected)::after { opacity: 0; }
+#inv-ammo-picker .ammo-picker-option:hover:not(:disabled):not(.selected) { color: var(--ink); }
+#inv-ammo-picker .ammo-picker-option:hover:not(:disabled):not(.selected) :is(.ammo-picker-option-copy strong, .ammo-picker-index, .ammo-picker-current) { color: var(--ink); }
+#inv-ammo-picker .ammo-picker-option:hover:not(:disabled):not(.selected) .ammo-picker-option-copy small { color: var(--note-dim); }
+#inv-ammo-picker .ammo-picker-option:hover:not(:disabled):not(.selected) .ammo-picker-preferred { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+#inv-ammo-picker .ammo-picker-option:hover:not(:disabled):not(.selected) .ammo-picker-cartridge svg { fill: var(--ink); stroke: transparent; }
+#inv-ammo-picker .ammo-picker-option.selected { color: var(--mark-ink); }
+#inv-ammo-picker .ammo-picker-option.selected :is(.ammo-picker-option-copy strong, .ammo-picker-option-copy small, .ammo-picker-index, .ammo-picker-current) { color: var(--mark-ink); }
+#inv-ammo-picker .ammo-picker-option.selected .ammo-picker-cartridge::before { background: rgba(242, 242, 242, 0.4); }
+#inv-ammo-picker .ammo-picker-close { width: 2.1rem; height: 2.1rem; }
+#inv-ammo-picker .ammo-picker-close::before { width: 0.95rem; height: 0.95rem; flex: none; }
+#inv-ammo-picker .ammo-picker-actions { background: transparent; }
+#inv-ammo-picker .ammo-picker-actions button { display: flex; align-items: center; justify-content: center; gap: 0.45rem; }
+/* the load gauge: paper on a thin track (it is not critical) */
+#inv-ammo-picker .ammo-picker-load-track { height: 0.26rem; background: rgba(242, 242, 242, 0.14); box-shadow: none; }
+#inv-ammo-picker .ammo-picker-load-track i { background: var(--paper); }
+
+/* ── The shop's money switch: the chosen money is the red band ── */
+#right-inventory-panel .rp-currency-btn::before {
+  -webkit-mask: var(--tex-band-sm) center / 100% 100% no-repeat;
+  mask: var(--tex-band-sm) center / 100% 100% no-repeat;
+}
+#right-inventory-panel .rp-currency-btn:hover { color: var(--ink); }
+#right-inventory-panel .rp-currency-btn:hover::before { background-color: var(--paper); }
+#right-inventory-panel .rp-currency-btn.active, #right-inventory-panel .rp-currency-btn.active:hover { color: var(--mark-ink); }
+#right-inventory-panel .rp-currency-btn.active::before { background-color: var(--mark); }
+#right-inventory-panel .rp-currency-btn.active:hover::before { background-color: var(--mark-lit); }
+
+/* ── The split slider: a thin track with the paper fill, a paper handle ── */
+#inv-split-dialog .split-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 1.1rem;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+#inv-split-dialog .split-slider::-webkit-slider-runnable-track {
+  height: 0.16rem;
+  background: linear-gradient(to right, var(--paper) var(--w-fill, 50%), rgba(242, 242, 242, 0.18) var(--w-fill, 50%));
+}
+/* the range runs from the start side, so in Arabic it fills from the right */
+[dir='rtl'] #inv-split-dialog .split-slider::-webkit-slider-runnable-track {
+  background: linear-gradient(to left, var(--paper) var(--w-fill, 50%), rgba(242, 242, 242, 0.18) var(--w-fill, 50%));
+}
+#inv-split-dialog .split-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 0.62rem;
+  height: 0.95rem;
+  margin-top: -0.4rem;
+  border: 0;
+  background: var(--paper);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+#inv-split-dialog .split-slider:focus { outline: none; }
+#inv-split-dialog .split-slider:active::-webkit-slider-thumb { box-shadow: 0 0 0 2px var(--ink), inset 0 -3px 0 var(--mark); }
+
+/* ── The trade request note: the kit's choices, the paper band's ink and the red line under the one the cursor is on;
+   the refusal keeps its red line at rest (it is the destructive one) ── */
+.trade-request-card .wf-choice { cursor: pointer; background: none; border: 0; }
+.trade-request-card .wf-choice:hover, .trade-request-card .wf-choice:focus-visible { color: var(--ink); outline: none; }
+.trade-request-card .wf-choice:hover::after, .trade-request-card .wf-choice:focus-visible::after { opacity: 1; }
+.trade-request-card .wf-choice.decline::after { opacity: 1; }
+
+/* ── The context menu: rows on hairlines, the paper band under the cursor (ink text on it) ── */
+#inventory-options .option { position: relative; isolation: isolate; }
+#inventory-options .option::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: transparent;
+  -webkit-mask: var(--tex-band) center / 100% 100% no-repeat;
+  mask: var(--tex-band) center / 100% 100% no-repeat;
+  transition: background-color 120ms var(--ease);
+}
+#inventory-options .option + .option { border-top: 1px solid var(--rule); }
+#inventory-options .option:hover { color: var(--ink); }
+#inventory-options .option:hover::before { background: var(--paper); }
+#inventory-options .option:hover, #inventory-options .option:hover + .option { border-top-color: transparent; }
+#inventory-options .option:hover svg { opacity: 1; }
+#inventory-options .option.equipped:hover { color: var(--ink); }
+#inventory-options .opt-header::after { inset-inline: .7rem; }
+
+/* ── Ultrawide: the trade window and the toasts sit inside the 16:9 frame like the bag ── */
+#trade-panel { right: calc(1.5rem + var(--ws-gutter)); }
+#inv-toasts { right: calc(1.5rem + var(--ws-gutter)); }

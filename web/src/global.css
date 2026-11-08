@@ -1,10 +1,8 @@
 /* ============================================================
-   The Wraith theme (w_lib/nui/theme): black ink, white paper (neutral greys, r = g = b), one red.
-   Every face comes from the theme package (theme/fonts.css, pulled in by the
-   store-theme.css link in index.html), so the inventory carries no font files
-   of its own. The --wc-* names stay: they are what index.scss draws with, and
-   each one is now a theme token. Red is a mark only (critical weight, drop,
-   a destructive row), never a text colour.
+   The board kit's palette (kit.css): black ink, white paper, one red. The w_lib store theme is retired from the
+   bag (wave 1A, 2026-11-08): w_lib's tokens are no longer linked, so the names index.scss draws with (--w-*,
+   --wc-*, --font-*) are bound here to the kit's own tokens and faces. Red is a mark only: the chosen slot, tab,
+   row or ammo, a critical gauge, a destructive row - never a text colour.
    ============================================================ */
 :root {
   --wc-bg: var(--w-ink);
@@ -21,10 +19,48 @@
   --wc-red-deep: var(--w-red-deep);
   --wc-red-soft: var(--w-red-soft);
   --wc-hover: rgba(242, 242, 242, 0.12);
-  --wc-ok: var(--w-green, #9FC79A); /* 2026-11-05: ok states in the site's soft green */
+  --wc-ok: var(--green);
   --wc-accent: var(--w-paper);
   --wc-accent-soft: rgba(242, 242, 242, 0.08);
   --wc-glow: rgba(242, 242, 242, 0.05);
+
+  /* the w_lib theme names index.scss still uses, now the kit's values */
+  --w-ink: var(--ink);
+  --w-ink-2: var(--ink-2);
+  --w-ink-3: var(--ink-3);
+  --w-ink-4: var(--ink-4);
+  --w-ink-5: #3A3534;
+  --w-paper: var(--paper);
+  --w-paper-dim: var(--paper-dim);
+  --w-paper-faint: var(--paper-faint);
+  --w-rule: var(--rule);
+  --w-rule-2: var(--rule-2);
+  --w-rule-3: rgba(242, 242, 242, 0.5);
+  --w-red: var(--red);
+  --w-red-deep: var(--red-deep);
+  --w-red-soft: var(--red-soft);
+  --w-green: var(--green);
+  --w-note: var(--note);
+  --w-note-ink: var(--note-ink);
+  --w-note-dim: var(--note-dim);
+  --w-note-glow: rgba(0, 0, 0, 0.28);
+  --w-scrim: rgba(5, 5, 5, 0.72);
+  --w-tex-tear: var(--tex-tear);
+  --w-tex-grain: var(--tex-grain);
+  /* faces: labels and controls in EB Garamond (Lalezar in Arabic), money in RDR Catalogue */
+  --w-f-label: var(--f-label);
+  --w-f-input: var(--f-input);
+  --w-f-title: var(--f-display);
+  --w-f-text: var(--f-serif);
+  --w-f-action: var(--f-serif);
+  --w-f-num: 'RDR Catalogue', 'EB Garamond', Georgia, serif;
+  --w-k-title: 1;    --w-lh-title: 1.12;  --w-track-title: .005em;  --w-wt-title: 600;
+  --w-k-text: 1;     --w-lh-text: 1.45;
+  --w-k-action: 1;   --w-lh-action: 1.3;  --w-wt-action: 500;
+  --w-k-label: 1;    --w-lh-label: 1.25;  --w-wt-label: 500;
+  --w-k-input: 1;    --w-wt-input: 500;
+  --w-label-case: uppercase;
+  --w-label-track: .12em;
 
   /* w_inventory's old names, bound to the same tokens so nothing breaks */
   --glass: radial-gradient(130% 90% at 50% 0%, rgba(28, 25, 25, 0.94) 0%, rgba(21, 19, 19, 0.96) 42%, rgba(11, 10, 10, 0.97) 100%);
@@ -57,18 +93,26 @@
   --radius: 0;
   --shadow: 0 44px 130px -32px rgba(0, 0, 0, 0.92);
 
-  /* The font roles (theme/tokens.css). Each follows the nearest dir: Arabic-first under RTL.
-     main = labels, controls, cells (Hapna Slab / Tajawal)
-     display = titles (EB Garamond 600 / Lalezar 400)
-     text = reading text (EB Garamond / Amiri 400)
-     action = menu rows (EB Garamond 500 / Amiri 700)
-     numeral = figures (RDR Catalogue) */
+  /* The font roles. Each follows the nearest dir (kit.css switches the stacks under RTL):
+     main = labels, controls, cells; display = titles; text = reading text; action = menu rows
+     (all EB Garamond, Lalezar in Arabic); numeral = the money figures (RDR Catalogue) */
   --font-main: var(--w-f-label);
   --font-display: var(--w-f-title);
   --font-text: var(--w-f-text);
   --font-action: var(--w-f-action);
   --font-input: var(--w-f-input);
   --font-numeral: var(--w-f-num);
+}
+
+/* Arabic (Lalezar): a little larger, never letter-spaced, never uppercased */
+[dir='rtl'] {
+  --w-k-title: .92;  --w-lh-title: 1.25;  --w-track-title: 0em;  --w-wt-title: 400;
+  --w-k-text: 1.04;  --w-lh-text: 1.55;
+  --w-k-action: 1;   --w-lh-action: 1.4;  --w-wt-action: 400;
+  --w-k-label: 1.06; --w-lh-label: 1.3;   --w-wt-label: 400;
+  --w-k-input: 1.04; --w-wt-input: 400;
+  --w-label-case: none;
+  --w-label-track: 0;
 }
 
 *,
@@ -102,10 +146,13 @@ body {
   direction: ltr;
 }
 
-/* The Arabic font (Tajawal) is heavy: a general medium + bold for the headings and the buttons - as in w_crafting */
-[dir='rtl'] body,
 body {
   font-weight: 500;
+}
+
+/* Lalezar has one weight: no faux bold in Arabic */
+[dir='rtl'] body {
+  font-weight: 400;
 }
 
 #root {

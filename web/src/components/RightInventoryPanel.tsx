@@ -4,7 +4,6 @@ import { N, SVG_X, SVG_BAG, SVG_CASH, SVG_GOLD, fmtWeight } from '../utils/items
 import { InventoryItem, RightInventoryMeta } from '../typings';
 import { formatCompact } from '../utils/formatNumber';
 import { tr, trf } from '../i18n';
-import Frame from './Frame';
 import usePanelPosition from '../hooks/usePanelPosition';
 import { loadPanelPos, savePanelPos } from '../utils/layout';
 
@@ -131,13 +130,12 @@ export default function RightInventoryPanel({
       };
 
   return (
-    <div id="right-inventory-panel" className="wst-panel" ref={rightRef} style={{ display: 'flex', ...posStyle }}>
-      <Frame px={13} opacity={0.5} />
-      <div className="wst-header rp-header" onMouseDown={handleDragStart} style={{ cursor: 'grab' }}>
+    <div id="right-inventory-panel" className="wf-shell" ref={rightRef} style={{ display: 'flex', ...posStyle }}>
+      <div className="rp-header" onMouseDown={handleDragStart} style={{ cursor: 'grab' }}>
         <div className="inv-badge">{isShop ? SVG_SHOP : isCrafting ? SVG_CRAFT : SVG_BAG}</div>
         <div className="rp-title-area">
-          <div className="wst-title rp-title">{rightInventory.label || tr(`ui_inv_${rightInventory.type}`, rightInventory.type)}</div>
-          <div className="wst-sub rp-subtitle">
+          <div className="rp-title">{rightInventory.label || tr(`ui_inv_${rightInventory.type}`, rightInventory.type)}</div>
+          <div className="rp-subtitle">
             {isShop ? tr('ui_shop_drag_hint', 'Drag items to your inventory to purchase') :
              isCrafting ? tr('ui_crafting_drag_hint', 'Drag items to your inventory to craft') :
              trf('ui_item_count', '%s item(s)', itemCount)}
@@ -150,7 +148,7 @@ export default function RightInventoryPanel({
           <div className="rp-currency-toggle">
             <button
               type="button"
-              className={`wst-tab rp-currency-btn ${shopPaymentCurrency === 'cash' ? 'active' : ''}`}
+              className={`rp-currency-btn ${shopPaymentCurrency === 'cash' ? 'active' : ''}`}
               onClick={() => onSetPaymentCurrency('cash')}
             >
               <span className="rp-currency-icon">{SVG_CASH}</span>
@@ -158,7 +156,7 @@ export default function RightInventoryPanel({
             </button>
             <button
               type="button"
-              className={`wst-tab rp-currency-btn gold ${shopPaymentCurrency === 'gold' ? 'active' : ''}`}
+              className={`rp-currency-btn gold ${shopPaymentCurrency === 'gold' ? 'active' : ''}`}
               onClick={() => onSetPaymentCurrency('gold')}
             >
               <span className="rp-currency-icon gold">{SVG_GOLD}</span>
@@ -169,7 +167,7 @@ export default function RightInventoryPanel({
             <label className="rp-amount-label">{tr('ui_quantity', 'Quantity')}</label>
             <input
               type="number"
-              className="wst-input rp-amount-input"
+              className="rp-amount-input"
               value={itemAmount || ''}
               min={0}
               onChange={(e) => onSetItemAmount(parseInt(e.target.value) || 0)}
@@ -184,7 +182,7 @@ export default function RightInventoryPanel({
           <label className="rp-amount-label">{tr('ui_quantity', 'Quantity')}</label>
           <input
             type="number"
-            className="wst-input rp-amount-input"
+            className="rp-amount-input"
             value={itemAmount || ''}
             min={0}
             onChange={(e) => onSetItemAmount(parseInt(e.target.value) || 0)}

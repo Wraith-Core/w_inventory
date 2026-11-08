@@ -41,7 +41,7 @@ function Slot({ item, idx, gridIndex, selected, panel, hotbarIndex, dimmed, onSe
   if (!item) {
     return (
       <div
-        className={`slot${droppable.isOver ? ' drag-over' : ''}`}
+        className={`slot wf-slot${droppable.isOver ? ' drag-over is-over' : ''}`}
         ref={droppable.setNodeRef}
         data-grid-index={gridIndex}
       >
@@ -52,10 +52,10 @@ function Slot({ item, idx, gridIndex, selected, panel, hotbarIndex, dimmed, onSe
 
   const r = rarity(item);
   const cls = [
-    'slot filled wst-card', r,
-    selected ? 'selected' : '',
+    'slot filled wf-slot is-filled', r,
+    selected ? 'selected is-picked' : '',
     draggable.isDragging ? 'drag-source' : '',
-    droppable.isOver ? 'drag-over' : '',
+    droppable.isOver ? 'drag-over is-over' : '',
     item.isWeapon && item.equipped ? 'weapon-equipped' : '',
     isHotbarAssigned ? 'hotbar-assigned' : '',
     dimmed ? 'filter-dimmed' : '',

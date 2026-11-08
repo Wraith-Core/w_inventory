@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { SVG_BAG, SVG_EYE } from '../utils/items';
 import { InventoryItem } from '../typings';
 import { tr } from '../i18n';
-import Frame from './Frame';
 import { wsPx } from '../utils/wsScale';
 
 const SVG_USE = <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>;
@@ -67,19 +66,19 @@ export default function ContextMenu({ visible, x, y, item, idx, panel, container
     const primary: React.ReactNode[] = [];
     if (item.isContainer) {
       primary.push(
-        <div key="open" className="wst-card option" onClick={() => { onOpenContainer(idx); onClose(); }}>
+        <div key="open" className="option" onClick={() => { onOpenContainer(idx); onClose(); }}>
           {SVG_BAG} <span>{tr('ui_open', 'Open')}</span> <kbd className="opt-key">{tr('ui_double_click', 'Double-click')}</kbd>
         </div>
       );
     } else {
       primary.push(
-        <div key="use" className="wst-card option" onClick={() => { onUse(idx); onClose(); }}>
+        <div key="use" className="option" onClick={() => { onUse(idx); onClose(); }}>
           {SVG_USE} <span>{tr('ui_use', 'Use')}</span> <kbd className="opt-key">{tr('ui_double_click', 'Double-click')}</kbd>
         </div>
       );
     }
     primary.push(
-      <div key="inspect" className="wst-card option" onClick={() => { onInspect(idx, 'main'); onClose(); }}>
+      <div key="inspect" className="option" onClick={() => { onInspect(idx, 'main'); onClose(); }}>
         {SVG_EYE} <span>{tr('ui_inspect', 'Inspect')}</span>
       </div>
     );
@@ -88,21 +87,21 @@ export default function ContextMenu({ visible, x, y, item, idx, panel, container
     const secondary: React.ReactNode[] = [];
     if (item.count > 1) {
       secondary.push(
-        <div key="split" className="wst-card option" onClick={() => { onSplit(idx, panel); onClose(); }}>
+        <div key="split" className="option" onClick={() => { onSplit(idx, panel); onClose(); }}>
           {SVG_SPLIT} <span>{tr('ui_split', 'Split')}</span>
         </div>
       );
     }
     if (containerOpen !== null && !item.isContainer) {
       secondary.push(
-        <div key="store" className="wst-card option" onClick={() => { onStoreIn(idx); onClose(); }}>
+        <div key="store" className="option" onClick={() => { onStoreIn(idx); onClose(); }}>
           {SVG_STORE} <span>{tr('ui_store_container', 'Store in container')}</span>
         </div>
       );
     }
     if (Number(item.metadata?.ammo || 0) > 0) {
       secondary.push(
-        <div key="unload-ammo" className="wst-card option" onClick={() => { onRemoveAmmo(idx); onClose(); }}>
+        <div key="unload-ammo" className="option" onClick={() => { onRemoveAmmo(idx); onClose(); }}>
           {SVG_UNLOAD} <span>{tr('ui_remove_ammo', 'Remove ammo')}</span>
         </div>
       );
@@ -111,7 +110,7 @@ export default function ContextMenu({ visible, x, y, item, idx, panel, container
     if (customButtons && customButtons.length > 0 && onCustomButton) {
       for (const btn of customButtons) {
         secondary.push(
-          <div key={`btn-${btn.id}-${btn.label}`} className="wst-card option" onClick={() => { onCustomButton(idx, btn.id); onClose(); }}>
+          <div key={`btn-${btn.id}-${btn.label}`} className="option" onClick={() => { onCustomButton(idx, btn.id); onClose(); }}>
             {SVG_USE} <span>{btn.label}</span>
           </div>
         );
@@ -122,28 +121,28 @@ export default function ContextMenu({ visible, x, y, item, idx, panel, container
 
     const danger: React.ReactNode[] = [];
     danger.push(
-      <div key="give" className="wst-card option" onClick={() => { onGive(idx); onClose(); }}>
+      <div key="give" className="option" onClick={() => { onGive(idx); onClose(); }}>
         {SVG_GIVE} <span>{tr('ui_give', 'Give')}</span>
       </div>
     );
     danger.push(
-      <div key="drop" className="wst-card option danger" onClick={() => { onDrop(idx); onClose(); }}>
+      <div key="drop" className="option danger" onClick={() => { onDrop(idx); onClose(); }}>
         {SVG_DROP} <span>{tr('ui_drop', 'Drop')}</span>
       </div>
     );
     sections.push(danger);
   } else if (panel === 'container') {
     sections.push([
-      <div key="takeout" className="wst-card option" onClick={() => { onTakeOut(idx); onClose(); }}>
+      <div key="takeout" className="option" onClick={() => { onTakeOut(idx); onClose(); }}>
         {SVG_TAKE} <span>{tr('ui_take_out', 'Take out')}</span>
       </div>,
-      <div key="inspect" className="wst-card option" onClick={() => { onInspect(idx, 'container'); onClose(); }}>
+      <div key="inspect" className="option" onClick={() => { onInspect(idx, 'container'); onClose(); }}>
         {SVG_EYE} <span>{tr('ui_inspect', 'Inspect')}</span>
       </div>,
     ]);
   } else if (panel === 'right') {
     sections.push([
-      <div key="inspect" className="wst-card option" onClick={() => { onInspect(idx, 'right'); onClose(); }}>
+      <div key="inspect" className="option" onClick={() => { onInspect(idx, 'right'); onClose(); }}>
         {SVG_EYE} <span>{tr('ui_inspect', 'Inspect')}</span>
       </div>,
     ]);
@@ -151,7 +150,7 @@ export default function ContextMenu({ visible, x, y, item, idx, panel, container
 
   const elements: React.ReactNode[] = [];
   sections.forEach((sec, si) => {
-    if (si > 0) elements.push(<div key={`sep-${si}`} className="wst-rule opt-sep" />);
+    if (si > 0) elements.push(<div key={`sep-${si}`} className="opt-sep" />);
     sec.forEach((el) => elements.push(el));
   });
 
@@ -159,12 +158,11 @@ export default function ContextMenu({ visible, x, y, item, idx, panel, container
     <div
       id="inventory-options"
       ref={ref}
-      className="show wst-panel"
+      className="show wf-shell is-small"
       style={{ left: x, top: y, opacity: 0 }}
       onMouseDown={e => e.stopPropagation()}
     >
-      <Frame px={9} opacity={0.4} />
-      <div className="wst-title opt-header">{item.label || item.name}</div>
+      <div className="opt-header">{item.label || item.name}</div>
       {elements}
     </div>
   );

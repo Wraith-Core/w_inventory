@@ -20,7 +20,7 @@ export default function HotBar({ slots, visible, onUseSlot }: HotBarProps) {
         return (
           <div
             key={i}
-            className={`wst-plate hb-slot${slot ? ' hb-filled' : ''}${slot?.equipped ? ' hb-equipped' : ''} ${r}`}
+            className={`hb-slot${slot ? ' hb-filled' : ''}${slot?.equipped ? ' hb-equipped' : ''} ${r}`}
             onClick={() => slot && onUseSlot(i)}
             onMouseEnter={() => slot && setHoveredSlot(i)}
             onMouseLeave={() => setHoveredSlot(null)}

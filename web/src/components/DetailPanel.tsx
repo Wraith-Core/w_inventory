@@ -3,7 +3,6 @@ import { getItemUrl, itemImageError } from '../utils/nui';
 import { setClipboard } from '../utils/setClipboard';
 import { InventoryItem } from '../typings';
 import { tr } from '../i18n';
-import Frame from './Frame';
 import { useLayoutEffect, useRef, useState } from 'react';
 import usePanelPosition from '../hooks/usePanelPosition';
 import { PANEL_W_REM, CONTAINER_W_REM, PANEL_GAP_REM, remPx } from '../utils/layout';
@@ -72,7 +71,7 @@ export default function DetailPanel({ item, panel, containerOpen, panelPos }: De
     <div
       id="inventory-detail"
       ref={panelRef}
-      className={'wst-panel ' + (fitted ? 'positioned' : shifted ? 'shifted' : '')}
+      className={'wf-shell' + (fitted ? ' positioned' : shifted ? ' shifted' : '')}
       style={{ display: 'flex', ...posStyle }}
       onWheel={(e) => {
         // The wheel over the picture or the footer still moves the body.
@@ -80,7 +79,6 @@ export default function DetailPanel({ item, panel, containerOpen, panelPos }: De
         if (body && !body.contains(e.target as Node)) body.scrollTop += e.deltaY;
       }}
     >
-      <Frame px={11} opacity={0.45} />
       <div className={`detail-hero ${r}`}>
         <div className="detail-img-wrap">
           <img
@@ -89,45 +87,45 @@ export default function DetailPanel({ item, panel, containerOpen, panelPos }: De
             alt=""
           />
         </div>
-        <div className="wst-title detail-name">{title}</div>
+        <div className="detail-name">{title}</div>
         <div className={`detail-rarity ${r}`}>{rarityLabel(r)}</div>
       </div>
 
-      <div className="wst-rule detail-sep" />
+      <div className="detail-sep" />
 
       <div ref={bodyRef} className={'detail-body' + (fade.top ? ' fade-top' : '') + (fade.bottom ? ' fade-bottom' : '')}>
-      {desc && <div className="wst-sub detail-desc">{desc}</div>}
+      {desc && <div className="detail-desc">{desc}</div>}
 
       <div className="detail-stats">
-        <div className="wst-row detail-stat">
+        <div className="detail-stat">
           <span className="lbl">{tr('ui_weight', 'Weight')}</span>
           <span className="val">{unitWeight}</span>
         </div>
-        <div className="wst-row detail-stat">
+        <div className="detail-stat">
           <span className="lbl">{tr('ui_quantity', 'Quantity')}</span>
           <span className="val">{item.count}</span>
         </div>
         {item.count > 1 && (
-          <div className="wst-row detail-stat">
+          <div className="detail-stat">
             <span className="lbl">{tr('ui_total_weight', 'Total weight')}</span>
             <span className="val">{totalWeight}</span>
           </div>
         )}
         {item.isContainer && (
-          <div className="wst-row detail-stat">
+          <div className="detail-stat">
             <span className="lbl">{tr('ui_storage', 'Storage')}</span>
             <span className="val">{fmtWeight(N(item.containerContentWeight))}/{fmtWeight(N(item.containerMaxWeight))}</span>
           </div>
         )}
         {item.isWeapon && (
-          <div className="wst-row detail-stat">
+          <div className="detail-stat">
             <span className="lbl">{tr('ui_status', 'Status')}</span>
             <span className={`val ${item.equipped ? 'equipped-text' : ''}`}>{item.equipped ? tr('ui_equipped', 'Equipped') : tr('ui_in_bag', 'In bag')}</span>
           </div>
         )}
         {item.isWeapon && (item.metadata?.serial || item.metadata?.serial_number) && (
           <div
-            className="wst-row detail-stat"
+            className="detail-stat"
             style={{ cursor: 'pointer' }}
             title={tr('ui_click_copy_serial', 'Click to copy serial number')}
             onClick={() => setClipboard(String(item.metadata?.serial || item.metadata?.serial_number))}
@@ -139,13 +137,13 @@ export default function DetailPanel({ item, panel, containerOpen, panelPos }: De
           </div>
         )}
         {ammoEntries.map(([type, count]) => (
-          <div className="wst-row detail-stat" key={type}>
+          <div className="detail-stat" key={type}>
             <span className="lbl">{tr('ui_ammo', 'Ammo')}</span>
             <span className="val">{count}</span>
           </div>
         ))}
         {pctRound != null && (
-          <div className="wst-row detail-stat">
+          <div className="detail-stat">
             <span className="lbl">{tr('ui_durability', 'Durability')}</span>
             <span className={`val dur-${pctRound <= 25 ? 'low' : pctRound <= 60 ? 'mid' : 'high'}`}>{pctRound}%</span>
           </div>
@@ -153,7 +151,7 @@ export default function DetailPanel({ item, panel, containerOpen, panelPos }: De
       </div>
       </div>
 
-      <div className="wst-rule detail-sep" />
+      <div className="detail-sep" />
 
       <div className="detail-hint">
         <svg viewBox="0 0 24 24" fill="currentColor" style={{width:'.5rem',height:'.5rem',opacity:.4}}><path d="M2 12C2 6.48 6.48 2 12 2s10 4.48 10 10-4.48 10-10 10S2 17.52 2 12zm11-1v6h-2v-6h2zm0-4v2h-2V7h2z"/></svg>

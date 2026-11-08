@@ -63,10 +63,10 @@ export default function InspectOverlay({ item, onClose }: InspectOverlayProps) {
           onError={(e) => { itemImageError(e.currentTarget, item); }}
           alt=""
         />
-        <div className="wst-title inspect-label">{item.label || item.name}</div>
+        <div className="inspect-label">{item.label || item.name}</div>
         <div className={`inspect-rarity detail-rarity ${r}`}>{rarityLabel(r)}</div>
-        <div className="wst-rule inspect-sep" />
-        <div className="wst-sub inspect-desc">{item.desc || tr('ui_no_description', 'No description.')}</div>
+        <div className="inspect-sep" />
+        <div className="inspect-desc">{item.desc || tr('ui_no_description', 'No description.')}</div>
         <div className="inspect-stats">
           <div className="inspect-s">
             <div className="inspect-sv">{fmtWeight(N(item.weight))}</div>
@@ -87,7 +87,7 @@ export default function InspectOverlay({ item, onClose }: InspectOverlayProps) {
             </div>
           )}
         </div>
-        <div className="wst-button inspect-x" onClick={handleClose}>[ {tr('ui_esc_close', 'ESC TO CLOSE')} ]</div>
+        <div className="inspect-x" onClick={handleClose}>[ {tr('ui_esc_close', 'ESC TO CLOSE')} ]</div>
       </div>
     </div>
   );

@@ -1,0 +1,510 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   shop-kit.css - the shop parts of the board kit (wave 1A, 2026-11-08): the bag's slot grid, the shop's
+   item tile, the gauge, the key chip, a torn card on one element, the two-pane stage, the big band
+   button, the quantity box and the page's toast. The same prefix, palette, faces, textures and motion
+   as kit.css (load it AFTER kit.css: it reads kit.css's tokens and keyframes).
+
+   A shared file like kit.css: copied byte-identical into every resource that uses it (w_inventory,
+   w_store, w_marketplace; later w_gunsmith, w_banking, w_pets). Never edit one copy to restyle one page:
+   the page's own parts go in the page's own sheet. Classes a page does not use stay, so every copy is
+   the same drop-in file.
+
+   The owner's rules (2026-11-08):
+     - the cursor (hover, keyboard focus, a drag over) is the white paper band, and only that;
+     - the CHOSEN item (picked slot / tile / row, the main button) is the red mark band;
+     - bars and gauges are paper on a thin track, red only when critical;
+     - big figures in RDR Catalogue (.wf-figure), every other number in EB Garamond (.wf-num), Latin digits;
+     - item art is never tinted, masked or recoloured: it sits in an ink well that stays dark under
+       both bands, so the game's white engravings read on paper and on red alike.
+   Logical properties only: in Arabic every part mirrors by itself.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════ A torn card on one element ══════════════════
+   kit.css draws a card as .wf-wrap > .wf-card (the wrapper carries the shadow the mask would clip).
+   A part that must stay one element (a draggable panel, a floating menu) wears .wf-shell instead:
+   the torn paper is its ::before, the grain its ::after, the shadow its own filter. A .wf-shell is a
+   containing block for fixed children (the filter): keep tooltips and menus outside it. */
+.wf-shell {
+  position: relative;
+  isolation: isolate;
+  filter: drop-shadow(0 0.55rem 0.9rem rgba(0, 0, 0, 0.55));
+}
+.wf-shell::before,
+.wf-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  -webkit-mask-box-image: var(--tex-tear) 64 fill / var(--edge) round;
+}
+.wf-shell::before {
+  z-index: -2;
+  background-color: var(--ink-2);
+  background-image: linear-gradient(160deg, rgba(242, 242, 242, 0.035), rgba(242, 242, 242, 0) 55%);
+  box-shadow:
+    inset 0 0 1.25rem rgba(242, 242, 242, 0.11),
+    inset 0 0 0.45rem rgba(242, 242, 242, 0.1);
+  transition: background-color 160ms var(--ease), box-shadow 160ms var(--ease);
+}
+.wf-shell::after {
+  z-index: -1;
+  background-image: var(--tex-grain);
+  background-size: 256px 256px;
+  opacity: 0.1;
+  mix-blend-mode: screen;
+  filter: invert(1);
+}
+.wf-shell.is-focus::before {
+  background-color: var(--ink-3);
+  box-shadow:
+    inset 0 0 1.4rem rgba(242, 242, 242, 0.17),
+    inset 0 0 0.5rem rgba(242, 242, 242, 0.16);
+}
+.wf-shell > .wf-tick { inset-inline-start: 0.15rem; }
+.wf-shell.is-focus > .wf-tick { opacity: 1; transform: none; }
+/* a smaller tear for small sheets (a menu, a tooltip, a hotbar) */
+.wf-shell.is-small::before, .wf-shell.is-small::after { -webkit-mask-box-image: var(--tex-tear) 64 fill / 0.9rem round; }
+
+/* ══════════════════ The stage: a list beside its detail (the w_crafting bench) ══════════════════
+   Centred inside the 16:9 frame; the first child sits on the start side (the right in Arabic). */
+.wf-veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 50%, rgba(11, 10, 10, 0.55), rgba(11, 10, 10, 0.86));
+  animation: wf-fade 220ms var(--ease) both;
+}
+.wf-duo {
+  position: absolute;
+  inset-block: max(2rem, calc((100vh - 46rem) / 2));
+  inset-inline: max(calc(3.2rem + var(--ws-gutter)), calc((100vw - 84rem) / 2));
+  display: flex;
+  gap: 1.6rem;
+}
+.wf-duo.is-single { inset-inline: max(calc(3.2rem + var(--ws-gutter)), calc((100vw - 50rem) / 2)); }
+.wf-duo-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 1rem; }
+.wf-duo-side { flex: none; width: 29rem; min-height: 0; display: flex; flex-direction: column; gap: 1rem; }
+.wf-duo .wf-wrap.is-grow { flex: 1; min-height: 0; }
+.wf-duo .wf-wrap.is-fit { flex: none; }
+.wf-duo .wf-wrap.is-fit .wf-card { height: auto; }
+.wf-duo .wf-wrap.is-fit .wf-card-body { height: auto; }
+
+/* the masthead's close (the kit's .wf-x look at the masthead's height) */
+.wf-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--paper-dim);
+  transition: color 120ms var(--ease), background-color 120ms var(--ease);
+}
+.wf-close .wf-glyph { width: 0.95rem; height: 0.95rem; }
+.wf-close:hover, .wf-close.is-here { color: var(--paper); background: var(--ink-3); box-shadow: inset 0 -2px 0 var(--red); }
+
+/* a scrolling area inside a card */
+.wf-scroll { flex: 1; min-height: 0; overflow-y: auto; padding-inline-end: 0.3rem; }
+.wf-scroll::-webkit-scrollbar { width: 3px; }
+.wf-scroll::-webkit-scrollbar-thumb { background: var(--rule-2); }
+
+/* ══════════════════ Figures ══════════════════ */
+/* a big figure (money in hand, a total, a balance): RDR Catalogue, Latin digits, left to right */
+.wf-figure {
+  font-family: 'RDR Catalogue', 'EB Garamond', Georgia, serif;
+  font-weight: 400;
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: 0.02em;
+  direction: ltr;
+  unicode-bidi: isolate;
+  white-space: nowrap;
+}
+.wf-money-line { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.wf-money-line .wf-label { overflow: visible; }
+.wf-money-line .wf-figure { font-size: 1.9rem; line-height: 1; color: var(--paper); }
+
+/* a row the player CHOSE (the kit's .wf-row is the cursor): the red mark band */
+.wf-row.is-picked { color: var(--mark-ink); border-bottom-color: transparent; }
+.wf-row.is-picked::before { opacity: 1; background: var(--mark); }
+.wf-row.is-picked.is-here::before { background: var(--mark-lit); }
+.wf-row.is-picked .wf-row-meta, .wf-row.is-picked .wf-row-end { color: rgba(242, 242, 242, 0.82); }
+.wf-row.is-off { opacity: 0.42; cursor: default; }
+
+/* ══════════════════ The gauge: paper on a thin track, red only when critical ══════════════════ */
+.wf-gauge {
+  position: relative;
+  display: block;
+  height: 0.26rem;
+  background: rgba(242, 242, 242, 0.14);
+  overflow: hidden;
+}
+.wf-gauge.is-thin { height: 0.16rem; }
+.wf-gauge.is-thick { height: 0.36rem; }
+.wf-gauge-fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 0;
+  background: var(--paper);
+  transition: width 220ms var(--ease), background-color 160ms var(--ease);
+}
+.wf-gauge.is-warn .wf-gauge-fill { background: var(--paper-dim); }
+.wf-gauge.is-critical .wf-gauge-fill { background: var(--red); }
+.wf-gauge-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.8rem; margin-bottom: 0.4rem; }
+.wf-gauge-head .wf-num { font-size: 0.92rem; color: var(--paper-dim); }
+.wf-gauge-head .wf-num b { color: var(--paper); font-weight: 600; }
+/* on the paper band the track turns ink */
+.is-here > .wf-gauge, .is-here .wf-gauge { background: rgba(17, 17, 17, 0.18); }
+.is-here .wf-gauge:not(.is-critical) .wf-gauge-fill { background: var(--ink); }
+
+/* ══════════════════ The key chip ══════════════════
+   One chip for every key the page names: a slot's hotbar number, a key hint, a shortcut. */
+.wf-keychip {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.34rem;
+  border: 1px solid var(--rule-2);
+  background: rgba(11, 10, 10, 0.55);
+  font: 600 0.78rem/1 'EB Garamond', Georgia, serif;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--paper-dim);
+  direction: ltr;
+  unicode-bidi: isolate;
+  white-space: nowrap;
+}
+.wf-keychip.is-small { min-width: 1.02rem; height: 1.02rem; padding: 0 0.2rem; font-size: 0.66rem; }
+.wf-keychip.is-lit { border-color: var(--paper); color: var(--paper); }
+.is-here .wf-keychip { border-color: rgba(17, 17, 17, 0.45); background: transparent; color: var(--ink); }
+
+/* what Enter / Esc / a key does, clickable (the w_crafting bench's hints) */
+.wf-hints { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.1rem; }
+.wf-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font: 500 0.9rem/1 var(--f-label);
+  color: var(--paper-faint);
+  white-space: nowrap;
+  transition: color 120ms var(--ease);
+}
+.wf-hint:not(:disabled):hover { color: var(--paper); }
+.wf-hint:disabled { cursor: default; }
+.wf-hint:hover .wf-keychip { border-color: var(--paper-dim); color: var(--paper); }
+
+/* ══════════════════ The slot grid (the bag, a stash, a drop on the ground) ══════════════════
+   A slot is an ink well; its rim is the band: paper under the cursor (or a drag over it), the red mark
+   when it is the chosen slot. The art stays untouched inside the well. --cols sets the columns. */
+.wf-slots {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr));
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 0.5rem;
+}
+.wf-slot {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+  color: var(--paper);
+}
+.wf-slot::before {
+  content: '';
+  position: absolute;
+  inset: -0.2rem;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--paper);
+  opacity: 0;
+  -webkit-mask: var(--tex-band-sm) center / 100% 100% no-repeat;
+  transition: opacity 120ms var(--ease), background-color 120ms var(--ease);
+}
+.wf-slot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(90% 90% at 50% 45%, rgba(242, 242, 242, 0.035), rgba(242, 242, 242, 0) 70%),
+    rgba(11, 10, 10, 0.62);
+  box-shadow: inset 0 0 0 1px var(--rule), inset 0 0 0.9rem rgba(0, 0, 0, 0.5);
+  transition: box-shadow 120ms var(--ease), background-color 120ms var(--ease);
+}
+.wf-slot.is-filled { cursor: pointer; }
+.wf-slot.is-filled::after { box-shadow: inset 0 0 0 1px var(--rule-2), inset 0 0 0.9rem rgba(0, 0, 0, 0.5); }
+.wf-slot.is-here::before,
+.wf-slot.is-filled:hover::before,
+.wf-slot.is-over::before { opacity: 1; }
+.wf-slot.is-here::after,
+.wf-slot.is-filled:hover::after,
+.wf-slot.is-over::after { box-shadow: inset 0 0 0 1px rgba(242, 242, 242, 0.5), inset 0 0 0.9rem rgba(0, 0, 0, 0.5); }
+.wf-slot.is-picked::before { opacity: 1; background: var(--mark); }
+.wf-slot.is-picked.is-here::before, .wf-slot.is-picked:hover::before { background: var(--mark-lit); }
+.wf-slot.is-picked::after { box-shadow: inset 0 0 0 1px rgba(208, 22, 27, 0.75), inset 0 0 1rem rgba(208, 22, 27, 0.16); }
+.wf-slot.is-dim { opacity: 0.14; pointer-events: none; }
+.wf-slot.is-ghost { opacity: 0.18; pointer-events: none; }
+.wf-slot-art { width: 78%; height: 78%; object-fit: contain; display: block; pointer-events: none; transition: transform 160ms var(--ease); }
+.wf-slot.is-filled:hover .wf-slot-art { transform: scale(1.06); }
+/* the count (bottom end), the slot's key (top start), a mark (top end) */
+.wf-slot-count {
+  position: absolute;
+  inset-inline-end: 0.3rem;
+  bottom: 0.32rem;
+  z-index: 2;
+  font: 600 0.8rem/1 'EB Garamond', Georgia, serif;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--paper);
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-shadow: 0 1px 0.3rem rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+.wf-slot-key { position: absolute; inset-inline-start: 0.24rem; top: 0.24rem; z-index: 2; pointer-events: none; }
+.wf-slot-mark { position: absolute; inset-inline-end: 0.26rem; top: 0.26rem; z-index: 2; pointer-events: none; color: var(--paper-dim); }
+.wf-slot .wf-gauge { position: absolute; inset-inline: 0.3rem; bottom: 0.14rem; z-index: 2; }
+
+/* ══════════════════ The item tile (a shop's catalogue) ══════════════════
+   Selectable: a click / Enter picks it (the red mark band), the cursor is the paper band. No button on
+   a tile: what is bought or sold is the chosen tiles, acted on from the page's actions. */
+.wf-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile, 9.2rem), 1fr));
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 0.65rem;
+}
+.wf-tile {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.32rem;
+  min-width: 0;
+  padding: 0.7rem 0.75rem 0.7rem;
+  color: var(--paper);
+  text-align: start;
+  cursor: pointer;
+  transition: color 120ms var(--ease), opacity 120ms var(--ease);
+}
+.wf-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background: rgba(242, 242, 242, 0.035);
+  box-shadow: inset 0 -1px 0 var(--rule-2);
+}
+.wf-tile::after {
+  content: '';
+  position: absolute;
+  inset: -0.1rem -0.25rem;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--paper);
+  opacity: 0;
+  -webkit-mask: var(--tex-band) center / 100% 100% no-repeat;
+  transition: opacity 120ms var(--ease), background-color 120ms var(--ease);
+}
+.wf-tile.is-here, .wf-tile:not(.is-off):hover { color: var(--ink); }
+.wf-tile.is-here::after, .wf-tile:not(.is-off):hover::after { opacity: 1; }
+.wf-tile.is-picked, .wf-tile.is-picked:hover { color: var(--mark-ink); }
+.wf-tile.is-picked::after { opacity: 1; background: var(--mark); }
+.wf-tile.is-picked.is-here::after, .wf-tile.is-picked:not(.is-off):hover::after { background: var(--mark-lit); }
+.wf-tile.is-off { opacity: 0.42; cursor: default; }
+.wf-tile-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 5.2rem;
+  margin-bottom: 0.25rem;
+  background: rgba(11, 10, 10, 0.72);
+  box-shadow: inset 0 0 0 1px var(--rule), inset 0 0 1rem rgba(0, 0, 0, 0.55);
+  /* one fixed track, so the image's 82% has a height to resolve against (an auto row let it overflow onto the name) */
+  grid-template-rows: 100%;
+  grid-template-columns: 100%;
+}
+.wf-tile-art img { width: auto; height: 82%; max-width: 88%; object-fit: contain; display: block; pointer-events: none; justify-self: center; align-self: center; }
+.wf-tile-name {
+  font: 500 1.05rem/1.2 var(--f-serif);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wf-tile-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font: 500 0.82rem/1.1 var(--f-label);
+  color: var(--paper-faint);
+}
+.wf-tile-price .wf-num { font-size: 1.12rem; font-weight: 600; color: var(--paper); }
+.wf-tile-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 1rem;
+  font: 500 0.8rem/1.15 var(--f-label);
+  color: var(--paper-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wf-tile.is-here :is(.wf-tile-price, .wf-tile-meta), .wf-tile:not(.is-off):hover :is(.wf-tile-price, .wf-tile-meta) { color: rgba(17, 17, 17, 0.62); }
+.wf-tile.is-here .wf-tile-price .wf-num, .wf-tile:not(.is-off):hover .wf-tile-price .wf-num { color: var(--ink); }
+.wf-tile.is-picked :is(.wf-tile-price, .wf-tile-meta) { color: rgba(242, 242, 242, 0.8); }
+.wf-tile.is-picked .wf-tile-price .wf-num { color: var(--mark-ink); }
+/* a count on the tile (how many are chosen): paper on ink, ink on paper on the red band */
+.wf-tile-badge {
+  position: absolute;
+  inset-inline-end: 0.45rem;
+  top: 0.45rem;
+  z-index: 2;
+  min-width: 1.5rem;
+  padding: 0.16rem 0.38rem 0.2rem;
+  background: var(--paper);
+  color: var(--ink);
+  text-align: center;
+  font: 600 0.82rem/1 'EB Garamond', Georgia, serif;
+  font-variant-numeric: lining-nums tabular-nums;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* ══════════════════ Small marks ══════════════════ */
+.wf-dot { flex: none; display: inline-block; width: 0.44rem; height: 0.44rem; background: var(--paper-dim); }
+.wf-dot[data-state='ok'] { background: var(--green); }
+.wf-dot[data-state='bad'] { background: var(--red); }
+.wf-tag.is-mark { border-color: var(--red); color: var(--paper); }
+.wf-tag.is-ok { border-color: rgba(159, 199, 154, 0.6); color: var(--green); }
+.wf-tag.is-paper { border-color: var(--paper); color: var(--paper); }
+/* a kit button or tab that cannot act now (the kit only knows aria-disabled) */
+.wf-btn:disabled { opacity: 0.4; cursor: default; }
+.wf-btn:disabled:hover { color: var(--paper-dim); }
+.wf-btn:disabled:hover::before { background: var(--ink-3); }
+.wf-tab:disabled { opacity: 0.32; cursor: default; }
+
+/* ══════════════════ The quantity box: − n + ══════════════════ */
+.wf-qty {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 2.1rem;
+  background: var(--ink-2);
+  box-shadow: inset 0 -1px 0 var(--rule-2);
+  transition: background-color 120ms var(--ease), box-shadow 120ms var(--ease);
+}
+.wf-qty:focus-within, .wf-qty.is-here { background: var(--ink-3); box-shadow: inset 0 -2px 0 var(--paper); }
+.wf-qty button {
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 100%;
+  color: var(--paper-dim);
+  font: 600 1.2rem/1 'EB Garamond', Georgia, serif;
+  text-align: center;
+  transition: color 120ms var(--ease);
+}
+.wf-qty button:hover:not(:disabled) { color: var(--paper); }
+.wf-qty button:disabled { opacity: 0.3; cursor: default; }
+.wf-qty input {
+  width: 2.7rem;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: none;
+  text-align: center;
+  font: 600 1.02rem/1 'EB Garamond', Georgia, serif;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--paper);
+  direction: ltr;
+  caret-color: var(--paper);
+}
+.wf-qty input:disabled { opacity: 0.5; }
+.wf-qty input::-webkit-inner-spin-button, .wf-qty input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* ══════════════════ The big band button (the bench's main action) ══════════════════
+   A dark band; the paper band under the cursor; the main one is the red mark band. */
+.wf-cta {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-width: 8.5rem;
+  height: 2.9rem;
+  padding: 0 1.15rem;
+  color: var(--paper);
+  font: 600 1.08rem/1 var(--f-label);
+  white-space: nowrap;
+  transition: color 120ms var(--ease), opacity 120ms var(--ease);
+}
+.wf-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--ink-4);
+  -webkit-mask: var(--tex-band-sm) center / 100% 100% no-repeat;
+  transition: background-color 120ms var(--ease);
+}
+.wf-cta:hover:not(:disabled):not([aria-disabled='true']), .wf-cta.is-here { color: var(--ink); }
+.wf-cta:hover:not(:disabled):not([aria-disabled='true'])::before, .wf-cta.is-here::before { background: var(--paper); }
+.wf-cta.is-main { color: var(--mark-ink); min-width: 11rem; }
+.wf-cta.is-main::before { background: var(--mark); }
+.wf-cta.is-main:hover:not(:disabled):not([aria-disabled='true']), .wf-cta.is-main.is-here { color: var(--mark-ink); }
+.wf-cta.is-main:hover:not(:disabled):not([aria-disabled='true'])::before, .wf-cta.is-main.is-here::before { background: var(--mark-lit); }
+.wf-cta.is-main:active:not(:disabled):not([aria-disabled='true'])::before { background: var(--mark-deep); }
+.wf-cta:disabled, .wf-cta[aria-disabled='true'] { opacity: 0.38; cursor: default; }
+.wf-cta.is-small { min-width: 0; height: 2.35rem; padding: 0 0.85rem; font-size: 0.98rem; }
+.wf-cta.is-small.is-main { min-width: 7rem; }
+.wf-cta .wf-figure { font-size: 1.15em; }
+
+/* ══════════════════ The page's own message (a refusal, a receipt) ══════════════════ */
+.wf-toast {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 3.4rem;
+  z-index: 60;
+  width: max-content;
+  max-width: min(40rem, 90vw);
+  margin-inline: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.75rem 1.5rem 0.8rem;
+  background: var(--ink-2);
+  box-shadow: inset 0 0 1.1rem rgba(242, 242, 242, 0.13);
+  -webkit-mask-box-image: var(--tex-tear) 64 fill / 0.9rem round;
+  font: 500 1.02rem/1.4 var(--f-serif);
+  color: var(--paper);
+  pointer-events: none;
+  animation: wf-rise 220ms var(--ease) both;
+}
+.wf-toast::before { content: ''; flex: none; width: 0.42rem; height: 0.42rem; background: var(--green); transform: translateY(-0.12em); }
+.wf-toast.is-bad::before { background: var(--red); }
+
+/* number fields without the browser's spin arrows */
+.wf-input[type='number']::-webkit-inner-spin-button, .wf-input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* ══════════════════ Arabic ══════════════════ */
+.is-rtl .wf-hint, .is-rtl .wf-cta, .is-rtl .wf-tile-price, .is-rtl .wf-tile-meta { font-weight: 700; letter-spacing: 0; font-variant-caps: normal; }
+.is-rtl .wf-cta { font-size: 1.02rem; }
+.is-rtl .wf-cta.is-small { font-size: 0.92rem; }
+.is-rtl .wf-tile-name { font-size: 1.1rem; line-height: 1.35; }
+.is-rtl .wf-toast { font-size: 1.05rem; }
+.wf:not(.is-rtl) .wf-cta, .wf:not(.is-rtl) .wf-hint { font-variant-caps: all-small-caps; letter-spacing: 0.08em; }
+.wf:not(.is-rtl) .wf-cta { font-size: 1.18rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wf-veil, .wf-toast { animation: none; }
+}

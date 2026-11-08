@@ -28,7 +28,6 @@ import HotBar from './components/HotBar';
 import TradePanel, { TradeRequest } from './components/TradePanel';
 import AmmoPicker, { AmmoPickerData } from './components/AmmoPicker';
 import { SVG_X, SVG_SATCHEL, SVG_CASH, SVG_GOLD } from './utils/items';
-import Frame from './components/Frame';
 import Glyph from './components/Glyph';
 import { isEnvBrowser } from './utils/misc';
 import { formatCompact } from './utils/formatNumber';
@@ -793,7 +792,7 @@ export default function App() {
     <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div id="inventory" style={{ display: 'block' }}>
         <div
-          id="inventory-wrapper" className="wst-panel"
+          id="inventory-wrapper" className="wf-shell"
           ref={wrapperRef}
           style={{
             opacity: animating ? 1 : 0,
@@ -808,20 +807,19 @@ export default function App() {
                 }),
           }}
         >
-          <Frame px={13} opacity={0.5} />
-          <div className="wst-header top" onMouseDown={handlePanelDragStart} style={{ cursor: 'grab' }}>
+          <div className="top" onMouseDown={handlePanelDragStart} style={{ cursor: 'grab' }}>
             {/* The bag's badge and the close button at one width, and the title between them in the middle */}
             <div className="inv-badge">{SVG_SATCHEL}</div>
             <div className="inv-titles">
-              <span className="wst-title title" id="inv-title">{tr('ui_inventory', 'Inventory')}</span>
+              <span className="title" id="inv-title">{tr('ui_inventory', 'Inventory')}</span>
             </div>
-            <div id="inv-close-btn" className="wst-close" onClick={handleClose}>{SVG_X}</div>
+            <div id="inv-close-btn" onClick={handleClose}>{SVG_X}</div>
           </div>
           <div className="inv-weight-block">
             <WeightBar grid={state.grid} maxWeight={state.maxWeight} />
             <WeightProgress grid={state.grid} maxWeight={state.maxWeight} />
           </div>
-          <div className="wst-rule inv-hr" />
+          <div className="inv-hr" />
           <div id="inv-currency-row">
             <div className="inv-currency cash">
               <span className="inv-currency-icon">{SVG_CASH}</span>
@@ -836,10 +834,10 @@ export default function App() {
               stays compact at the end. They used to be two stacked rows, which
               wasted a whole line and left the quantity field floating alone. */}
           <div id="inv-search-row">
-            <div className="wst-field inv-search">
+            <div className="inv-search">
               <input
                 type="text"
-                className="wst-input search-bar"
+                className="search-bar"
                 id="inv-search"
                 placeholder={tr('ui_search_items', 'Search items...')}
                 value={state.search}
@@ -864,7 +862,7 @@ export default function App() {
             <div id="inv-amount-row">
               <input
                 type="number"
-                className="wst-input inv-amount-input"
+                className="inv-amount-input"
                 value={state.itemAmount || ''}
                 min={0}
                 onChange={(e) => handleSetItemAmount(parseInt(e.target.value) || 0)}

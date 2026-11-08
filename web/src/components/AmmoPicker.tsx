@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { tr } from '../i18n';
-import Frame from './Frame';
 
 export interface AmmoPickerOption {
   slot: number;
@@ -78,28 +77,27 @@ export default function AmmoPicker({ data, busy, onSelect, onUnload, onSetPrefer
       }}
     >
       <section
-        id="inv-ammo-picker" className="wst-panel"
+        id="inv-ammo-picker" className="wf-shell"
         role="dialog"
         aria-modal="true"
         aria-labelledby="ammo-picker-title"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <Frame px={12} opacity={0.5} />
         <div className="ammo-picker-rail" />
 
-        <header className="wst-header ammo-picker-header">
+        <header className="ammo-picker-header">
           <div className="ammo-picker-emblem"><Cartridge /></div>
           <div className="ammo-picker-heading">
-            <span className="wst-sub ammo-picker-kicker">{data.weaponLabel}</span>
+            <span className="ammo-picker-kicker">{data.weaponLabel}</span>
             <h2 id="ammo-picker-title">{tr('ui_ammo_select_title', 'Choose ammunition')}</h2>
             <p>{tr('ui_ammo_select_subtitle', 'Select the rounds to load into this weapon')}</p>
           </div>
-          <button className="wst-close ammo-picker-close" type="button" onClick={onClose} disabled={busy} aria-label={tr('ui_cancel', 'Cancel')}>
+          <button className="ammo-picker-close" type="button" onClick={onClose} disabled={busy} aria-label={tr('ui_cancel', 'Cancel')}>
             ×
           </button>
         </header>
 
-        <div className="wst-plate ammo-picker-load">
+        <div className="ammo-picker-load">
           <div className="ammo-picker-load-copy">
             <span>{tr('ui_ammo_loaded', 'Loaded')}</span>
             <strong>{loaded}<small> / {capacity}</small></strong>
@@ -116,7 +114,7 @@ export default function AmmoPicker({ data, busy, onSelect, onUnload, onSetPrefer
                 type="button"
                 role="radio"
                 aria-checked={chosen}
-                className={`wst-card ammo-picker-option${chosen ? ' selected' : ''}${locked ? ' locked' : ''}`}
+                className={`ammo-picker-option${chosen ? ' selected' : ''}${locked ? ' locked' : ''}`}
                 key={`${option.slot}:${option.item}`}
                 onClick={() => setSelectedSlot(option.slot)}
                 onContextMenu={(event) => {
@@ -143,7 +141,7 @@ export default function AmmoPicker({ data, busy, onSelect, onUnload, onSetPrefer
         {selectedLocked && (
           <div className="ammo-picker-warning">
             <span>{tr('ammo_switch_loaded', 'Unload the current rounds before switching ammo type')}</span>
-            <button className="wst-button" type="button" onClick={() => onUnload(data.weaponSlot)} disabled={busy}>
+            <button className="ammo-picker-unload" type="button" onClick={() => onUnload(data.weaponSlot)} disabled={busy}>
               {tr('ui_ammo_unload', 'Unload current rounds')}
             </button>
           </div>
@@ -152,12 +150,12 @@ export default function AmmoPicker({ data, busy, onSelect, onUnload, onSetPrefer
         <p className="ammo-picker-hint">{tr('ui_ammo_preferred_hint', 'Select a type, then Load rounds · Right-click to mark a favorite')}</p>
 
         <footer className="ammo-picker-actions">
-          <button type="button" className="wst-button ammo-picker-cancel" onClick={onClose} disabled={busy}>
+          <button type="button" className="ammo-picker-cancel" onClick={onClose} disabled={busy}>
             {tr('ui_cancel', 'Cancel')}
           </button>
           <button
             type="button"
-            className="wst-button primary ammo-picker-confirm"
+            className="ammo-picker-confirm"
             onClick={() => selectedSlot !== null && onSelect(data.weaponSlot, selectedSlot)}
             disabled={busy || selectedSlot === null || !!selectedLocked}
           >

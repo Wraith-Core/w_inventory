@@ -1,12 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   w_inventory in the Wraith theme (w_lib/nui/theme): the loading screen's and the pause menu's
-   black ink and white paper (neutral, no tint: the launcher's palette), one red as a mark only. Every visible surface is composed from
-   RDR2's own art through the texture masks (the --tex-* registered in main.tsx): the
-   crafting_highlight frame in eight pieces, the crafting_outline slots, the buttons' panels
-   selection_box_bg, the badges' plates swatch_bg/counter_bg, and the dividers
-   divider_line / list_item_h_line_narrow / vertical_divider_line.
-   The tokens and the font roles come from global.css (each one a --w-* theme token). The cursor
-   (hover, keyboard focus, the active tab, the selected row) is the paper band with ink text.
+   w_inventory on the board kit (kit.css + shop-kit.css, wave 1A 2026-11-08): black ink, white paper,
+   one red as a mark only. This sheet keeps the bag's layout, geometry, drag and motion; the panels are
+   the kit's torn ink cards (.wf-shell), the slots the kit's wells with the band as their rim (.wf-slot),
+   and skin.css (loaded last) settles the rest. Dividers and small plates still use RDR2's own art through
+   the texture masks (--tex-* registered in main.tsx).
+   The tokens and the font roles come from global.css. The cursor (hover) is the paper band with ink
+   text; the chosen slot, tab, row or ammo is the red mark band.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ═══════════════ 1. The shared RDR primitives (matching w_crafting) ═══════════════ */
@@ -485,15 +484,14 @@
     color: var(--wc-text)
 }
 
-/* The weight bar: white -> grey -> red as the bag fills up */
+/* The weight bar: the kit's gauge - paper on a thin track, paper-dim when heavy, red only when critical */
 #inventory .progress {
     position: relative;
     width: 100%;
-    height: .38rem;
+    height: .26rem;
     border-radius: 0;
     overflow: hidden;
-    background: rgba(242, 242, 242, .1);
-    box-shadow: inset 0 -1px 0 var(--w-rule)
+    background: rgba(242, 242, 242, .14)
 }
 
 #inventory .progress .progress-bar {
@@ -525,10 +523,7 @@
     transition: color .15s ease, background-color .15s ease
 }
 
-#inv-close-btn:hover {
-    color: var(--wc-text);
-    background-color: var(--wc-hover)
-}
+#inv-close-btn:hover { color: var(--ink) }
 
 #inv-close-btn svg { display: none }
 
@@ -770,14 +765,15 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     max-height: min(26rem, 46vh);
     overflow-y: auto;
     overflow-x: hidden;
-    padding: .15rem .2rem;
+    /* room for the band rim (.wf-slot::before reaches .2rem past the well) */
+    padding: .25rem;
     direction: ltr;
     scrollbar-width: none
 }
 
 .inv-grid::-webkit-scrollbar { width: 0; display: none }
 
-/* The slot: an inner paper panel + a crafting_outline frame from the game (like .wc-slot) */
+/* The slot: the kit's ink well with the band as its rim (.wf-slot in shop-kit.css); here only its geometry */
 .inv-grid .slot {
     position: relative;
     isolation: isolate;
@@ -792,40 +788,8 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     transition: transform .15s ease, opacity .15s ease
 }
 
-/* The inner panel: an opaque swatch_bg_1a material - it gives depth instead of a flat square */
-.inv-grid .slot::after {
-    content: "";
-    position: absolute;
-    inset: 5%;
-    z-index: -1;
-    pointer-events: none;
-    background-color: var(--w-ink-2);
-    -webkit-mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
-    mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
-    transition: background-color .18s ease
-}
-
-.inv-grid .slot::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background-color: var(--wc-accent);
-    opacity: .3;
-    -webkit-mask: var(--tex-crafting_outline) center / 100% 100% no-repeat;
-    mask: var(--tex-crafting_outline) center / 100% 100% no-repeat;
-    transition: opacity .18s ease, background-color .18s ease
-}
-
-.inv-grid .slot.filled { cursor: pointer }
-.inv-grid .slot.filled::before { opacity: .55 }
-.inv-grid .slot.filled::after { background-color: var(--w-ink-3) }
-
 .inv-grid .slot.filled:hover { z-index: 2 }
-.inv-grid .slot.filled:hover::before { opacity: 1; background-color: var(--w-paper) }
-.inv-grid .slot.filled:hover::after { background-color: var(--w-ink-4) }
-.inv-grid .slot.filled:hover img { transform: scale(1.08) }
+.inv-grid .slot.filled:hover img { transform: scale(1.06) }
 
 .inv-grid .slot .slot-inner {
     position: absolute;
@@ -881,16 +845,8 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     opacity: .55
 }
 
-/* An equipped weapon */
-.inv-grid .slot.weapon-equipped::before {
-    opacity: 1;
-    background-color: var(--w-paper)
-}
-
-.inv-grid .slot.weapon-equipped::after {
-    background-color: var(--w-ink-4);
-    background-image: linear-gradient(180deg, rgba(242, 242, 242, .1), transparent 60%)
-}
+/* An equipped weapon: a lit well (its badge says it); the rim stays the cursor's and the choice's */
+.inv-grid .slot.weapon-equipped::after { background-image: linear-gradient(180deg, rgba(242, 242, 242, .1), transparent 60%) }
 
 .inv-grid .slot .equipped-badge {
     position: absolute;
@@ -911,9 +867,6 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     color: inherit;
     filter: none
 }
-
-/* A slot bound to a hotbar */
-.inv-grid .slot.hotbar-assigned::before { opacity: .8 }
 
 /* The hotbar's number on a counter_bg_1a disc from the game's art */
 .inv-grid .slot .hotbar-badge {
@@ -944,50 +897,11 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     mask: var(--tex-counter_bg_1a) center / contain no-repeat
 }
 
-/* A selected slot - a fully bright frame + the RDR selection brackets on both sides */
-.inv-grid .slot.selected::before {
-    opacity: 1;
-    background-color: var(--w-paper)
-}
-
-.inv-grid .slot.selected::after { background-color: var(--w-ink-5) }
-
-.inv-grid .slot.selected .slot-inner::before,
-.inv-grid .slot.selected .slot-inner::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    width: .72rem;
-    height: .72rem;
-    margin-top: -.36rem;
-    z-index: 3;
-    background-color: var(--w-paper);
-    -webkit-mask-size: contain;
-    mask-size: contain;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    mask-position: center
-}
-
-.inv-grid .slot.selected .slot-inner::before {
-    left: -.22rem;
-    -webkit-mask-image: var(--tex-selection_arrow_right);
-    mask-image: var(--tex-selection_arrow_right)
-}
-
-.inv-grid .slot.selected .slot-inner::after {
-    right: -.22rem;
-    -webkit-mask-image: var(--tex-selection_arrow_left);
-    mask-image: var(--tex-selection_arrow_left)
-}
+/* A selected slot: the red rim (.wf-slot.is-picked) */
 
 .inv-grid .slot.filter-dimmed { opacity: .12; pointer-events: none; transform: scale(.96) }
 .inv-grid .slot.drag-source { opacity: .15; transform: scale(.92); pointer-events: none }
 
-.inv-grid .slot.drag-over::before { opacity: .85 }
-.inv-grid .slot.drag-over::after { background-color: var(--w-ink-4) }
-.inv-grid .slot.filled.drag-over::before { opacity: 1; background-color: var(--w-paper) }
 .inv-grid .slot.filled.drag-over { z-index: 2 }
 
 /* The rarity: a grey glow inside the panel (no colours outside the theme) */
@@ -998,11 +912,6 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
 .inv-grid .slot.mythic::after { background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, .26), transparent 72%) }
 .inv-grid .slot.exotic::after { background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, .24), transparent 72%) }
 .inv-grid .slot.divine::after { background-image: radial-gradient(circle at 50% 55%, rgba(242, 242, 242, .3), transparent 72%) }
-
-.inv-grid .slot.legendary::before,
-.inv-grid .slot.mythic::before,
-.inv-grid .slot.exotic::before,
-.inv-grid .slot.divine::before { opacity: .8 }
 
 /* The price badge (the shop) */
 /* Same clearance as .count — the durability bar spans the full slot width, so
@@ -1145,30 +1054,18 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     transition: color .14s ease
 }
 
+/* the kit's tab: a dark band at rest, the paper band under the cursor, the red mark band when chosen */
 #inventory .category::before {
     content: "";
     position: absolute;
     inset: 0;
     z-index: -1;
-    background-color: var(--wc-plate);
-    -webkit-mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
-    mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
+    background-color: var(--ink-3);
+    -webkit-mask: var(--tex-band-sm) center / 100% 100% no-repeat;
+    mask: var(--tex-band-sm) center / 100% 100% no-repeat;
     transition: background-color .14s ease
 }
 
-/* The bottom bar marks the selected category (instead of the solid red frame) */
-#inventory .category::after {
-    content: "";
-    position: absolute;
-    inset-inline: .18rem;
-    bottom: .1rem;
-    height: 2px;
-    background-color: var(--wc-accent);
-    opacity: 0;
-    -webkit-mask: var(--tex-list_item_h_line_narrow) center / 100% 100% no-repeat;
-    mask: var(--tex-list_item_h_line_narrow) center / 100% 100% no-repeat;
-    transition: opacity .14s ease, background-color .14s ease
-}
 
 /* Nudged down so the corner counter clears it. */
 #inventory .category svg {
@@ -1179,17 +1076,17 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .8))
 }
 
-#inventory .category:hover { color: var(--wc-text) }
-#inventory .category:hover::before { background-color: var(--w-ink-5) }
-#inventory .category:hover::after { opacity: .5 }
+#inventory .category:hover { color: var(--ink) }
+#inventory .category:hover::before { background-color: var(--paper) }
+#inventory .category:hover svg { filter: none }
 
 #inventory .category.active {
-    color: var(--wc-text);
+    color: var(--mark-ink);
     cursor: default
 }
 
-#inventory .category.active::before { background-color: var(--wc-accent) }
-#inventory .category.active::after { opacity: 0 }
+#inventory .category.active::before { background-color: var(--mark) }
+#inventory .category.active svg { filter: none }
 
 #inventory .category.dim { opacity: .4; cursor: default }
 
@@ -1215,7 +1112,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     line-height: 1
 }
 
-#inventory .category.active .cat-count {
+#inventory .category:hover .cat-count {
     background: var(--w-ink);
     color: var(--w-paper)
 }
@@ -1272,19 +1169,21 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     width: 3.6rem;
     height: 3.6rem;
     pointer-events: none;
-    background: var(--glass-solid);
-    box-shadow: 0 12px 34px rgba(0, 0, 0, .7);
+    isolation: isolate;
+    background: var(--ink-2);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, .7), inset 0 0 0 1px rgba(242, 242, 242, .5);
     opacity: .95
 }
 
+/* the slot in the hand wears the cursor's paper band as its rim */
 #inv-drag-ghost::before {
     content: "";
     position: absolute;
-    inset: 0;
-    background-color: var(--w-paper);
-    opacity: .9;
-    -webkit-mask: var(--tex-crafting_outline) center / 100% 100% no-repeat;
-    mask: var(--tex-crafting_outline) center / 100% 100% no-repeat
+    inset: -.2rem;
+    z-index: -1;
+    background-color: var(--paper);
+    -webkit-mask: var(--tex-band-sm) center / 100% 100% no-repeat;
+    mask: var(--tex-band-sm) center / 100% 100% no-repeat
 }
 
 #inv-drag-ghost img {
@@ -1615,25 +1514,16 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     margin-bottom: .55rem
 }
 
-/* An inner paper panel + a crafting_outline frame - the same as the preview slot in the crafting */
+/* The item's well: the kit's slot well (an ink plate with a hairline), the art untouched in it */
 #inventory-detail .detail-img-wrap::after {
     content: "";
     position: absolute;
-    inset: 5%;
-    z-index: -1;
-    background-color: var(--w-ink-3);
-    -webkit-mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
-    mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat
-}
-
-#inventory-detail .detail-img-wrap::before {
-    content: "";
-    position: absolute;
     inset: 0;
-    background-color: var(--wc-accent);
-    opacity: .5;
-    -webkit-mask: var(--tex-crafting_outline) center / 100% 100% no-repeat;
-    mask: var(--tex-crafting_outline) center / 100% 100% no-repeat
+    z-index: -1;
+    background:
+        radial-gradient(90% 90% at 50% 45%, rgba(242, 242, 242, .05), rgba(242, 242, 242, 0) 70%),
+        rgba(11, 10, 10, .62);
+    box-shadow: inset 0 0 0 1px var(--rule-2), inset 0 0 1rem rgba(0, 0, 0, .55)
 }
 
 #inventory-detail .detail-img-wrap img {
@@ -2304,15 +2194,19 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     font-family: var(--font-main)
 }
 
+/* the kit's toast: a torn ink slip, a small square for the kind (green done, red refused, paper a note) */
 .inv-toast {
     position: relative;
+    isolation: isolate;
     display: flex;
-    align-items: center;
-    gap: .4rem;
+    align-items: baseline;
+    gap: .5rem;
     max-width: 16rem;
-    padding: .5rem .7rem;
-    color: var(--wc-text);
-    font-size: .68rem;
+    padding: .55rem .95rem .6rem;
+    color: var(--paper);
+    font-family: var(--font-text);
+    font-size: calc(.74rem * var(--w-k-text));
+    line-height: 1.4;
     opacity: 0;
     transform: translateX(16px);
     transition: opacity .25s, transform .25s
@@ -2323,9 +2217,9 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     position: absolute;
     inset: 0;
     z-index: -1;
-    background-color: rgba(11, 10, 10, .96);
-    -webkit-mask: var(--tex-toast_bg) center / 100% 100% no-repeat;
-    mask: var(--tex-toast_bg) center / 100% 100% no-repeat
+    background-color: var(--ink-2);
+    box-shadow: inset 0 0 1.1rem rgba(242, 242, 242, .13);
+    -webkit-mask-box-image: var(--tex-tear) 64 fill / .7rem round
 }
 
 .inv-toast.show { opacity: 1; transform: translateX(0) }
@@ -2334,16 +2228,17 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
 
 .inv-toast::after {
     content: "";
-    position: absolute;
-    inset-block: .35rem;
-    inset-inline-start: 0;
-    width: 2px;
-    background: var(--wc-line-strong)
+    order: -1;
+    flex: none;
+    width: .38rem;
+    height: .38rem;
+    background: var(--paper-dim);
+    transform: translateY(-.1em)
 }
 
-.inv-toast.success::after { background: var(--w-paper) }
-.inv-toast.error::after { background: var(--wc-red) }
-.inv-toast.info::after { background: var(--wc-text-dim) }
+.inv-toast.success::after { background: var(--green) }
+.inv-toast.error::after { background: var(--red) }
+.inv-toast.info::after { background: var(--paper-dim) }
 
 @keyframes weightShake {
     0%, 100% { transform: translateX(0) }
@@ -3061,40 +2956,40 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     transition: transform .15s
 }
 
-/* An inner paper panel + a crafting_outline frame - exactly the bag's slots */
+/* The kit's slot (as the bag's .wf-slot): an ink well with a hairline, the band as its rim - paper under the
+   cursor, the red mark on the weapon in hand */
 .hb-slot::after {
     content: "";
     position: absolute;
-    inset: 5%;
+    inset: 0;
     z-index: -1;
     pointer-events: none;
-    background-color: rgba(11, 10, 10, .88);
-    -webkit-mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
-    mask: var(--tex-swatch_bg_1a) center / 100% 100% no-repeat;
-    transition: background-color .2s
+    background:
+        radial-gradient(90% 90% at 50% 45%, rgba(242, 242, 242, .035), rgba(242, 242, 242, 0) 70%),
+        rgba(11, 10, 10, .86);
+    box-shadow: inset 0 0 0 1px var(--rule), inset 0 0 .9rem rgba(0, 0, 0, .5);
+    transition: box-shadow .12s ease
 }
 
 .hb-slot::before {
     content: "";
     position: absolute;
-    inset: 0;
-    z-index: 0;
+    inset: -.2rem;
+    z-index: -1;
     pointer-events: none;
-    background-color: var(--wc-accent);
-    opacity: .32;
-    -webkit-mask: var(--tex-crafting_outline) center / 100% 100% no-repeat;
-    mask: var(--tex-crafting_outline) center / 100% 100% no-repeat;
-    transition: opacity .2s, background-color .2s
+    background-color: var(--paper);
+    opacity: 0;
+    -webkit-mask: var(--tex-band-sm) center / 100% 100% no-repeat;
+    mask: var(--tex-band-sm) center / 100% 100% no-repeat;
+    transition: opacity .12s ease, background-color .12s ease
 }
 
 .hb-slot.hb-filled { cursor: pointer }
-.hb-slot.hb-filled::before { opacity: .58 }
-.hb-slot.hb-filled::after { background-color: rgba(21, 19, 19, .9) }
+.hb-slot.hb-filled::after { box-shadow: inset 0 0 0 1px var(--rule-2), inset 0 0 .9rem rgba(0, 0, 0, .5) }
 .hb-slot.hb-filled:hover { transform: translateY(-3px) }
-.hb-slot.hb-filled:hover::before { opacity: 1; background-color: var(--w-paper) }
-.hb-slot.hb-filled:hover::after { background-color: rgba(36, 32, 32, .92) }
-.hb-slot.hb-equipped::before { opacity: 1; background-color: var(--w-paper) }
-.hb-slot.hb-equipped::after { background-color: rgba(58, 53, 52, .92) }
+.hb-slot.hb-filled:hover::before { opacity: 1 }
+.hb-slot.hb-equipped::before { opacity: 1; background-color: var(--mark) }
+.hb-slot.hb-equipped::after { box-shadow: inset 0 0 0 1px rgba(208, 22, 27, .75), inset 0 0 1rem rgba(208, 22, 27, .16) }
 
 /* The slot's number on a counter_bg_1a disc */
 .hb-key {
@@ -3170,7 +3065,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     z-index: 2;
     width: .42rem;
     height: .42rem;
-    background: var(--w-paper);
+    background: var(--mark);
     box-shadow: 0 0 0 1px rgba(0, 0, 0, .55)
 }
 
@@ -3223,37 +3118,11 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
     font-family: var(--font-main)
 }
 
-.trade-request-note { animation: ammoLedgerIn .22s cubic-bezier(.2, .8, .2, 1) both }
-
-.trade-request-card {
-    position: relative;
-    min-width: 19rem;
-    max-width: min(26rem, calc(100vw - 2rem));
-    padding: 1.7rem 2.1rem 1.35rem;
-    text-align: center;
-    color: var(--w-note-ink)
-}
-
-.trade-request-icon { width: 2rem; height: 2rem; margin: 0 auto .45rem; color: var(--w-note-ink); opacity: .7 }
+/* the request is the kit's paper note (.wf-note-plate, .wf-choice): only its size and the icon are the bag's */
+.trade-request-card { min-width: 19rem; max-width: min(26rem, calc(100vw - 2rem)); }
+.trade-request-icon { width: 2rem; height: 2rem; margin: 0 auto .45rem; color: var(--note-ink); opacity: .7 }
 .trade-request-icon svg { width: 100%; height: 100% }
-
-.trade-request-title {
-    margin-bottom: .2rem;
-    font-size: calc(1.5rem * var(--w-k-title));
-    color: var(--w-note-ink)
-}
-
-.trade-request-name { font-family: var(--font-action); font-weight: var(--w-wt-action); font-size: calc(1.05rem * var(--w-k-action)); line-height: var(--w-lh-action); color: var(--w-note-ink) }
-.trade-request-sub { margin-bottom: .75rem; font-family: var(--font-text); font-size: calc(.9rem * var(--w-k-text)); line-height: var(--w-lh-text); color: var(--w-note-dim) }
-.trade-request-actions { display: flex; gap: 2rem; justify-content: center }
-
-/* the refusal is destructive: a thin underline in the one red at rest (never a faded red, which reads
-   pink on the note), and it fills red under the cursor */
-.trade-req-btn.decline::after { opacity: 1; inset-inline: 22%; height: 2px }
-.trade-req-btn.decline:hover,
-.trade-req-btn.decline:focus-visible { color: var(--w-paper); background: var(--w-red) }
-.trade-req-btn.decline:hover::after,
-.trade-req-btn.decline:focus-visible::after { opacity: 0 }
+.trade-request-name { font-size: 1.45rem; }
 
 #trade-panel {
     position: fixed;
@@ -3308,7 +3177,7 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
 
 .trade-header-icon { width: 1.5rem; height: 1.5rem; flex: none; color: var(--wc-accent); opacity: .85 }
 .trade-header-icon svg { width: 100%; height: 100% }
-.trade-header-text { flex: 1; min-width: 0 }
+.trade-header-text { flex: 1; min-width: 0; text-align: center }
 
 .trade-title {
     font-family: var(--font-display);
@@ -3384,31 +3253,31 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
 .trade-arrows { position: relative; width: 1.1rem; height: 1.1rem; color: var(--wc-text-faint); opacity: .5 }
 .trade-arrows svg { width: 100%; height: 100% }
 
+/* the kit's slot well; the cursor lights its hairline into paper (the cell is too tight for the band rim) */
 .trade-slot {
     position: relative;
+    isolation: isolate;
     aspect-ratio: 1;
     display: grid;
     place-items: center;
     overflow: hidden;
-    background: rgba(242, 242, 242, .015)
+    background: transparent
 }
 
 .trade-slot::before {
     content: "";
     position: absolute;
     inset: 0;
-    z-index: 0;
+    z-index: -1;
     pointer-events: none;
-    background-color: var(--wc-accent);
-    opacity: .28;
-    -webkit-mask: var(--tex-crafting_outline) center / 100% 100% no-repeat;
-    mask: var(--tex-crafting_outline) center / 100% 100% no-repeat;
-    transition: opacity .18s
+    background: rgba(11, 10, 10, .62);
+    box-shadow: inset 0 0 0 1px var(--rule), inset 0 0 .8rem rgba(0, 0, 0, .5);
+    transition: box-shadow .12s ease
 }
 
-.trade-slot-filled { cursor: pointer; background: rgba(242, 242, 242, .04) }
-.trade-slot-filled::before { opacity: .5 }
-.trade-slot-filled:hover::before { opacity: .95 }
+.trade-slot-filled { cursor: pointer }
+.trade-slot-filled::before { box-shadow: inset 0 0 0 1px var(--rule-2), inset 0 0 .8rem rgba(0, 0, 0, .5) }
+.trade-slot-filled:hover::before { box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 .8rem rgba(0, 0, 0, .5) }
 .trade-slot img { position: relative; width: 70%; height: 70%; object-fit: contain; pointer-events: none }
 
 .trade-slot-count {
