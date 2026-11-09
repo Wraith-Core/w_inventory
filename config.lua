@@ -5,10 +5,10 @@ Config = Config or {}
 -- server. Lua strings come from locales/{ar,en}.json and the React interface receives the
 -- same dictionary and direction from Lua (see shared.localeKey() in init.lua).
 
--- Restore weapons marked as used/used2 after the character inventory loads.
--- This mirrors VORP's AUTO_EQUIP_USED_WEAPONS behaviour while keeping each
--- physical weapon identified by its own inventory slot and serial number.
-Config.RestoreUsedWeapons = true
+-- Reconnecting starts with empty hands. Weapons and their loaded ammunition stay
+-- in their inventory slots until the player deliberately draws them again.
+-- Set true to opt back into restoring the persisted used/used2 loadout.
+Config.RestoreUsedWeapons = false
 
 -- ── A holstered weapon stays in its holster ──────────────────────────────────────
 --

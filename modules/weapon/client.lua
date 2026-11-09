@@ -1257,17 +1257,17 @@ end
 ---@return boolean
 local function requestWeaponAsset(weaponHash)
 	if not weaponHash then return false end
-	if Citizen.InvokeNative(0xFF07CF465F48B830, weaponHash) then return true end -- HAS_WEAPON_ASSET_LOADED
+	if nativeTrue(Citizen.InvokeNative(0xFF07CF465F48B830, weaponHash)) then return true end -- HAS_WEAPON_ASSET_LOADED
 
 	Citizen.InvokeNative(0x72D4CB5DB927009C, weaponHash, 0, true) -- REQUEST_WEAPON_ASSET
 
 	local deadline = GetGameTimer() + 3000
 
-	while not Citizen.InvokeNative(0xFF07CF465F48B830, weaponHash) and GetGameTimer() < deadline do
+	while not nativeTrue(Citizen.InvokeNative(0xFF07CF465F48B830, weaponHash)) and GetGameTimer() < deadline do
 		Wait(10)
 	end
 
-	return Citizen.InvokeNative(0xFF07CF465F48B830, weaponHash) == true
+	return nativeTrue(Citizen.InvokeNative(0xFF07CF465F48B830, weaponHash))
 end
 
 ---@param weapon table
@@ -1399,7 +1399,9 @@ function Weapon.Equip(item, data, _, options)
 
 	item.hash = data.hash
 	item.ammo = data.ammoname
-	item.melee = IsWeaponAGun(data.hash) == 0
+	-- Bows use ammunition too; being non-firearm does not make them melee.
+	item.melee = not nativeTrue(IsWeaponAGun(data.hash))
+		and getAmmoTypeHash(data, item.metadata) == 0 and not data.throwable
 	item.timer = 0
 	item.throwable = data.throwable
 	item.group = GetWeapontypeGroup(item.hash)
@@ -1438,7 +1440,7 @@ function Weapon.Equip(item, data, _, options)
 			return nil, nil, 'story_only_weapon'
 		end
 
-		if not dualHandled and not HasPedGotWeapon(playerPed, data.hash, 0, false) then
+		if not dualHandled and not nativeTrue(HasPedGotWeapon(playerPed, data.hash, 0, false)) then
 			-- Without streaming the assets a patch-pack weapon does not show in the hand and is not usable
 			requestWeaponAsset(data.hash)
 
@@ -1472,11 +1474,11 @@ function Weapon.Equip(item, data, _, options)
 			-- and report instead of staying silent.
 			local deadline = GetGameTimer() + 400
 
-			while not HasPedGotWeapon(playerPed, data.hash, 0, false) and GetGameTimer() < deadline do
+			while not nativeTrue(HasPedGotWeapon(playerPed, data.hash, 0, false)) and GetGameTimer() < deadline do
 				Wait(0)
 			end
 
-			if not HasPedGotWeapon(playerPed, data.hash, 0, false) then
+			if not nativeTrue(HasPedGotWeapon(playerPed, data.hash, 0, false)) then
 				warn(('w_inventory: RDR refused to give %s (%s). Missing weapon asset or invalid hash.')
 					:format(item.name, tostring(data.model or item.name)))
 
@@ -1485,6 +1487,7 @@ function Weapon.Equip(item, data, _, options)
 					type = 'error',
 					description = locale('dual_equip_failed')
 				})
+				return nil, nil, 'engine_failed'
 			end
 
 		end
@@ -1535,51 +1538,24 @@ function Weapon.Equip(item, data, _, options)
 	end
 
 	do
-		local savedAmmo = data.throwable and item.count or (item.metadata.ammo or 0)
-		local ammoTypehash = getAmmoTypeHash(data, item.metadata)
-		if data.throwable and ammoTypehash ~= 0 then
-			SetAmmoTypeForPedWeapon(playerPed, data.hash, ammoTypehash)
-		end
-		local pedAlreadyHadWeapon = HasPedGotWeapon(playerPed, data.hash, 0, false)
-		local hasAmmoType = ammoTypehash ~= 0
-
-		if not pedAlreadyHadWeapon and hasAmmoType then
-			local currentPedAmmo = GetPedAmmoByType(playerPed, ammoTypehash)
-			if currentPedAmmo > 0 then
-				Citizen.InvokeNative(0xB6CFEC32E3742779, playerPed, ammoTypehash, currentPedAmmo, GetHashKey('REMOVE_REASON_DROPPED'))
-			end
-			SetPedAmmoByType(playerPed, ammoTypehash, savedAmmo)
-			Citizen.InvokeNative(0xCC9C4393523833E2, playerPed, data.hash, ammoTypehash)
-		end
-
-		-- ! There used to be broken dual-wield logic here: it compared a boolean against a weapon's hash
-		--     (hasPrimaryWeapon == data.hash) so it never came true, and it always fell
-		--     through to SetCurrentPedWeapon. It was replaced with the dualwield module
-		--     which uses the RDR3 item database as the game itself does.
-		if not dualHandled then
-			SetCurrentPedWeapon(playerPed, data.hash, false, 0, false, false)
-		else
-			-- The dual-wield path bypasses the regular give block, so always bind
-			-- the weapon to its real engine ammo type here.
-			SetAmmoTypeForPedWeapon(playerPed, data.hash, ammoTypehash)
-
-			-- * The separation: we no longer gather the two weapons' balances into one 'owner' after today. The
-			-- gathering used to make the empty Cattleman fire from the Navy's bullets the moment it was drawn.
-			-- Every weapon keeps its balance in its metadata, and the reserve is built as a sum
-			-- while every one's store is set to its own balance.
-			applyAmmoSeparation(ammoTypehash)
-			savedAmmo = math.max(0, math.floor(tonumber(item.metadata.ammo) or 0))
-		end
-
-		-- A weapon the dual-wield module did not take over (a bow/a long gun/a melee weapon): register it here, otherwise
-		-- the ammunition accounting never saw it so its ammunition was wiped. See singleHeldSlot above.
+		local ammoTypeHash = getAmmoTypeHash(data, item.metadata)
+		-- Register the single weapon before rebuilding its pool and clip. Previously
+		-- only GUID sidearms took this path; a holstered rifle/bow kept an empty clip
+		-- until switching ammo types happened to rebuild it through the reload flow.
 		singleHeldSlot = (not dualHandled) and item.slot or nil
 
-		if pedAlreadyHadWeapon and not dualHandled and hasAmmoType then
-			local currentPedAmmo = GetPedAmmoByType(playerPed, ammoTypehash)
-			if currentPedAmmo ~= savedAmmo then
-				SetPedAmmoByType(playerPed, ammoTypehash, savedAmmo)
+		if ammoTypeHash ~= 0 then
+			SetAmmoTypeForPedWeapon(playerPed, data.hash, ammoTypeHash)
+			if data.throwable then
+				SetPedAmmoByType(playerPed, ammoTypeHash, item.count)
+			else
+				applyAmmoSeparation(ammoTypeHash)
 			end
+		end
+
+		-- A bow needs its arrow pool before the native draw task starts.
+		if not dualHandled then
+			SetCurrentPedWeapon(playerPed, data.hash, false, 0, false, false)
 		end
 	end
 
@@ -1593,7 +1569,7 @@ function Weapon.Equip(item, data, _, options)
 		Utils.ItemNotify({ item, 'ui_equipped' })
 	end
 
-	if IsWeaponAGun(data.hash) ~= 0 then
+	if nativeTrue(IsWeaponAGun(data.hash)) then
 		Citizen.CreateThreadNow(function() applyWeaponStatus(item, data) end)
 	end
 
@@ -1679,7 +1655,9 @@ function Weapon.Disarm(currentWeapon, noAnim, keepHolstered, skipUsageSync, sile
 		currentWeapon.throwable = currentWeapon.throwable or trackedItem.throwable
 		currentWeapon.group = currentWeapon.group or GetWeapontypeGroup(currentWeapon.hash)
 		if currentWeapon.melee == nil and currentWeapon.hash then
-			currentWeapon.melee = IsWeaponAGun(currentWeapon.hash) == 0
+			currentWeapon.melee = not nativeTrue(IsWeaponAGun(currentWeapon.hash))
+				and getAmmoTypeHash(trackedItem, currentWeapon.metadata) == 0
+				and not trackedItem.throwable
 		end
 	end
 

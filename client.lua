@@ -1063,7 +1063,13 @@ local function drawWeaponWheelLoadout(slots)
 				or not sameWeaponSerial(weaponSerial(currentWeapon), weaponSerial(item)) then
 				return false, 'loadout_changed'
 			end
-			-- This is the existing non-GUID draw path; it never gives ammo/weapons.
+			-- Restore only this already-equipped slot's saved ammunition before drawing.
+			-- Holstering can leave a bow/rifle with an empty native clip.
+			local ammoType = Weapon.AmmoTypeForSlot(item.slot)
+			if ammoType ~= 0 and not Items[item.name].throwable then
+				SetAmmoTypeForPedWeapon(PlayerPedId(), currentWeapon.hash, ammoType)
+				Weapon.ApplyAmmoSeparation(ammoType)
+			end
 			SetCurrentPedWeapon(PlayerPedId(), currentWeapon.hash, false, 0, false, false)
 			local deadline = GetGameTimer() + 1200
 			while not wheelWeaponDrawn(item.slot, currentWeapon.hash, 0) do
@@ -2597,19 +2603,13 @@ reloadWeapon = function(weaponSlot, forcedAmmoSlot, quiet)
 		if #sharingSlots > 1 then
 			Weapon.ApplyAmmoSeparation(separationType)
 		else
-			local makePedReload = N_0x79e1e511ff7efb13
-			makePedReload(cache.ped)
-
-			SetTimeout(100, function()
-				while IsPedReloading(cache.ped) do
-					DisableControlAction(0, `INPUT_JUMP`, true)
-					Wait(0)
-				end
-
-				-- The engine moves the rounds during the task; we rewrite the stores from
-				-- the balances after it ends so what is in every weapon is what it owns.
-				if separationType ~= 0 then Weapon.ApplyAmmoSeparation(separationType) end
-			end)
+			local isGun = IsWeaponAGun(weaponItem.hash)
+			if isGun == true or isGun == 1 then
+				local makePedReload = N_0x79e1e511ff7efb13
+				makePedReload(cache.ped)
+			end
+			-- The clip was already filled above. The native owns its animation and
+			-- movement; no detached loop may block jumping or rewrite a later loadout.
 		end
 	else
 		-- * A holstered weapon: breaking the closed loop.
@@ -3785,12 +3785,10 @@ RegisterNetEvent('w_inventory:setPlayerInventory', function(currentDrops, invent
 				if not invBusy and currentWeapon.timer ~= 0 and currentWeapon.timer < GetGameTimer() then
 					currentWeapon.timer = 0
 
-					if weaponAmmo then
-						local weapon = currentWeapon
-						CreateThread(function()
-							persistHeldAmmo(weapon)
-						end)
-					elseif currentWeapon.metadata.durability then
+					-- ObserveFiring already commits every shot with ammo/shot revisions;
+					-- the server batches its save and flushes on disconnect. A second
+					-- awaited snapshot here blocked the trigger after every burst.
+					if weaponAmmo == nil and currentWeapon.metadata.durability then
 						TriggerServerEvent('w_inventory:updateWeapon', 'melee', currentWeapon.melee)
 						currentWeapon.melee = 0
 					end
