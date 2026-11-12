@@ -19,6 +19,7 @@ import Tooltip from './components/Tooltip';
 import InspectOverlay from './components/InspectOverlay';
 import CategoryBar from './components/CategoryBar';
 import WeightBar, { WeightProgress } from './components/WeightBar';
+import { Keys } from './components/Notebook';
 import ToastContainer from './components/Toast';
 import DragGhost from './components/DragGhost';
 import DropZone from './components/DropZone';
@@ -816,7 +817,7 @@ export default function App() {
             <div id="inv-close-btn" onClick={handleClose}>{SVG_X}</div>
           </div>
           <div className="inv-weight-block">
-            <WeightBar grid={state.grid} maxWeight={state.maxWeight} />
+            <WeightBar grid={state.grid} maxWeight={state.maxWeight} cash={state.playerCash} />
             <WeightProgress grid={state.grid} maxWeight={state.maxWeight} />
           </div>
           <div className="inv-hr" />
@@ -892,6 +893,11 @@ export default function App() {
             containerOpen={state.containerOpen}
           />
           <CategoryBar active={state.category} onChange={handleCategoryChange} grid={state.grid} />
+          <Keys keys={[
+            ['Esc', tr('ui_nb_key_close', 'close')],
+            ['1-6', tr('ui_nb_key_tabs', 'sections')],
+            [tr('ui_nb_key_rmb', 'Right click'), tr('ui_nb_key_options', 'options')],
+          ]} />
         </div>
 
         <DetailPanel
@@ -948,6 +954,7 @@ export default function App() {
           onUse={handleUseItem}
           onDrop={handleDropItem}
           onGive={handleGiveItem}
+          giveCount={ctxItem ? Math.min(ctxItem.count, state.itemAmount > 0 ? state.itemAmount : ctxItem.count) : undefined}
           onInspect={handleInspect}
           onOpenContainer={handleOpenContainer}
           onStoreIn={handleStoreIn}

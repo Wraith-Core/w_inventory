@@ -3500,3 +3500,122 @@ svg.cur-gold { width: 1.05rem; height: 1.05rem; }
 
 /* The hotbar's rod a little quieter */
 #hotbar::after { opacity: .4 }
+
+/* ═══════════ The notebook layer: opening sentences, plain details, readiness lines, the advanced fold, keys rows ═══════════ */
+
+/* The bag's opening sentence (in place of "Weight 9.92 kg / 40.00 kg"): it reads in the page's direction */
+#inventory .sub-info.nb-lead { justify-content: flex-start }
+#inventory .nb-lead-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-main);
+    font-size: .66rem;
+    color: var(--wc-text)
+}
+.nb-critical { color: var(--w-red); font-weight: inherit }
+
+/* Red only when critical: the other side's bar when it is almost full */
+#right-inventory-panel .rp-bar-fill.critical { background: var(--gauge-low) }
+
+/* Durability / status in words: they follow the page's direction (the number inside is isolated) */
+#inventory-detail .detail-stat .val.nb-words { direction: inherit; unicode-bidi: isolate }
+
+/* The detail's plain sentence (count + weights) */
+#inventory-detail .detail-plain {
+    padding: .5rem .9rem .3rem;
+    font-family: var(--font-text);
+    font-size: calc(.84rem * var(--w-k-text));
+    line-height: var(--w-lh-text);
+    color: var(--wc-text)
+}
+
+/* The fold that starts closed: «خيارات متقدمة» */
+.nb-fold { margin: .35rem .9rem 0; border-top: 1px solid var(--w-rule) }
+.nb-fold-head {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    min-height: 1.6rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    font-family: var(--font-main);
+    font-size: .6rem;
+    color: var(--wc-text-faint);
+    transition: color .12s ease
+}
+.nb-fold-head:hover { color: var(--wc-text) }
+.nb-fold-head svg { width: .7rem; height: .7rem; transition: transform .16s ease }
+.nb-fold.is-open .nb-fold-head svg { transform: rotate(180deg) }
+.nb-fold-body .detail-stats { padding-inline: 0 }
+#inventory-detail .detail-stat .nb-raw { font-size: .5rem; opacity: .85 }
+
+/* The readiness line: what is missing (red rule at the start + «أصلحه»), or what the action will do */
+.nb-ready {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    margin: .45rem .2rem .1rem;
+    padding-inline-start: .5rem;
+    font-family: var(--font-main);
+    font-size: .62rem;
+    line-height: 1.4;
+    color: var(--wc-text)
+}
+.nb-ready-text { min-width: 0; flex: 1 }
+.nb-ready.is-missing { color: var(--wc-text-dim); box-shadow: inset 3px 0 0 var(--w-red) }
+[dir='rtl'] .nb-ready.is-missing { box-shadow: inset -3px 0 0 var(--w-red) }
+.nb-fix {
+    flex: none;
+    padding: 0 0 .15rem;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    color: var(--wc-text);
+    font-family: var(--font-main);
+    font-size: .6rem;
+    box-shadow: inset 0 -2px 0 var(--w-red)
+}
+
+/* The keys row at the bottom of a window */
+.nb-keys {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .25rem .8rem;
+    margin-top: .45rem;
+    font-family: var(--font-main);
+    font-size: .64rem;
+    color: var(--wc-text-dim)
+}
+.nb-key { display: inline-flex; align-items: center; gap: .28rem; white-space: nowrap }
+.nb-keychip {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.1rem;
+    padding: .1rem .28rem;
+    border: 1px solid currentColor;
+    box-shadow: inset 0 -2px 0 rgba(242, 242, 242, .14);
+    background: none;
+    color: var(--wc-text);
+    font-family: var(--font-main);
+    font-size: .6rem;
+    line-height: 1;
+    unicode-bidi: isolate
+}
+
+/* The menu's Give option says what goes and to whom */
+#inventory-options .option .nb-opt-sub {
+    display: block;
+    font-family: var(--font-main);
+    font-weight: 400;
+    font-size: .58rem;
+    color: var(--wc-text-faint)
+}
+
+.is-rtl .nb-lead-text, .is-rtl .nb-ready, .is-rtl .nb-fold-head, .is-rtl .nb-keys, .is-rtl .nb-fix { font-weight: 700; letter-spacing: 0; font-variant-caps: normal }

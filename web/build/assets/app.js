@@ -4766,7 +4766,7 @@ function tr(key, fallback) {
 function trf(key, fallback, ...values) {
   let value = tr(key, fallback);
   for (const replacement of values) {
-    value = value.replace(/%[sd]/, String(replacement));
+    value = value.replace(/%[sd]/, () => String(replacement));
   }
   return value;
 }
@@ -5861,10 +5861,104 @@ const setClipboard = (value) => {
   document.body.removeChild(clipElem);
 };
 
+function iso(value) {
+  return "⁨" + String(value) + "⁩";
+}
+function kgShort(grams) {
+  const kg = (Number(grams) || 0) / 1e3;
+  const fixed = kg >= 10 ? kg.toFixed(0) : kg >= 1 ? kg.toFixed(1) : kg.toFixed(2);
+  return String(parseFloat(fixed));
+}
+function itemsWord(n) {
+  if (n <= 0)
+    return tr("ui_nb_items_0", "empty");
+  if (n === 1)
+    return tr("ui_nb_items_1", "1 item");
+  if (n === 2)
+    return tr("ui_nb_items_2", "2 items");
+  if (n <= 10)
+    return trf("ui_nb_items_few", "%s items", iso(n));
+  return trf("ui_nb_items_many", "%s items", iso(n));
+}
+function durabilityWord(pct) {
+  if (pct <= 0)
+    return tr("ui_nb_dur_broken", "Broken");
+  if (pct <= 25)
+    return tr("ui_nb_dur_low", "Nearly worn out");
+  if (pct <= 60)
+    return tr("ui_nb_dur_mid", "Worn");
+  return tr("ui_nb_dur_high", "Good");
+}
+function fullnessWord(pct) {
+  if (pct >= 100)
+    return tr("ui_nb_full", "full");
+  if (pct >= 85)
+    return tr("ui_nb_near_full", "almost full");
+  return "";
+}
+
+function Ready({ missing, note, fix, onFix }) {
+  if (missing) {
+    return /* @__PURE__ */ jsxs("div", { className: "nb-ready is-missing", children: [
+      /* @__PURE__ */ jsx("span", { className: "nb-ready-text", children: missing }),
+      onFix && /* @__PURE__ */ jsx("button", { type: "button", className: "nb-fix", onClick: onFix, children: fix })
+    ] });
+  }
+  return /* @__PURE__ */ jsx("div", { className: "nb-ready", children: /* @__PURE__ */ jsx("span", { className: "nb-ready-text", children: note }) });
+}
+function Fold({ title, children }) {
+  const [open, setOpen] = reactExports.useState(false);
+  return /* @__PURE__ */ jsxs("div", { className: "nb-fold" + (open ? " is-open" : ""), children: [
+    /* @__PURE__ */ jsxs("button", { type: "button", className: "nb-fold-head", onClick: () => setOpen((v) => !v), "aria-expanded": open, children: [
+      /* @__PURE__ */ jsx("span", { children: title }),
+      /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.2", "aria-hidden": "true", children: /* @__PURE__ */ jsx("path", { d: "M6 9l6 6 6-6" }) })
+    ] }),
+    open && /* @__PURE__ */ jsx("div", { className: "nb-fold-body", children })
+  ] });
+}
+function Keys({ keys }) {
+  return /* @__PURE__ */ jsx("div", { className: "nb-keys", children: keys.map(([key, label]) => /* @__PURE__ */ jsxs("span", { className: "nb-key", children: [
+    /* @__PURE__ */ jsx("kbd", { className: "nb-keychip", children: key }),
+    /* @__PURE__ */ jsx("span", { children: label })
+  ] }, key + label)) });
+}
+
 function sameText(a, b) {
   const norm = (s) => String(s ?? "").normalize("NFKC").replace(/[\u200e\u200f\u061c]/g, "").replace(/[\s.\u06d4\u2026!?\u061f,\u060c:;\-\u2013\u2014]+/g, " ").trim().toLowerCase();
   const left = norm(a);
   return left !== "" && left === norm(b);
+}
+const SHOWN_META = /* @__PURE__ */ new Set([
+  "label",
+  "description",
+  "descriptionKey",
+  "descriptionArgs",
+  "durability",
+  "ammo",
+  "serial",
+  "serial_number",
+  "container",
+  "containerMaxWeight",
+  "containerContentWeight",
+  "containerSlots",
+  "image",
+  "imageurl"
+]);
+function metaRows(meta) {
+  if (!meta || typeof meta !== "object")
+    return [];
+  const rows = [];
+  for (const [key, value] of Object.entries(meta)) {
+    if (SHOWN_META.has(key) || value == null || value === "")
+      continue;
+    let text = typeof value === "object" ? JSON.stringify(value) : String(value);
+    if (text.length > 48)
+      text = text.slice(0, 47) + "…";
+    rows.push([key, text]);
+    if (rows.length >= 12)
+      break;
+  }
+  return rows;
 }
 function DetailPanel({ item, panel, containerOpen, panelPos }) {
   const panelRef = reactExports.useRef(null);
@@ -5900,12 +5994,15 @@ function DetailPanel({ item, panel, containerOpen, panelPos }) {
     return /* @__PURE__ */ jsx("div", { id: "inventory-detail", style: { display: "none" } });
   const r = rarity(item);
   const shifted = containerOpen !== null;
-  const totalWeight = fmtWeight(N(item.weight));
-  const unitWeight = item.count > 1 ? fmtWeight(N(item.weight) / item.count) : fmtWeight(N(item.weight));
   const ammoEntries = item.ammo ? Object.entries(item.ammo).filter(([, v]) => v > 0) : [];
   const pctRound = item.percentage != null ? Math.round(item.percentage) : null;
   const title = item.label || item.name;
   const desc = item.desc && !sameText(item.desc, title) && !sameText(item.desc, item.name) ? item.desc : null;
+  const unitGrams = item.count > 1 ? N(item.weight) / item.count : N(item.weight);
+  const plain = item.count > 1 ? trf("ui_nb_detail_many", "You have %s · %s kg each, %s kg in all.", iso(item.count), iso(kgShort(unitGrams)), iso(kgShort(N(item.weight)))) : trf("ui_nb_detail_one", "It weighs %s kg.", iso(kgShort(unitGrams)));
+  const serialRaw = item.isWeapon ? item.metadata?.serial || item.metadata?.serial_number : null;
+  const serial = serialRaw ? String(serialRaw) : null;
+  const rawMeta = metaRows(item.metadata);
   const posStyle = fitted ? {
     left: `${fitted.x}px`,
     top: `${fitted.y}px`,
@@ -5941,19 +6038,8 @@ function DetailPanel({ item, panel, containerOpen, panelPos }) {
         /* @__PURE__ */ jsx("div", { className: "detail-sep" }),
         /* @__PURE__ */ jsxs("div", { ref: bodyRef, className: "detail-body" + (fade.top ? " fade-top" : "") + (fade.bottom ? " fade-bottom" : ""), children: [
           desc && /* @__PURE__ */ jsx("div", { className: "detail-desc", children: desc }),
+          /* @__PURE__ */ jsx("div", { className: "detail-plain", children: plain }),
           /* @__PURE__ */ jsxs("div", { className: "detail-stats", children: [
-            /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
-              /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_weight", "Weight") }),
-              /* @__PURE__ */ jsx("span", { className: "val", children: unitWeight })
-            ] }),
-            /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
-              /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_quantity", "Quantity") }),
-              /* @__PURE__ */ jsx("span", { className: "val", children: item.count })
-            ] }),
-            item.count > 1 && /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
-              /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_total_weight", "Total weight") }),
-              /* @__PURE__ */ jsx("span", { className: "val", children: totalWeight })
-            ] }),
             item.isContainer && /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
               /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_storage", "Storage") }),
               /* @__PURE__ */ jsxs("span", { className: "val", children: [
@@ -5964,36 +6050,51 @@ function DetailPanel({ item, panel, containerOpen, panelPos }) {
             ] }),
             item.isWeapon && /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
               /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_status", "Status") }),
-              /* @__PURE__ */ jsx("span", { className: `val ${item.equipped ? "equipped-text" : ""}`, children: item.equipped ? tr("ui_equipped", "Equipped") : tr("ui_in_bag", "In bag") })
+              /* @__PURE__ */ jsx("span", { className: `val nb-words ${item.equipped ? "equipped-text" : ""}`, children: item.equipped ? tr("ui_equipped", "Equipped") : tr("ui_in_bag", "In bag") })
             ] }),
-            item.isWeapon && (item.metadata?.serial || item.metadata?.serial_number) && /* @__PURE__ */ jsxs(
-              "div",
-              {
-                className: "detail-stat",
-                style: { cursor: "pointer" },
-                title: tr("ui_click_copy_serial", "Click to copy serial number"),
-                onClick: () => setClipboard(String(item.metadata?.serial || item.metadata?.serial_number)),
-                children: [
-                  /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_serial", "Serial number") }),
-                  /* @__PURE__ */ jsxs("span", { className: "val", style: { fontSize: ".42rem", letterSpacing: ".04em" }, children: [
-                    item.metadata?.serial || item.metadata?.serial_number,
-                    " ⧉"
-                  ] })
-                ]
-              }
-            ),
             ammoEntries.map(([type, count]) => /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
               /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_ammo", "Ammo") }),
               /* @__PURE__ */ jsx("span", { className: "val", children: count })
             ] }, type)),
             pctRound != null && /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
               /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_durability", "Durability") }),
-              /* @__PURE__ */ jsxs("span", { className: `val dur-${pctRound <= 25 ? "low" : pctRound <= 60 ? "mid" : "high"}`, children: [
-                pctRound,
-                "%"
+              /* @__PURE__ */ jsxs("span", { className: `val nb-words dur-${pctRound <= 25 ? "low" : pctRound <= 60 ? "mid" : "high"}`, children: [
+                durabilityWord(pctRound),
+                " · ",
+                iso(pctRound + "%")
               ] })
             ] })
-          ] })
+          ] }),
+          /* @__PURE__ */ jsx(Fold, { title: tr("ui_nb_advanced", "Advanced options"), children: /* @__PURE__ */ jsxs("div", { className: "detail-stats nb-adv", children: [
+            /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
+              /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_nb_item_id", "Item id") }),
+              /* @__PURE__ */ jsx("span", { className: "val", children: item.name })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
+              /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_nb_slot", "Slot") }),
+              /* @__PURE__ */ jsx("span", { className: "val", children: item.slot })
+            ] }),
+            serial && /* @__PURE__ */ jsxs(
+              "div",
+              {
+                className: "detail-stat",
+                style: { cursor: "pointer" },
+                title: tr("ui_click_copy_serial", "Click to copy serial number"),
+                onClick: () => setClipboard(serial),
+                children: [
+                  /* @__PURE__ */ jsx("span", { className: "lbl", children: tr("ui_serial", "Serial number") }),
+                  /* @__PURE__ */ jsxs("span", { className: "val", style: { fontSize: ".42rem", letterSpacing: ".04em" }, children: [
+                    serial,
+                    " ⧉"
+                  ] })
+                ]
+              }
+            ),
+            rawMeta.map(([key, value]) => /* @__PURE__ */ jsxs("div", { className: "detail-stat", children: [
+              /* @__PURE__ */ jsx("span", { className: "lbl nb-raw", children: key }),
+              /* @__PURE__ */ jsx("span", { className: "val nb-raw", children: value })
+            ] }, key))
+          ] }) }, itemKey)
         ] }),
         /* @__PURE__ */ jsx("div", { className: "detail-sep" }),
         /* @__PURE__ */ jsxs("div", { className: "detail-hint", children: [
@@ -6045,7 +6146,7 @@ function ContainerPanel({ containerOpen, containerGrid, containerLabel, containe
         /* @__PURE__ */ jsx("div", { className: "cp-icon", children: SVG_BAG }),
         /* @__PURE__ */ jsxs("div", { className: "cp-title-text", children: [
           /* @__PURE__ */ jsx("div", { className: "cp-title", children: containerLabel }),
-          /* @__PURE__ */ jsx("div", { className: "cp-subtitle", children: itemCount === 0 ? tr("ui_empty_container", "Empty container") : trf("ui_stored_items", "%s stored item(s)", itemCount) })
+          /* @__PURE__ */ jsx("div", { className: "cp-subtitle", children: (itemCount === 0 ? tr("ui_nb_side_empty", "Nothing inside") : trf("ui_nb_side_has", "Holds %s", itemsWord(itemCount))) + (containerMaxWeight > 0 ? " · " + trf("ui_nb_kg_of", "%s of %s kg", iso(kgShort(cw)), iso(kgShort(containerMaxWeight))) : "") })
         ] })
       ] }),
       /* @__PURE__ */ jsx("div", { className: "cp-close", onClick: onClose, children: SVG_X })
@@ -6189,6 +6290,10 @@ function RightInventoryPanel({
     return null;
   const isShop = rightInventory.type === "shop";
   const isCrafting = rightInventory.type === "crafting";
+  const maxW = rightInventory.maxWeight != null ? Number(rightInventory.maxWeight) : 0;
+  const sidePct = maxW > 0 ? totalWeight / maxW * 100 : 0;
+  const sideFull = fullnessWord(sidePct);
+  const sideLead = (itemCount === 0 ? tr("ui_nb_side_empty", "Nothing inside") : trf("ui_nb_side_has", "Holds %s", itemsWord(itemCount))) + (maxW > 0 ? " · " + trf("ui_nb_kg_of", "%s of %s kg", iso(kgShort(totalWeight)), iso(kgShort(maxW))) : "") + (sideFull ? " · " + sideFull : "");
   const posStyle = fittedRightPos ? {
     position: "fixed",
     left: `${fittedRightPos.x}px`,
@@ -6205,7 +6310,7 @@ function RightInventoryPanel({
       /* @__PURE__ */ jsx("div", { className: "inv-badge", children: isShop ? SVG_SHOP : isCrafting ? SVG_CRAFT : SVG_BAG }),
       /* @__PURE__ */ jsxs("div", { className: "rp-title-area", children: [
         /* @__PURE__ */ jsx("div", { className: "rp-title", children: rightInventory.label || tr(`ui_inv_${rightInventory.type}`, rightInventory.type) }),
-        /* @__PURE__ */ jsx("div", { className: "rp-subtitle", children: isShop ? tr("ui_shop_drag_hint", "Drag items to your inventory to purchase") : isCrafting ? tr("ui_crafting_drag_hint", "Drag items to your inventory to craft") : trf("ui_item_count", "%s item(s)", itemCount) })
+        /* @__PURE__ */ jsx("div", { className: "rp-subtitle", children: isShop ? tr("ui_shop_drag_hint", "Drag items to your inventory to purchase") : isCrafting ? tr("ui_crafting_drag_hint", "Drag items to your inventory to craft") : sideLead })
       ] })
     ] }),
     isShop && /* @__PURE__ */ jsxs("div", { className: "rp-shop-controls", children: [
@@ -6264,20 +6369,13 @@ function RightInventoryPanel({
         }
       )
     ] }),
-    !isShop && rightInventory.maxWeight != null && /* @__PURE__ */ jsxs("div", { className: "rp-weight-bar", children: [
-      /* @__PURE__ */ jsxs("span", { className: "rp-weight-text", children: [
-        fmtWeight(totalWeight),
-        " / ",
-        fmtWeight(rightInventory.maxWeight)
-      ] }),
-      /* @__PURE__ */ jsx("div", { className: "rp-bar", children: /* @__PURE__ */ jsx(
-        "div",
-        {
-          className: "rp-bar-fill",
-          style: { width: `${Math.min(100, totalWeight / (rightInventory.maxWeight || 1) * 100)}%` }
-        }
-      ) })
-    ] }),
+    !isShop && rightInventory.maxWeight != null && /* @__PURE__ */ jsx("div", { className: "rp-weight-bar", title: `${fmtWeight(totalWeight)} / ${fmtWeight(rightInventory.maxWeight)}`, children: /* @__PURE__ */ jsx("div", { className: "rp-bar", children: /* @__PURE__ */ jsx(
+      "div",
+      {
+        className: "rp-bar-fill" + (sidePct >= 85 ? " critical" : ""),
+        style: { width: `${Math.min(100, totalWeight / (rightInventory.maxWeight || 1) * 100)}%` }
+      }
+    ) }) }),
     /* @__PURE__ */ jsx(
       InventoryGrid,
       {
@@ -6305,7 +6403,7 @@ const SVG_DROP = /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "curre
 const SVG_TAKE = /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "currentColor", children: /* @__PURE__ */ jsx("path", { d: "M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z" }) });
 const SVG_GIVE = /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "currentColor", children: /* @__PURE__ */ jsx("path", { d: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" }) });
 const SVG_UNLOAD = /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "currentColor", children: /* @__PURE__ */ jsx("path", { d: "M7 3h10v2H7V3zm1 4h8l2 4v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8l2-4zm2 3-1 2v6h6v-6l-1-2h-4zm-7 1h2v8H3v-8zm16 0h2v8h-2v-8z" }) });
-function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, onUse, onDrop, onGive, onInspect, onOpenContainer, onStoreIn, onTakeOut, onSplit, onRemoveAmmo, customButtons, onCustomButton }) {
+function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, onUse, onDrop, onGive, onInspect, onOpenContainer, onStoreIn, onTakeOut, onSplit, onRemoveAmmo, customButtons, onCustomButton, giveCount }) {
   const ref = reactExports.useRef(null);
   reactExports.useEffect(() => {
     if (!visible)
@@ -6434,7 +6532,10 @@ function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, 
       }, children: [
         SVG_GIVE,
         " ",
-        /* @__PURE__ */ jsx("span", { children: tr("ui_give", "Give") })
+        /* @__PURE__ */ jsxs("span", { children: [
+          tr("ui_give", "Give"),
+          giveCount != null && giveCount > 0 && item && /* @__PURE__ */ jsx("small", { className: "nb-opt-sub", children: trf("ui_nb_give_to", "you give %s %s to the player beside you", iso(giveCount), item.label || item.name) })
+        ] })
       ] }, "give")
     );
     danger.push(
@@ -6728,16 +6829,23 @@ function useGridWeight(grid) {
     return t;
   }, [grid]);
 }
-function WeightBar({ grid, maxWeight }) {
+function WeightBar({ grid, maxWeight, cash }) {
   const total = useGridWeight(grid);
-  return /* @__PURE__ */ jsxs("div", { className: "sub-info", children: [
-    /* @__PURE__ */ jsx("span", { className: "weight-label", children: tr("ui_weight", "Weight") }),
-    /* @__PURE__ */ jsxs("span", { id: "inv-weight-text", children: [
-      fmtWeight(total),
-      " / ",
-      fmtWeight(maxWeight)
+  const pct = maxWeight > 0 ? total / maxWeight * 100 : 0;
+  const full = fullnessWord(pct);
+  const lead = trf("ui_nb_bag_lead", "Your bag · %s of %s kg", iso(kgShort(total)), iso(kgShort(maxWeight)));
+  const money = cash != null ? trf("ui_nb_bag_cash", "you carry %s", iso("$" + formatCompact(cash))) : "";
+  return /* @__PURE__ */ jsx("div", { className: "sub-info nb-lead", title: `${fmtWeight(total)} / ${fmtWeight(maxWeight)}`, children: /* @__PURE__ */ jsxs("span", { className: "nb-lead-text", children: [
+    lead,
+    money && /* @__PURE__ */ jsxs(Fragment, { children: [
+      " · ",
+      money
+    ] }),
+    full && /* @__PURE__ */ jsxs(Fragment, { children: [
+      " · ",
+      /* @__PURE__ */ jsx("b", { className: "nb-critical", children: full })
     ] })
-  ] });
+  ] }) });
 }
 function WeightProgress({ grid, maxWeight }) {
   const progressRef = reactExports.useRef(null);
@@ -6831,11 +6939,26 @@ function SplitDialog({ item, visible, onConfirm, onCancel }) {
       onConfirm(amount);
     }
   }, [amount, item, onConfirm]);
+  reactExports.useEffect(() => {
+    if (!visible)
+      return;
+    const onKey = (e) => {
+      if (e.key !== "Enter")
+        return;
+      e.preventDefault();
+      handleConfirm();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [visible, handleConfirm]);
   if (!visible || !item)
     return null;
   const max = item.count - 1;
   const keepAmount = item.count - amount;
   const fill = max > 1 ? (amount - 1) / (max - 1) * 100 : 100;
+  const ready = amount > 0 && amount < item.count;
+  const name = item.label || item.name;
+  const fixAmount = () => setAmount(Math.max(1, Math.floor(item.count / 2)));
   return /* @__PURE__ */ jsxs(Fragment, { children: [
     /* @__PURE__ */ jsx("div", { className: "split-backdrop", onClick: onCancel }),
     /* @__PURE__ */ jsxs("div", { id: "inv-split-dialog", className: "wf-shell", style: { display: "flex" }, children: [
@@ -6880,10 +7003,20 @@ function SplitDialog({ item, visible, onConfirm, onCancel }) {
         ),
         /* @__PURE__ */ jsx("span", { className: "split-adj", onClick: () => setAmount((a) => Math.min(max, a + 1)), children: "+" })
       ] }),
+      /* @__PURE__ */ jsx(
+        Ready,
+        {
+          missing: ready ? void 0 : item.count < 2 ? tr("ui_nb_split_one", "Missing: a stack of two or more") : tr("ui_nb_split_missing", "Missing: the amount"),
+          fix: tr("ui_nb_fix", "Fix it"),
+          onFix: item.count >= 2 ? fixAmount : void 0,
+          note: trf("ui_nb_split_ready", "%s stay here and %s %s move to a new slot.", iso(keepAmount), iso(amount), name)
+        }
+      ),
       /* @__PURE__ */ jsxs("div", { className: "split-actions", children: [
         /* @__PURE__ */ jsx("div", { className: "split-btn", onClick: onCancel, children: tr("ui_cancel", "Cancel") }),
         /* @__PURE__ */ jsx("div", { className: "split-btn confirm", onClick: handleConfirm, children: tr("ui_split", "Split") })
-      ] })
+      ] }),
+      /* @__PURE__ */ jsx(Keys, { keys: [["Enter", tr("ui_split", "Split")], ["Esc", tr("ui_cancel", "Cancel")]] })
     ] })
   ] });
 }
@@ -6927,6 +7060,16 @@ function HotBar({ slots, visible, onUseSlot }) {
   }) });
 }
 
+function offerWords(list) {
+  if (!list || list.length === 0)
+    return "";
+  if (list.length === 1) {
+    const it = list[0] || {};
+    const label = it.label || window.__oxItems?.[it.name]?.label || it.name || "";
+    return `${iso(it.count || 1)} ${label}`;
+  }
+  return itemsWord(list.length);
+}
 const SVG_CHECK = /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "currentColor", children: /* @__PURE__ */ jsx("path", { d: "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" }) });
 const SVG_HANDSHAKE = /* @__PURE__ */ jsxs("svg", { viewBox: "0 0 24 24", fill: "currentColor", children: [
   /* @__PURE__ */ jsx("path", { d: "M16.48 7.58c-.28.28-.67.28-.95 0L12.7 4.76a.67.67 0 0 0-.95 0L9.53 6.97l3.3 3.3a2 2 0 0 1 0 2.83l-.71.71a2 2 0 0 1-2.83 0L6.97 11.5l-1.2 1.2a.67.67 0 0 0 0 .96l2.82 2.82c.28.28.28.67 0 .95L7.64 18.4a.67.67 0 0 0 0 .95l1.41 1.41c.28.28.67.28.95 0l.95-.95c.28-.28.67-.28.95 0l.95.95c.28.28.67.28.95 0l1.41-1.41a.67.67 0 0 0 0-.95l-.95-.95a.67.67 0 0 1 0-.95l1.2-1.2 2.3 2.3c.79.79 2.05.79 2.84 0s.79-2.05 0-2.84L16.48 7.58z" }),
@@ -7005,6 +7148,9 @@ function TradePanel({ tradeOpen, tradePartner, myOffer, theirOffer, myConfirmed,
     const item = theirOffer[i] || null;
     theirSlots.push(/* @__PURE__ */ jsx(TradeSlot, { item }, `their-${i}`));
   }
+  const bothEmpty = myOffer.length === 0 && theirOffer.length === 0;
+  const plan = (myOffer.length === 0 ? trf("ui_nb_trade_give_none", "You give %s nothing", tradePartner) : trf("ui_nb_trade_give", "You give %s to %s", offerWords(myOffer), tradePartner)) + " " + (theirOffer.length === 0 ? tr("ui_nb_trade_take_none", "and take nothing.") : trf("ui_nb_trade_take", "and take %s.", offerWords(theirOffer)));
+  const waiting = myConfirmed && !theirConfirmed ? trf("ui_nb_trade_wait_them", "Waiting for %s to confirm.", tradePartner) : !myConfirmed && theirConfirmed ? trf("ui_nb_trade_wait_you", "%s confirmed; your confirmation is left.", tradePartner) : !myConfirmed ? tr("ui_nb_trade_wait_both", "Both sides still have to confirm.") : "";
   const useCustomPos = pos.x !== 0 || pos.y !== 0;
   const style = useCustomPos ? { position: "fixed", left: pos.x, top: pos.y, transform: "none", right: "auto" } : {};
   return /* @__PURE__ */ jsxs("div", { id: "trade-panel", className: "wf-shell", style, onMouseDown, children: [
@@ -7031,6 +7177,17 @@ function TradePanel({ tradeOpen, tradePartner, myOffer, theirOffer, myConfirmed,
         /* @__PURE__ */ jsx("div", { className: "trade-col-grid", children: theirSlots })
       ] })
     ] }),
+    !tradeCompleting && /* @__PURE__ */ jsx(
+      Ready,
+      {
+        missing: bothEmpty ? tr("ui_nb_trade_empty", "Missing: an item in one of the offers - drag one into yours") : void 0,
+        note: /* @__PURE__ */ jsxs(Fragment, { children: [
+          plan,
+          " ",
+          waiting
+        ] })
+      }
+    ),
     !tradeCompleting && /* @__PURE__ */ jsxs("div", { className: "trade-footer", children: [
       /* @__PURE__ */ jsx("button", { className: "trade-btn cancel", onClick: onCancel, children: tr("ui_cancel", "Cancel") }),
       /* @__PURE__ */ jsx("button", { className: `trade-btn confirm${myConfirmed ? " confirmed" : ""}`, onClick: onConfirm, disabled: myConfirmed, children: myConfirmed ? /* @__PURE__ */ jsxs(Fragment, { children: [
@@ -7039,6 +7196,7 @@ function TradePanel({ tradeOpen, tradePartner, myOffer, theirOffer, myConfirmed,
         tr("ui_confirmed", "Confirmed")
       ] }) : tr("ui_confirm_trade", "Confirm trade") })
     ] }),
+    !tradeCompleting && /* @__PURE__ */ jsx(Keys, { keys: [[tr("ui_nb_key_drag", "Drag"), tr("ui_nb_key_offer", "add to your offer")], [tr("ui_nb_key_click", "Click"), tr("ui_nb_key_take_back", "take back")], ["Esc", tr("ui_cancel", "Cancel")]] }),
     tradeCompleting && /* @__PURE__ */ jsxs("div", { className: "trade-completing-overlay", children: [
       /* @__PURE__ */ jsx("div", { className: "trade-completing-icon", children: SVG_HANDSHAKE }),
       /* @__PURE__ */ jsx("div", { className: "trade-completing-text", children: tr("ui_completing_trade", "Completing trade") }),
@@ -7953,7 +8111,7 @@ function App() {
               /* @__PURE__ */ jsx("div", { id: "inv-close-btn", onClick: handleClose, children: SVG_X })
             ] }),
             /* @__PURE__ */ jsxs("div", { className: "inv-weight-block", children: [
-              /* @__PURE__ */ jsx(WeightBar, { grid: state.grid, maxWeight: state.maxWeight }),
+              /* @__PURE__ */ jsx(WeightBar, { grid: state.grid, maxWeight: state.maxWeight, cash: state.playerCash }),
               /* @__PURE__ */ jsx(WeightProgress, { grid: state.grid, maxWeight: state.maxWeight })
             ] }),
             /* @__PURE__ */ jsx("div", { className: "inv-hr" }),
@@ -8032,7 +8190,12 @@ function App() {
                 containerOpen: state.containerOpen
               }
             ),
-            /* @__PURE__ */ jsx(CategoryBar, { active: state.category, onChange: handleCategoryChange, grid: state.grid })
+            /* @__PURE__ */ jsx(CategoryBar, { active: state.category, onChange: handleCategoryChange, grid: state.grid }),
+            /* @__PURE__ */ jsx(Keys, { keys: [
+              ["Esc", tr("ui_nb_key_close", "close")],
+              ["1-6", tr("ui_nb_key_tabs", "sections")],
+              [tr("ui_nb_key_rmb", "Right click"), tr("ui_nb_key_options", "options")]
+            ] })
           ]
         }
       ),
@@ -8098,6 +8261,7 @@ function App() {
           onUse: handleUseItem,
           onDrop: handleDropItem,
           onGive: handleGiveItem,
+          giveCount: ctxItem ? Math.min(ctxItem.count, state.itemAmount > 0 ? state.itemAmount : ctxItem.count) : void 0,
           onInspect: handleInspect,
           onOpenContainer: handleOpenContainer,
           onStoreIn: handleStoreIn,

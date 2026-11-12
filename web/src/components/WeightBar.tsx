@@ -1,7 +1,9 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { N, fmtWeight } from '../utils/items';
 import { InventoryItem } from '../typings';
-import { tr } from '../i18n';
+import { trf } from '../i18n';
+import { formatCompact } from '../utils/formatNumber';
+import { iso, kgShort, fullnessWord } from '../utils/words';
 
 interface WeightBarProps {
   grid: (InventoryItem | null)[];
@@ -20,13 +22,21 @@ function useGridWeight(grid: (InventoryItem | null)[]) {
   }, [grid]);
 }
 
-export default function WeightBar({ grid, maxWeight }: WeightBarProps) {
+/** The bag's opening sentence: «حقيبتك · 18 من 40 كجم · معك $85», and «تكاد تمتلئ» in red when near full. */
+export default function WeightBar({ grid, maxWeight, cash }: WeightBarProps & { cash?: number }) {
   const total = useGridWeight(grid);
+  const pct = maxWeight > 0 ? (total / maxWeight) * 100 : 0;
+  const full = fullnessWord(pct);
+  const lead = trf('ui_nb_bag_lead', 'Your bag · %s of %s kg', iso(kgShort(total)), iso(kgShort(maxWeight)));
+  const money = cash != null ? trf('ui_nb_bag_cash', 'you carry %s', iso('$' + formatCompact(cash))) : '';
 
   return (
-    <div className="sub-info">
-      <span className="weight-label">{tr('ui_weight', 'Weight')}</span>
-      <span id="inv-weight-text">{fmtWeight(total)} / {fmtWeight(maxWeight)}</span>
+    <div className="sub-info nb-lead" title={`${fmtWeight(total)} / ${fmtWeight(maxWeight)}`}>
+      <span className="nb-lead-text">
+        {lead}
+        {money && <> · {money}</>}
+        {full && <> · <b className="nb-critical">{full}</b></>}
+      </span>
     </div>
   );
 }

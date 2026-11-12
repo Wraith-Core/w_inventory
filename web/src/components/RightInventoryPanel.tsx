@@ -4,6 +4,7 @@ import { N, SVG_X, SVG_BAG, SVG_CASH, SVG_GOLD, fmtWeight } from '../utils/items
 import { InventoryItem, RightInventoryMeta } from '../typings';
 import { formatCompact } from '../utils/formatNumber';
 import { tr, trf } from '../i18n';
+import { iso, kgShort, itemsWord, fullnessWord } from '../utils/words';
 import usePanelPosition from '../hooks/usePanelPosition';
 import { loadPanelPos, savePanelPos } from '../utils/layout';
 
@@ -114,6 +115,13 @@ export default function RightInventoryPanel({
 
   const isShop = rightInventory.type === 'shop';
   const isCrafting = rightInventory.type === 'crafting';
+  // The other side's opening sentence: «فيه 12 غرضًا · 18 من 100 كجم» (+ «تكاد تمتلئ»).
+  const maxW = rightInventory.maxWeight != null ? Number(rightInventory.maxWeight) : 0;
+  const sidePct = maxW > 0 ? (totalWeight / maxW) * 100 : 0;
+  const sideFull = fullnessWord(sidePct);
+  const sideLead = (itemCount === 0 ? tr('ui_nb_side_empty', 'Nothing inside') : trf('ui_nb_side_has', 'Holds %s', itemsWord(itemCount)))
+    + (maxW > 0 ? ' · ' + trf('ui_nb_kg_of', '%s of %s kg', iso(kgShort(totalWeight)), iso(kgShort(maxW))) : '')
+    + (sideFull ? ' · ' + sideFull : '');
 
   const posStyle: React.CSSProperties = fittedRightPos
     ? {
@@ -138,7 +146,7 @@ export default function RightInventoryPanel({
           <div className="rp-subtitle">
             {isShop ? tr('ui_shop_drag_hint', 'Drag items to your inventory to purchase') :
              isCrafting ? tr('ui_crafting_drag_hint', 'Drag items to your inventory to craft') :
-             trf('ui_item_count', '%s item(s)', itemCount)}
+             sideLead}
           </div>
         </div>
       </div>
@@ -192,11 +200,11 @@ export default function RightInventoryPanel({
       )}
 
       {!isShop && rightInventory.maxWeight != null && (
-        <div className="rp-weight-bar">
-          <span className="rp-weight-text">{fmtWeight(totalWeight)} / {fmtWeight(rightInventory.maxWeight)}</span>
+        <div className="rp-weight-bar" title={`${fmtWeight(totalWeight)} / ${fmtWeight(rightInventory.maxWeight)}`}>
+          {/* the figures are in the sentence under the title; the bar keeps the hover text */}
           <div className="rp-bar">
             <div
-              className="rp-bar-fill"
+              className={'rp-bar-fill' + (sidePct >= 85 ? ' critical' : '')}
               style={{ width: `${Math.min(100, (totalWeight / (rightInventory.maxWeight || 1)) * 100)}%` }}
             />
           </div>

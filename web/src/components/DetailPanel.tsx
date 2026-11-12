@@ -2,7 +2,9 @@ import { rarity, rarityLabel, N, fmtWeight } from '../utils/items';
 import { getItemUrl, itemImageError } from '../utils/nui';
 import { setClipboard } from '../utils/setClipboard';
 import { InventoryItem } from '../typings';
-import { tr } from '../i18n';
+import { tr, trf } from '../i18n';
+import { iso, kgShort, durabilityWord } from '../utils/words';
+import { Fold } from './Notebook';
 import { useLayoutEffect, useRef, useState } from 'react';
 import usePanelPosition from '../hooks/usePanelPosition';
 import { PANEL_W_REM, CONTAINER_W_REM, PANEL_GAP_REM, remPx } from '../utils/layout';
@@ -20,6 +22,22 @@ function sameText(a?: string, b?: string): boolean {
     .replace(/[\s.\u06d4\u2026!?\u061f,\u060c:;\-\u2013\u2014]+/g, ' ').trim().toLowerCase();
   const left = norm(a);
   return left !== '' && left === norm(b);
+}
+
+/** Metadata the sentence and rows above do not already say, as raw key / value lines for the advanced fold. */
+const SHOWN_META = new Set(['label', 'description', 'descriptionKey', 'descriptionArgs', 'durability', 'ammo', 'serial',
+  'serial_number', 'container', 'containerMaxWeight', 'containerContentWeight', 'containerSlots', 'image', 'imageurl']);
+function metaRows(meta: Record<string, any> | undefined): Array<[string, string]> {
+  if (!meta || typeof meta !== 'object') return [];
+  const rows: Array<[string, string]> = [];
+  for (const [key, value] of Object.entries(meta)) {
+    if (SHOWN_META.has(key) || value == null || value === '') continue;
+    let text = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    if (text.length > 48) text = text.slice(0, 47) + '…';
+    rows.push([key, text]);
+    if (rows.length >= 12) break;
+  }
+  return rows;
 }
 
 export default function DetailPanel({ item, panel, containerOpen, panelPos }: DetailPanelProps) {
@@ -51,13 +69,19 @@ export default function DetailPanel({ item, panel, containerOpen, panelPos }: De
 
   const r = rarity(item);
   const shifted = containerOpen !== null;
-  const totalWeight = fmtWeight(N(item.weight));
-  const unitWeight = item.count > 1 ? fmtWeight(N(item.weight) / item.count) : fmtWeight(N(item.weight));
   const ammoEntries = item.ammo ? Object.entries(item.ammo).filter(([, v]) => v > 0) : [];
   const pctRound = item.percentage != null ? Math.round(item.percentage) : null;
   const title = item.label || item.name;
   // A catalogue with no description repeats the name there: the line says nothing new, so it is left out.
   const desc = item.desc && !sameText(item.desc, title) && !sameText(item.desc, item.name) ? item.desc : null;
+  // The plain sentence in place of the weight / quantity / total rows.
+  const unitGrams = item.count > 1 ? N(item.weight) / item.count : N(item.weight);
+  const plain = item.count > 1
+    ? trf('ui_nb_detail_many', 'You have %s · %s kg each, %s kg in all.', iso(item.count), iso(kgShort(unitGrams)), iso(kgShort(N(item.weight))))
+    : trf('ui_nb_detail_one', 'It weighs %s kg.', iso(kgShort(unitGrams)));
+  const serialRaw = item.isWeapon ? (item.metadata?.serial || item.metadata?.serial_number) : null;
+  const serial = serialRaw ? String(serialRaw) : null;
+  const rawMeta = metaRows(item.metadata);
 
   const posStyle: React.CSSProperties = fitted
     ? {
@@ -96,21 +120,9 @@ export default function DetailPanel({ item, panel, containerOpen, panelPos }: De
       <div ref={bodyRef} className={'detail-body' + (fade.top ? ' fade-top' : '') + (fade.bottom ? ' fade-bottom' : '')}>
       {desc && <div className="detail-desc">{desc}</div>}
 
+      <div className="detail-plain">{plain}</div>
+
       <div className="detail-stats">
-        <div className="detail-stat">
-          <span className="lbl">{tr('ui_weight', 'Weight')}</span>
-          <span className="val">{unitWeight}</span>
-        </div>
-        <div className="detail-stat">
-          <span className="lbl">{tr('ui_quantity', 'Quantity')}</span>
-          <span className="val">{item.count}</span>
-        </div>
-        {item.count > 1 && (
-          <div className="detail-stat">
-            <span className="lbl">{tr('ui_total_weight', 'Total weight')}</span>
-            <span className="val">{totalWeight}</span>
-          </div>
-        )}
         {item.isContainer && (
           <div className="detail-stat">
             <span className="lbl">{tr('ui_storage', 'Storage')}</span>
@@ -120,20 +132,7 @@ export default function DetailPanel({ item, panel, containerOpen, panelPos }: De
         {item.isWeapon && (
           <div className="detail-stat">
             <span className="lbl">{tr('ui_status', 'Status')}</span>
-            <span className={`val ${item.equipped ? 'equipped-text' : ''}`}>{item.equipped ? tr('ui_equipped', 'Equipped') : tr('ui_in_bag', 'In bag')}</span>
-          </div>
-        )}
-        {item.isWeapon && (item.metadata?.serial || item.metadata?.serial_number) && (
-          <div
-            className="detail-stat"
-            style={{ cursor: 'pointer' }}
-            title={tr('ui_click_copy_serial', 'Click to copy serial number')}
-            onClick={() => setClipboard(String(item.metadata?.serial || item.metadata?.serial_number))}
-          >
-            <span className="lbl">{tr('ui_serial', 'Serial number')}</span>
-            <span className="val" style={{ fontSize: '.42rem', letterSpacing: '.04em' }}>
-              {item.metadata?.serial || item.metadata?.serial_number} ⧉
-            </span>
+            <span className={`val nb-words ${item.equipped ? 'equipped-text' : ''}`}>{item.equipped ? tr('ui_equipped', 'Equipped') : tr('ui_in_bag', 'In bag')}</span>
           </div>
         )}
         {ammoEntries.map(([type, count]) => (
@@ -145,10 +144,40 @@ export default function DetailPanel({ item, panel, containerOpen, panelPos }: De
         {pctRound != null && (
           <div className="detail-stat">
             <span className="lbl">{tr('ui_durability', 'Durability')}</span>
-            <span className={`val dur-${pctRound <= 25 ? 'low' : pctRound <= 60 ? 'mid' : 'high'}`}>{pctRound}%</span>
+            <span className={`val nb-words dur-${pctRound <= 25 ? 'low' : pctRound <= 60 ? 'mid' : 'high'}`}>{durabilityWord(pctRound)} · {iso(pctRound + '%')}</span>
           </div>
         )}
       </div>
+
+      <Fold key={itemKey} title={tr('ui_nb_advanced', 'Advanced options')}>
+        <div className="detail-stats nb-adv">
+          <div className="detail-stat">
+            <span className="lbl">{tr('ui_nb_item_id', 'Item id')}</span>
+            <span className="val">{item.name}</span>
+          </div>
+          <div className="detail-stat">
+            <span className="lbl">{tr('ui_nb_slot', 'Slot')}</span>
+            <span className="val">{item.slot}</span>
+          </div>
+          {serial && (
+            <div
+              className="detail-stat"
+              style={{ cursor: 'pointer' }}
+              title={tr('ui_click_copy_serial', 'Click to copy serial number')}
+              onClick={() => setClipboard(serial)}
+            >
+              <span className="lbl">{tr('ui_serial', 'Serial number')}</span>
+              <span className="val" style={{ fontSize: '.42rem', letterSpacing: '.04em' }}>{serial} ⧉</span>
+            </div>
+          )}
+          {rawMeta.map(([key, value]) => (
+            <div className="detail-stat" key={key}>
+              <span className="lbl nb-raw">{key}</span>
+              <span className="val nb-raw">{value}</span>
+            </div>
+          ))}
+        </div>
+      </Fold>
       </div>
 
       <div className="detail-sep" />

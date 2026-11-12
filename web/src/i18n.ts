@@ -30,7 +30,8 @@ export function trf(key: string, fallback: string, ...values: Array<string | num
   let value = tr(key, fallback);
 
   for (const replacement of values) {
-    value = value.replace(/%[sd]/, String(replacement));
+    // a replacer function: a value with '$' (money) must not be read as a replacement pattern
+    value = value.replace(/%[sd]/, () => String(replacement));
   }
 
   return value;

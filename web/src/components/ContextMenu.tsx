@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { SVG_BAG, SVG_EYE } from '../utils/items';
 import { InventoryItem } from '../typings';
-import { tr } from '../i18n';
+import { tr, trf } from '../i18n';
+import { iso } from '../utils/words';
 import { wsPx } from '../utils/wsScale';
 
 const SVG_USE = <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>;
@@ -32,9 +33,11 @@ interface ContextMenuProps {
   onRemoveAmmo: (idx: number) => void;
   customButtons?: Array<{ id: number; label: string; group?: string }>;
   onCustomButton?: (idx: number, buttonId: number) => void;
+  /** How many a Give hands over (the quantity field, or the whole stack) - shown under the option. */
+  giveCount?: number;
 }
 
-export default function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, onUse, onDrop, onGive, onInspect, onOpenContainer, onStoreIn, onTakeOut, onSplit, onRemoveAmmo, customButtons, onCustomButton }: ContextMenuProps) {
+export default function ContextMenu({ visible, x, y, item, idx, panel, containerOpen, onClose, onUse, onDrop, onGive, onInspect, onOpenContainer, onStoreIn, onTakeOut, onSplit, onRemoveAmmo, customButtons, onCustomButton, giveCount }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -122,7 +125,9 @@ export default function ContextMenu({ visible, x, y, item, idx, panel, container
     const danger: React.ReactNode[] = [];
     danger.push(
       <div key="give" className="option" onClick={() => { onGive(idx); onClose(); }}>
-        {SVG_GIVE} <span>{tr('ui_give', 'Give')}</span>
+        {SVG_GIVE} <span>{tr('ui_give', 'Give')}{giveCount != null && giveCount > 0 && item && (
+          <small className="nb-opt-sub">{trf('ui_nb_give_to', 'you give %s %s to the player beside you', iso(giveCount), item.label || item.name)}</small>
+        )}</span>
       </div>
     );
     danger.push(

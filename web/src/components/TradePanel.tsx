@@ -3,6 +3,19 @@ import { useDroppable } from '@dnd-kit/core';
 import { getItemUrl, itemImageError } from '../utils/nui';
 import { rarity, SVG_X } from '../utils/items';
 import { tr, trf } from '../i18n';
+import { iso, itemsWord } from '../utils/words';
+import { Ready, Keys } from './Notebook';
+
+/** One side's offer in words: «3 خبز» for one kind, «4 أغراض» for more. */
+function offerWords(list: any[]): string {
+  if (!list || list.length === 0) return '';
+  if (list.length === 1) {
+    const it = list[0] || {};
+    const label = it.label || (window as any).__oxItems?.[it.name]?.label || it.name || '';
+    return `${iso(it.count || 1)} ${label}`;
+  }
+  return itemsWord(list.length);
+}
 
 const SVG_CHECK = <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>;
 const SVG_HANDSHAKE = <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.48 7.58c-.28.28-.67.28-.95 0L12.7 4.76a.67.67 0 0 0-.95 0L9.53 6.97l3.3 3.3a2 2 0 0 1 0 2.83l-.71.71a2 2 0 0 1-2.83 0L6.97 11.5l-1.2 1.2a.67.67 0 0 0 0 .96l2.82 2.82c.28.28.28.67 0 .95L7.64 18.4a.67.67 0 0 0 0 .95l1.41 1.41c.28.28.67.28.95 0l.95-.95c.28-.28.67-.28.95 0l.95.95c.28.28.67.28.95 0l1.41-1.41a.67.67 0 0 0 0-.95l-.95-.95a.67.67 0 0 1 0-.95l1.2-1.2 2.3 2.3c.79.79 2.05.79 2.84 0s.79-2.05 0-2.84L16.48 7.58z"/><path d="M21.71 7.13l-3.54-3.54a1 1 0 0 0-.7-.29h-2.83L18.17 6.83l3.54 3.54V7.83a1 1 0 0 0-.29-.7zM2.29 7.13a1 1 0 0 0-.29.7v2.54L5.54 6.83 9.07 3.3H6.24a1 1 0 0 0-.7.29L2.29 7.13z" opacity=".45"/></svg>;
@@ -98,6 +111,13 @@ export default function TradePanel({ tradeOpen, tradePartner, myOffer, theirOffe
     theirSlots.push(<TradeSlot key={`their-${i}`} item={item} />);
   }
 
+  const bothEmpty = myOffer.length === 0 && theirOffer.length === 0;
+  const plan = (myOffer.length === 0 ? trf('ui_nb_trade_give_none', 'You give %s nothing', tradePartner)
+    : trf('ui_nb_trade_give', 'You give %s to %s', offerWords(myOffer), tradePartner))
+    + ' ' + (theirOffer.length === 0 ? tr('ui_nb_trade_take_none', 'and take nothing.') : trf('ui_nb_trade_take', 'and take %s.', offerWords(theirOffer)));
+  const waiting = myConfirmed && !theirConfirmed ? trf('ui_nb_trade_wait_them', 'Waiting for %s to confirm.', tradePartner)
+    : !myConfirmed && theirConfirmed ? trf('ui_nb_trade_wait_you', '%s confirmed; your confirmation is left.', tradePartner)
+    : !myConfirmed ? tr('ui_nb_trade_wait_both', 'Both sides still have to confirm.') : '';
   const useCustomPos = pos.x !== 0 || pos.y !== 0;
   const style: React.CSSProperties = useCustomPos ? { position: 'fixed', left: pos.x, top: pos.y, transform: 'none', right: 'auto' } : {};
 
@@ -127,6 +147,12 @@ export default function TradePanel({ tradeOpen, tradePartner, myOffer, theirOffe
         </div>
       </div>
       {!tradeCompleting && (
+        <Ready
+          missing={bothEmpty ? tr('ui_nb_trade_empty', 'Missing: an item in one of the offers - drag one into yours') : undefined}
+          note={<>{plan} {waiting}</>}
+        />
+      )}
+      {!tradeCompleting && (
         <div className="trade-footer">
           <button className="trade-btn cancel" onClick={onCancel}>{tr('ui_cancel', 'Cancel')}</button>
           <button className={`trade-btn confirm${myConfirmed ? ' confirmed' : ''}`} onClick={onConfirm} disabled={myConfirmed}>
@@ -134,6 +160,7 @@ export default function TradePanel({ tradeOpen, tradePartner, myOffer, theirOffe
           </button>
         </div>
       )}
+      {!tradeCompleting && <Keys keys={[[tr('ui_nb_key_drag', 'Drag'), tr('ui_nb_key_offer', 'add to your offer')], [tr('ui_nb_key_click', 'Click'), tr('ui_nb_key_take_back', 'take back')], ['Esc', tr('ui_cancel', 'Cancel')]]} />}
       {tradeCompleting && (
         <div className="trade-completing-overlay">
           <div className="trade-completing-icon">{SVG_HANDSHAKE}</div>

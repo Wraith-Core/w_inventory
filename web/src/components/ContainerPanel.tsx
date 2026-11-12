@@ -3,6 +3,7 @@ import InventoryGrid from './InventoryGrid';
 import { N, SVG_BAG, SVG_X, fmtWeight } from '../utils/items';
 import { InventoryItem } from '../typings';
 import { tr, trf } from '../i18n';
+import { iso, kgShort, itemsWord } from '../utils/words';
 import usePanelPosition from '../hooks/usePanelPosition';
 import { PANEL_W_REM, PANEL_GAP_REM, remPx } from '../utils/layout';
 
@@ -71,7 +72,8 @@ export default function ContainerPanel({ containerOpen, containerGrid, container
           <div className="cp-icon">{SVG_BAG}</div>
           <div className="cp-title-text">
             <div className="cp-title">{containerLabel}</div>
-            <div className="cp-subtitle">{itemCount === 0 ? tr('ui_empty_container', 'Empty container') : trf('ui_stored_items', '%s stored item(s)', itemCount)}</div>
+            <div className="cp-subtitle">{(itemCount === 0 ? tr('ui_nb_side_empty', 'Nothing inside') : trf('ui_nb_side_has', 'Holds %s', itemsWord(itemCount)))
+              + (containerMaxWeight > 0 ? ' · ' + trf('ui_nb_kg_of', '%s of %s kg', iso(kgShort(cw)), iso(kgShort(containerMaxWeight))) : '')}</div>
           </div>
         </div>
         <div className="cp-close" onClick={onClose}>{SVG_X}</div>

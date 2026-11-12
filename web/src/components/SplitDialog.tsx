@@ -3,6 +3,8 @@ import type { CSSProperties } from 'react';
 import { getItemUrl, itemImageError } from '../utils/nui';
 import { InventoryItem } from '../typings';
 import { tr, trf } from '../i18n';
+import { iso } from '../utils/words';
+import { Ready, Keys } from './Notebook';
 
 interface SplitDialogProps {
   item: InventoryItem | null;
@@ -27,11 +29,26 @@ export default function SplitDialog({ item, visible, onConfirm, onCancel }: Spli
     }
   }, [amount, item, onConfirm]);
 
+  // Enter splits (outside the number field's own keys), like the button.
+  useEffect(() => {
+    if (!visible) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      handleConfirm();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [visible, handleConfirm]);
+
   if (!visible || !item) return null;
 
   const max = item.count - 1;
   const keepAmount = item.count - amount;
   const fill = max > 1 ? ((amount - 1) / (max - 1)) * 100 : 100;
+  const ready = amount > 0 && amount < item.count;
+  const name = item.label || item.name;
+  const fixAmount = () => setAmount(Math.max(1, Math.floor(item.count / 2)));
 
   return (
     <>
@@ -72,10 +89,19 @@ export default function SplitDialog({ item, visible, onConfirm, onCancel }: Spli
           <span className="split-adj" onClick={() => setAmount((a) => Math.min(max, a + 1))}>+</span>
         </div>
 
+        <Ready
+          missing={ready ? undefined : (item.count < 2 ? tr('ui_nb_split_one', 'Missing: a stack of two or more') : tr('ui_nb_split_missing', 'Missing: the amount'))}
+          fix={tr('ui_nb_fix', 'Fix it')}
+          onFix={item.count >= 2 ? fixAmount : undefined}
+          note={trf('ui_nb_split_ready', '%s stay here and %s %s move to a new slot.', iso(keepAmount), iso(amount), name)}
+        />
+
         <div className="split-actions">
           <div className="split-btn" onClick={onCancel}>{tr('ui_cancel', 'Cancel')}</div>
           <div className="split-btn confirm" onClick={handleConfirm}>{tr('ui_split', 'Split')}</div>
         </div>
+
+        <Keys keys={[['Enter', tr('ui_split', 'Split')], ['Esc', tr('ui_cancel', 'Cancel')]]} />
       </div>
     </>
   );
