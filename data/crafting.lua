@@ -1,4 +1,7 @@
-return {
+-- Crafting benches (walk-up places with a J prompt and a white marker). Red River has none: crafting lives in the
+-- bag (w_crafting), so the old example bench at the Valentine gunsmith was removed (owner 2026-11-15).
+-- To add a bench, put an entry like this in the list below:
+--[[
 	{
 		items = {
 			{
@@ -18,4 +21,6 @@ return {
 			["valgunsmith"] = 1,
 		},
 	},
+]]
+return {
 }
