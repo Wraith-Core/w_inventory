@@ -6125,7 +6125,7 @@ function ContainerPanel({ containerOpen, containerGrid, containerLabel, containe
     for (const it of containerGrid) {
       if (!it)
         continue;
-      w += N(it.weight) * it.count;
+      w += N(it.weight);
       n++;
     }
     return { cw: w, itemCount: n };
@@ -6281,7 +6281,7 @@ function RightInventoryPanel({
     for (const it of rightGrid) {
       if (!it)
         continue;
-      w += N(it.weight) * it.count;
+      w += N(it.weight);
       n++;
     }
     return { totalWeight: w, itemCount: n };

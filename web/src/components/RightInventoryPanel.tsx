@@ -105,7 +105,8 @@ export default function RightInventoryPanel({
     let w = 0, n = 0;
     for (const it of rightGrid) {
       if (!it) continue;
-      w += N(it.weight) * it.count;
+      // Slot weight already includes the full stack and its metadata.
+      w += N(it.weight);
       n++;
     }
     return { totalWeight: w, itemCount: n };
