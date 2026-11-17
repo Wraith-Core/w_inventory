@@ -1715,7 +1715,7 @@ end
 exports('AddItem', Inventory.AddItem)
 
 local Cart = require 'modules.inventory.cart'
-local function cartPlan(inv, lines)
+local function cartPlan(inv, lines, consume)
     return Cart.plan(inv, lines, {
         item = Items, copy = table.deepclone, metadata = Items.Metadata,
         matches = metadataMatchForStack, maxStack = GetMaxStack,
@@ -1728,10 +1728,35 @@ local function cartPlan(inv, lines)
         weapon = function(bag, item, count)
             return not bag.player or not server.canCarryNativeWeapon or server.canCarryNativeWeapon(bag, item, count)
         end,
-    })
+    }, consume)
 end
 
 require('modules.inventory.market_claim')(Inventory, Inventories, Items, cartPlan, db)
+
+-- Both sides of the one-for-one wash share the cart's single capacity-checked commit.
+exports('WashJobGold', function(src, count)
+    if GetInvokingResource() ~= 'w_jobs' then return false, 'invalid_request' end
+    if type(count) ~= 'number' or count % 1 ~= 0 or count < 1 or count > 100 then return false, 'invalid_count' end
+    local inv = Inventory(src)
+    if not inv or not inv.player then return false, 'invalid_inventory' end
+    local plan, reason = cartPlan(inv, { { item = 'washed_gold', count = count } },
+        { item = 'goldnugget', count = count })
+    if not plan then return false, reason end
+    if Inventories[inv.id] ~= inv or inv.nativeTransfer or Inventory.HasForeignSlotTransfer and Inventory.HasForeignSlotTransfer(inv) then
+        return false, 'inventory_busy'
+    end
+    inv.items, inv.weight, inv.changed = plan.items, plan.weight, true
+    local ok, err = pcall(function()
+        local updates = {}
+        for slot in pairs(plan.changed) do
+            updates[#updates + 1] = { item = inv.items[slot] or { slot = slot }, inventory = inv.id }
+        end
+        if server.syncInventory then server.syncInventory(inv) end
+        inv:syncSlotsWithClients(updates, true)
+    end)
+    if not ok then lib.print.error('Washed gold committed, inventory publication failed: ' .. tostring(err)) end
+    return true
+end)
 
 exports('CanCarryItems', function(inv, lines)
     local plan, reason = cartPlan(Inventory(inv), lines)

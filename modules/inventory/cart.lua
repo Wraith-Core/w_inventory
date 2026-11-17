@@ -2,7 +2,7 @@
 -- slot values, so publication cannot expose a half-delivered order.
 local Cart = {}
 
-function Cart.plan(inv, lines, api)
+function Cart.plan(inv, lines, api, consume)
     if not inv or not inv.slots then return nil, 'invalid_inventory' end
     if type(lines) ~= 'table' or #lines < 1 or #lines > 12 then return nil, 'invalid_cart' end
     local prepared, totals = {}, {}
@@ -33,6 +33,28 @@ function Cart.plan(inv, lines, api)
     -- Metadata hooks can yield. Read the live bag only after all hooks finish.
     local slots, weight = api.copy(inv.items), inv.weight
     local changed, additions = {}, {}
+    if consume then
+        local def, sources = api.item(consume.item), {}
+        if not def then return nil, 'invalid_item' end
+        for slot, row in pairs(slots) do
+            if row.name == def.name then sources[#sources + 1] = slot end
+        end
+        -- Free the smallest stacks first so a full bag can still exchange a whole stack.
+        table.sort(sources, function(a, b)
+            return slots[a].count < slots[b].count or (slots[a].count == slots[b].count and a < b)
+        end)
+        local left = consume.count
+        for _, slot in ipairs(sources) do
+            local row = slots[slot]
+            local take = math.min(row.count, left)
+            weight = weight - row.weight
+            row.count, left, changed[slot] = row.count - take, left - take, true
+            if row.count == 0 then slots[slot] = nil
+            else row.weight = api.weight(def, row); weight = weight + row.weight end
+            if left == 0 then break end
+        end
+        if left > 0 then return nil, 'not_enough_items' end
+    end
     for _, entry in ipairs(prepared) do
         local item, remaining = entry.item, entry.count
         for pass = 1, 2 do

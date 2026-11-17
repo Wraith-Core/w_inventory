@@ -152,6 +152,7 @@ CreateThread(function()
         nativeCatalog.money.label = money.label.en or 'Money'
         nativeCatalog.money.label_ar = nativeCatalog.money.label_ar or money.label.ar
     end
+    require('modules.items.materials')(nativeCatalog, catalogNames, ItemList, Catalog.apply)
     Catalog.apply(ItemList, nativeCatalog, false)
     -- pick the server language (w_lib:locale) for the rows the native catalogue replaced
     shared.relocalizeItems()

@@ -673,7 +673,7 @@ return {
 		},
 	},
 	["goldnugget"] = {
-		label = { ar = "ذهب خام", en = "Gold Nugget" },
+		label = { ar = "ذهب غير مغسول", en = "Unwashed gold" },
 		weight = 300,
 		stack = true,
 		close = true,
@@ -682,7 +682,23 @@ return {
 			image = "goldnugget.png",
 		},
 	},
-	["raw_silver"] = {
+	["washed_gold"] = {
+        label = { ar = "ذهب مغسول", en = "Washed gold" }, weight = 300, stack = true, close = true,
+        client = { image = "goldnugget.png" },
+    },
+    ["ruby"] = {
+        label = { ar = "ياقوت", en = "Ruby" }, weight = 300, stack = true, close = true,
+        client = { image = "rock.png" },
+    },
+    ["gunpowder"] = {
+        label = { ar = "بارود", en = "Gunpowder" }, weight = 200, stack = true, close = true,
+        client = { image = "coal.png" },
+    },
+    ["crude_oil"] = {
+        label = { ar = "زيت خام", en = "Crude oil" }, weight = 500, stack = true, close = true,
+        client = { image = "kit_gun_oil.png" },
+    },
+    ["raw_silver"] = {
 		label = { ar = "فضة خام", en = "Raw Silver" },
 		weight = 300,
 		stack = true,

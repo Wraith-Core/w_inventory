@@ -3514,6 +3514,16 @@ AddEventHandler('w_lib:setLocale', function()
 	})
 end)
 
+RegisterNetEvent('w_inventory:gatheringMaterial', function(key, row)
+    if source ~= 65535 or type(row) ~= 'table' or row.name ~= key then return end
+    require('modules.items.catalog').apply(Items, { [key] = row }, true, client.imagepath)
+    shared.localizeItemData(Items[key])
+    if PlayerData.loaded and client.uiLoaded then
+        SendNUIMessage({ action = 'init', data = { items = buildItemData(), locale = shared.localeKey(),
+            dir = uiDirection(), strings = buildUiLocales() } })
+    end
+end)
+
 RegisterNetEvent('w_inventory:setPlayerInventory', function(currentDrops, inventory, weight, player)
 	if source == '' then return end
 
