@@ -9,7 +9,7 @@ function Cart.plan(inv, lines, api, consume)
     for _, line in ipairs(lines) do
         if type(line) ~= 'table' then return nil, 'invalid_cart' end
         local count = line.count
-        if type(count) ~= 'number' or count ~= count or count % 1 ~= 0 or count < 1 or count > 100 then
+        if type(count) ~= 'number' or count ~= count or count % 1 ~= 0 or count < 1 or count > (api.maxLineCount or 100) then
             return nil, 'invalid_count'
         end
         local item = api.item(line.item)

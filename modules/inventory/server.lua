@@ -595,9 +595,7 @@ function Inventory.Create(id, label, invType, slots, weight, maxWeight, owner, i
 end
 
 ---@param inv inventory
-function Inventory.Remove(inv)
-	inv = Inventory(inv) --[[@as WInventory]]
-
+local function removeInventory(inv)
 	if inv then
         -- already dropped by Inventory.Forget (a character purge): an old reference must not
         -- unindex a new inventory loaded under the same id since
@@ -638,6 +636,23 @@ function Inventory.Remove(inv)
 	end
 end
 
+function Inventory.Remove(inv)
+    inv = Inventory(inv)
+    if not (inv and inv.player and shared.backend == 'wcore') then return removeInventory(inv) end
+    if Inventories[inv.id] ~= inv then return true end
+    -- Disconnect can flush a dirty bag and yield. Keep its session indexed
+    -- and exclude new awards until that write and the removal are both done.
+    local previous = inv.nativeTransfer
+    inv.nativeTransfer = coroutine.running()
+    local ok, result = pcall(function()
+        Inventory.AwaitGatheringSaves(inv)
+        return removeInventory(inv)
+    end)
+    inv.nativeTransfer = previous
+    if not ok then error(result, 0) end
+    return result
+end
+
 exports('RemoveInventory', Inventory.Remove)
 
 --- Drop a loaded inventory WITHOUT saving it (PurgeCharacter, server_purge.lua): its rows are
@@ -647,6 +662,10 @@ exports('RemoveInventory', Inventory.Remove)
 --- Refuses (false) while a transfer runs on it: that thread still owns the rows.
 function Inventory.Forget(inv)
     if type(inv) ~= 'table' or Inventories[inv.id] ~= inv then return false end
+    if inv.player and Inventory.GatheringState then
+        local working, held = Inventory.GatheringState(inv.owner)
+        if working or held then return false end
+    end
     if type(inv.nativeTransfer) == 'thread' then return false end
     -- a recovery token (a lost market / custody reply) belongs to the character being purged
     inv.nativeTransfer, inv.purged, inv.changed = nil, true, false
@@ -682,6 +701,7 @@ function Inventory.Rekey(inv, id, owner, dbId)
             activeIdentifiers[inv.owner] = nil
             activeIdentifiers[owner] = inv.id
         end
+        if Inventory.MoveGatheringOwner then Inventory.MoveGatheringOwner(inv.owner, owner, inv) end
         inv.owner = owner
         return true
     end
@@ -723,11 +743,37 @@ local function persistentRows(inv)
     return #rows > 0 and json.encode(rows) or nil
 end
 
+-- A grant holds nativeTransfer before waiting. Writers already past the gate
+-- drain, and new snapshots cannot start until the committed bag is published.
+function Inventory.AwaitGatheringSaves(inv)
+    while (inv.pendingPlayerWrites or 0) > 0 do Wait(0) end
+end
+
+-- A first login can create the bag before WCore's asynchronous INSERT has
+-- filled PlayerData.id. Only adopt the generation from the same live session.
+function Inventory.GatheringOwnerRow(inv)
+    if inv.ownerRow then return inv.ownerRow end
+    local owner = inv.owner
+    local player = server.GetPlayerFromId(inv.id)
+    local data = player and player.PlayerData
+    if not data or not tonumber(data.id) or tonumber(data.source) ~= inv.id or data.citizenid ~= owner
+        or Inventories[inv.id] ~= inv or inv.owner ~= owner or inv.purged then return nil end
+    inv.ownerRow = tonumber(data.id)
+    return inv.ownerRow
+end
+
 function Inventory.Save(inv)
     inv = Inventory(inv)
     -- purged: its character was deleted (Inventory.Forget); saving would recreate its rows
     if not inv or inv.datastore or inv.purged then return false end
+    local fenced = inv.player and shared.backend == 'wcore'
+    local before = inv.items
     local data = persistentRows(inv)
+    if fenced then
+        if Inventories[inv.id] ~= inv or inv.items ~= before
+            or (inv.nativeTransfer and inv.nativeTransfer ~= coroutine.running()) then return false end
+        inv.pendingPlayerWrites = (inv.pendingPlayerWrites or 0) + 1
+    end
     -- the key this save is sent under: the character may move to another number while it is on
     -- its way (w_core Reassign / TransferNumber; server_purge.lua re-keys the copy)
     local sentId, sentOwner, sentMoves = inv.id, inv.owner, inv.moves
@@ -736,11 +782,12 @@ function Inventory.Save(inv)
     local ok, result, sentKey, sentValue = pcall(function()
         -- the bag names its players row (ownerRow): a save still in flight when the character
         -- moved can then never land on the next holder of the number
-        if inv.player then return db.savePlayer(inv.owner, data, inv.items, inv.ownerRow)
+        if inv.player then return db.savePlayer(inv.owner, data, inv.items, inv.ownerRow, inv.gatherRevision)
         elseif inv.type == 'trunk' then return db.saveTrunk(inv.dbId, data)
         elseif inv.type == 'glovebox' then return db.saveGlovebox(inv.dbId, data)
         else return db.saveStash(inv.owner, inv.dbId, data, inv.items) end
     end)
+    if fenced then inv.pendingPlayerWrites = inv.pendingPlayerWrites - 1 end
     if not ok or result ~= true then
         inv.changed = true
         warn(('Inventory save failed for %s: %s'):format(tostring(inv.id), tostring(result)))
@@ -1540,6 +1587,7 @@ function Inventory.AddItem(inv, item, count, metadata, slot, cb)
 	inv = Inventory(inv) --[[@as WInventory]]
 
 	if not inv?.slots then return false, 'invalid_inventory' end
+    local originalSlots = inv.items
     if item.nativeGunbelt and not inv.player then return false, 'gunbelt_is_character_ammo' end
     if item.name == 'gold' then return false, 'gold_is_account_currency' end
     if item.name == 'money' or item.name == 'cash' then
@@ -1639,6 +1687,10 @@ function Inventory.AddItem(inv, item, count, metadata, slot, cb)
 
 	if not toSlot then return false, 'inventory_full' end
 
+    -- Item metadata hooks can yield after selecting a slot. A gathering commit
+    -- replaces the slot table, and owns the inventory while its SQL is pending.
+    if inv.player and shared.backend == 'wcore' and (Inventories[inv.id] ~= inv or inv.items ~= originalSlots
+        or (inv.nativeTransfer and inv.nativeTransfer ~= coroutine.running())) then return false, 'inventory_busy' end
 	inv.changed = true
 
 	local invokingResource = server.loglevel > 1 and GetInvokingResource()
@@ -1715,9 +1767,9 @@ end
 exports('AddItem', Inventory.AddItem)
 
 local Cart = require 'modules.inventory.cart'
-local function cartPlan(inv, lines, consume)
+local function cartPlan(inv, lines, consume, maxLineCount)
     return Cart.plan(inv, lines, {
-        item = Items, copy = table.deepclone, metadata = Items.Metadata,
+        item = Items, copy = table.deepclone, metadata = Items.Metadata, maxLineCount = maxLineCount,
         matches = metadataMatchForStack, maxStack = GetMaxStack,
         weight = Inventory.SlotWeight, count = Inventory.GetItemCount,
         allowed = function(item)
@@ -1732,6 +1784,7 @@ local function cartPlan(inv, lines, consume)
 end
 
 require('modules.inventory.market_claim')(Inventory, Inventories, Items, cartPlan, db)
+require('modules.inventory.gathering_award')(Inventory, Inventories, Items, cartPlan)
 
 -- Both sides of the one-for-one wash share the cart's single capacity-checked commit.
 exports('WashJobGold', function(src, count)
@@ -1768,6 +1821,7 @@ exports('AddItems', function(inv, lines)
     local plan, reason = cartPlan(inv, lines)
     if not plan then return false, reason end
     if Inventories[inv.id] ~= inv then return false, 'invalid_inventory' end
+    if inv.nativeTransfer and inv.nativeTransfer ~= coroutine.running() then return false, 'inventory_busy' end
     -- No yield between the last capacity check and this complete state change.
     inv.items, inv.weight, inv.changed = plan.items, plan.weight, true
     local ok, err = pcall(function()

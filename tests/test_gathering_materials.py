@@ -59,6 +59,7 @@ class JobGoldWash(unittest.TestCase):
         self.vm.execute("""
             package.preload['modules.inventory.cart'] = function() return CartModule end
             package.preload['modules.inventory.market_claim'] = function() return function() end end
+            package.preload['modules.inventory.gathering_award'] = function() return function() end end
         """)
         # Load the actual public export and its cart adapter. The unrelated portions
         # of the inventory server require Cfx-specific syntax and engine globals.

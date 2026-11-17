@@ -62,9 +62,16 @@ local function mutate(owner, action, name, count, id, ammo)
         if not db.playerExists(owner) then return false, 'Character not found' end
         -- the row read here is the one written below: a character w_core moves to another number
         -- meanwhile (its number handed on) must not have its edit land on the next holder
-        local rowId = db.playerRowId(owner)
+        local data, rowId, gatherRevision
+        if shared.backend == 'wcore' then
+            data, rowId, gatherRevision = db.loadGatheringBag(owner)
+            if not rowId then return false, 'Character not found' end
+        else
+            rowId = db.playerRowId(owner)
+            data = db.loadPlayer(owner)
+        end
         -- story-only weapons leave the row with this edit's save (data/story_only_weapons.lua)
-        local rows = Inventory.StripStoryOnly(db.loadPlayer(owner) or {}, 'the offline bag of ' .. owner)
+        local rows = Inventory.StripStoryOnly(data or {}, 'the offline bag of ' .. owner)
         local item = name and Items(name)
         local lost = {}
         if action == 'add' then
@@ -135,7 +142,7 @@ local function mutate(owner, action, name, count, id, ammo)
             rows = kept
         else return false, 'Invalid operation' end
         if online(owner) then return false, 'Character is online' end
-        local saved = db.savePlayer(owner, json.encode(rows), nil, rowId) == true
+        local saved = db.savePlayer(owner, json.encode(rows), nil, rowId, gatherRevision) == true
         if saved then
             for _, l in ipairs(lost) do
                 Losses.record(owner, l.name, l.count, l.metadata, action == 'clear' and 'cleared' or 'admin',

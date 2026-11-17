@@ -22,6 +22,7 @@ local Query = {
     -- (players.id): w_core moves a character to another number and may hand the old one to
     -- someone else at once (TransferNumber), and a save still on its way must not land on him
     UPDATE_PLAYER_ROW = 'UPDATE `{user_table}` SET inventory = ? WHERE `{user_column}` = ? AND id = ?',
+    UPDATE_GATHERING_BAG = 'UPDATE players SET inventory = ? WHERE citizenid = ? AND (id = ? OR ? = 0) AND w_gather_revision = ?',
     SELECT_PLAYER = 'SELECT inventory FROM `{user_table}` WHERE `{user_column}` = ?',
 }
 
@@ -216,6 +217,13 @@ Citizen.CreateThreadNow(function()
         if not success then
             error(('Missing native inventory column on %s; install the framework schema first'):format(playerTable))
         end
+        if shared.backend == 'wcore' then
+            local exists = MySQL.scalar.await([[SELECT 1 FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='players' AND COLUMN_NAME='w_gather_revision']])
+            if not exists then
+                MySQL.query.await('ALTER TABLE players ADD COLUMN w_gather_revision BIGINT UNSIGNED NOT NULL DEFAULT 0')
+            end
+        end
     end
 
     local clearStashes = GetConvar('inventory:clearstashes', '6 MONTH')
@@ -260,14 +268,38 @@ function db.loadPlayer(identifier)
     return inventory and json.decode(inventory)
 end
 
+-- The old resource can die with its last COMMIT still running on an oxmysql
+-- connection. A plain MVCC read here would install the pre-award bag.
+function db.loadGatheringBag(owner)
+    awaitDatabase()
+    local row
+    local fenced = MySQL.startTransaction(function(query)
+        local rows = query('SELECT id, inventory, w_gather_revision FROM players WHERE citizenid = ? FOR UPDATE', { owner })
+        assert(type(rows) == 'table', 'Player inventory read failed')
+        row = rows[1]
+        return true
+    end)
+    assert(fenced == true, 'Could not lock the player inventory for loading')
+    if not row then return {}, nil, 0 end -- the core may still be creating its first row
+    return nativeRsg.decode(row.inventory), assert(tonumber(row.id)), assert(tonumber(row.w_gather_revision))
+end
+
 --- `rowId` (players.id, optional): the row the bag was loaded from; a row that no longer holds
 --- the number (the character moved) is left alone, the answer stays true (nothing to retry: the
 --- moved copy is re-keyed and saves again under its new number).
-function db.savePlayer(owner, inventory, liveItems, rowId)
+function db.savePlayer(owner, inventory, liveItems, rowId, gatherRevision)
     awaitDatabase()
     if nativeVorp then return nativeVorp.savePlayer(owner, inventory, liveItems) end
     if nativeRsg then inventory = nativeRsg.encode(inventory) end
     rowId = tonumber(rowId)
+    if gatherRevision ~= nil then
+        rowId = rowId or 0
+        local saved = MySQL.update.await(Query.UPDATE_GATHERING_BAG, { inventory, owner, rowId, rowId, gatherRevision })
+        if saved == 1 then return true end
+        -- An unchanged bag may report zero affected rows; a stale snapshot must not succeed.
+        return saved == 0 and MySQL.scalar.await([[SELECT 1 FROM players WHERE citizenid = ? AND (id = ? OR ? = 0)
+            AND w_gather_revision = ? AND BINARY inventory = BINARY ?]], { owner, rowId, rowId, gatherRevision, inventory }) ~= nil
+    end
     if rowId then return successful(MySQL.prepare.await(Query.UPDATE_PLAYER_ROW, { inventory, owner, math.floor(rowId) })) end
     return successful(MySQL.prepare.await(Query.UPDATE_PLAYER, { inventory, owner }))
 end

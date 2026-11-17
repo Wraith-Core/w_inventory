@@ -94,6 +94,7 @@ function Exchange.new(deps)
             local size = packing and output.ammocount or input.ammocount
             local metadata = deps.metadata(inv, output)
             -- Metadata hooks may yield. Revalidate before entering the no-yield plan/commit.
+            if inv.nativeTransfer and inv.nativeTransfer ~= coroutine.running() then return false, 'busy' end
             if inv.items[slot] ~= row or row.count ~= record.count or deps.encode(row.metadata) ~= record.metadata then return false, 'invalid' end
             local plan, error, need = Exchange.plan(inv, slot, input, output, metadata, packing, size,
                 deps.weight, deps.maxStack, deps.matches)

@@ -43,9 +43,16 @@ local function initializePlayerInventory(player, data)
             assert(Inventory.Remove(previous), 'Previous inventory save failed; character load cancelled')
         end
     end
-	if not data then
-		data = db.loadPlayer(player.identifier)
-	end
+    local ownerRow, gatherRevision
+    if shared.backend == 'wcore' then
+        local durableItems
+        durableItems, ownerRow, gatherRevision = db.loadGatheringBag(player.identifier)
+        -- A bootstrap caller may supply a copy from before a gathering commit.
+        -- Never stamp it with the current revision; load the committed bag.
+        if not data or gatherRevision > 0 then data = durableItems end
+    elseif not data then
+        data = db.loadPlayer(player.identifier)
+    end
 
 	-- story-only weapons (data/story_only_weapons.lua) are no longer items: they leave the bag here
 	-- and the bag is saved without them (inv.changed below)
@@ -116,7 +123,8 @@ local function initializePlayerInventory(player, data)
 		-- RSG: the players row (players.id) the bag belongs to. w_core may move the character to
 		-- another number and hand the old one to someone else; the bag's saves name this row, so one
 		-- still on its way never lands on the next holder (db.savePlayer)
-		inv.ownerRow = shared.framework == 'rsg' and tonumber(player.id) or nil
+        inv.ownerRow = ownerRow or (shared.framework == 'rsg' and tonumber(player.id) or nil)
+        inv.gatherRevision = gatherRevision
 		inv.player = server.setPlayerData(player)
 		inv.player.ped = GetPlayerPed(player.source)
         inv.player.slots, inv.player.maxWeight = inv.slots, inv.maxWeight
@@ -144,7 +152,12 @@ server.nativeOfflineLocks = {}
 server.nativeLoadingOwners = {}
 function server.setPlayerInventory(player, data)
     local owner = tostring(player.identifier)
-    while server.nativeOfflineLocks[owner] do Wait(0) end
+    while true do
+        local working, held
+        if Inventory.GatheringState then working, held = Inventory.GatheringState(owner) end
+        if not (server.nativeOfflineLocks[owner] or working or held) then break end
+        Wait(0)
+    end
     if server.nativeLoadingOwners[owner] then return end
     server.nativeLoadingOwners[owner] = true
     local ok, result = xpcall(initializePlayerInventory, debug.traceback, player, data)

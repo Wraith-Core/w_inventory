@@ -132,8 +132,20 @@ local function saveOfflineItems(playerData)
 
     -- an offline Player object is a copy read earlier: its players row (id) is named, so a copy of
     -- a character w_core has since moved to another number never writes over that number's next holder
-    db.savePlayer(playerData.citizenid, next(buffer) and json.encode(buffer) or nil, nil, tonumber(playerData.id))
-    return true
+    local owner, rowId = playerData.citizenid, tonumber(playerData.id)
+    local rows = next(buffer) and json.encode(buffer) or nil
+    if shared.backend ~= 'wcore' then return db.savePlayer(owner, rows, nil, rowId) end
+    -- Offline WCore player objects retain the players row (SELECT *) from the time
+    -- they were opened. A gathering commit increments its bag revision in SQL.
+    if not rowId or server.nativeOfflineLocks[owner] or server.nativeLoadingOwners[owner] then return false end
+    for _, inv in pairs(Inventory.GetPersistenceInventories()) do
+        if inv.player and inv.owner == owner then return false end
+    end
+    server.nativeOfflineLocks[owner] = true
+    local ok, saved = pcall(db.savePlayer, owner, rows, nil, rowId, tonumber(playerData.w_gather_revision) or 0)
+    server.nativeOfflineLocks[owner] = nil
+    if not ok then error(saved, 0) end
+    return saved
 end
 
 local function setCoreItems(Player, items)

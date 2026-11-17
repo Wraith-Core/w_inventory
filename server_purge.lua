@@ -162,6 +162,10 @@ end
 --- recovery (a lost reply) that the purge settles and releases.
 local function busy(cid, c)
     if server.nativeLoadingOwners[cid] then return 'inventory_busy' end
+    if Inventory.GatheringState then
+        local working, held = Inventory.GatheringState(cid)
+        if working or held then return 'inventory_busy' end
+    end
     local working, held = Inventory.MarketPurgeState(cid)
     if working then return 'inventory_busy' end
     held = held or (server.DebtCustodyHeld ~= nil and server.DebtCustodyHeld(cid))
