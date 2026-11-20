@@ -1,7 +1,10 @@
 -- Currency rows are projections. Every physical transfer has two ledger accounts.
 return function(Inventory, Inventories, Items)
     local function ready()
-        return GetResourceState('w_centralbank') == 'started' and exports.w_centralbank:IsReady()
+        local okN, name = pcall(function() return exports.w_lib:EconName() end)
+        if not okN or name ~= 'w_centralbank' then return false end
+        local okR, r = pcall(function() return exports.w_lib:EconIsReady() end)
+        return okR and r == true
     end
     function Inventory.CashAccount(inv)
         if not inv then return nil end
@@ -26,7 +29,7 @@ return function(Inventory, Inventories, Items)
                     if not ok or not value then return end
                     owner = tostring(value)
                 end
-                exports.w_centralbank:SetAccountOwner(claim, owner)
+                exports.w_lib:EconSetAccountOwner(claim, owner)
             end
         end
     end
@@ -42,8 +45,8 @@ return function(Inventory, Inventories, Items)
                 if not ok or not value then return nil end
                 owner = tostring(value)
             end
-            if not exports.w_centralbank:EnsureAccount(id, owner, 'inventory') then return nil end
-            if owner and not exports.w_centralbank:SetAccountOwner(id, owner) then return nil end
+            if not exports.w_lib:EconEnsureAccount(id, owner, 'inventory') then return nil end
+            if owner and not exports.w_lib:EconSetAccountOwner(id, owner) then return nil end
         end
         return id
     end
@@ -51,7 +54,7 @@ return function(Inventory, Inventories, Items)
         inv = Inventory(inv)
         local id = inv and account(inv)
         if not id then return false end
-        local value = exports.w_centralbank:GetBalance(id)
+        local value = exports.w_lib:EconGetBalance(id)
         if value == nil then return false end
         local updates, slot = {}, nil
         for index, row in pairs(inv.items) do
@@ -84,21 +87,21 @@ return function(Inventory, Inventories, Items)
         amount = tonumber(amount)
         local id = inv and account(inv)
         if not id or not amount or amount ~= amount or amount == math.huge or amount == -math.huge then return false, 'economy_unavailable' end
-        local ok, reason = exports.w_centralbank:AdjustAccount(id, amount, 'inventory-currency')
+        local ok, reason = exports.w_lib:EconAdjustAccount(id, amount, 'inventory-currency')
         if ok then Inventory.ReflectCash(inv) end
         return ok, reason
     end
     function Inventory.TransferCash(from, to, amount)
         local a, b = account(from), account(to)
         if not a or not b then return false, 'economy_unavailable' end
-        local ok, reason = exports.w_centralbank:Transfer(a, b, amount, 'physical-cash-transfer')
+        local ok, reason = exports.w_lib:EconTransfer(a, b, amount, 'physical-cash-transfer')
         if ok then Inventory.ReflectCash(from); Inventory.ReflectCash(to) end
         return ok, reason
     end
     function Inventory.ReclaimCash(inv)
         local id = account(inv)
         if not id then return false end
-        local amount = exports.w_centralbank:GetBalance(id)
+        local amount = exports.w_lib:EconGetBalance(id)
         if amount == nil then return false end
         local moves, seen = {}, {}
         if amount > 0 then moves[#moves+1] = {from=id,to='central:reserve',amount=amount} end
@@ -106,17 +109,17 @@ return function(Inventory, Inventories, Items)
             local meta = row.metadata or row.info
             local claim = row.name == 'moneybag' and type(meta) == 'table' and meta.economyClaim
             if type(claim) == 'string' and claim:match('^moneybag:%x+:cash$') and not seen[claim] then
-                local held = exports.w_centralbank:GetBalance(claim)
+                local held = exports.w_lib:EconGetBalance(claim)
                 if held and held > 0 then moves[#moves+1] = {from=claim,to='central:reserve',amount=held} end
                 seen[claim] = true
             end
         end
         if #moves==0 then return true end
-        local ok = exports.w_centralbank:TransferMany(moves, 'expired-physical-cash')
+        local ok = exports.w_lib:EconTransferMany(moves, 'expired-physical-cash')
         if ok then Inventory.ReflectCash(inv) end
         return ok == true
     end
-    AddEventHandler('w_centralbank:balanceChanged', function(id)
+    exports.w_lib:EconOnBalanceChanged(function(id)
         for _, inv in pairs(Inventories) do
             if Inventory.CashAccount(inv) == id then Inventory.ReflectCash(inv) end
         end

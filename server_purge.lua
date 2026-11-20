@@ -199,8 +199,9 @@ local function cashMoves(c, has, cid)
     if #ids == 0 then return {} end
     table.sort(ids)
     local ready = false
-    if GetResourceState('w_centralbank') == 'started' then
-        local ok, value = pcall(function() return exports.w_centralbank:IsReady() end)
+    local okN, econName = pcall(function() return exports.w_lib:EconName() end)
+    if okN and econName == 'w_centralbank' then
+        local ok, value = pcall(function() return exports.w_lib:EconIsReady() end)
         ready = ok and value == true
     end
     if not ready then
@@ -217,7 +218,7 @@ local function cashMoves(c, has, cid)
     end
     local moves = {}
     for _, id in ipairs(ids) do
-        local ok, balance = pcall(function() return exports.w_centralbank:GetBalance(id) end)
+        local ok, balance = pcall(function() return exports.w_lib:EconGetBalance(id) end)
         if not ok then return nil, 'economy_not_ready' end
         balance = tonumber(balance) -- nil: no such account
         if balance and balance > 0 then
@@ -240,7 +241,7 @@ local function reclaim(moves, cid)
     if #moves == 0 then return true, 0, 0 end
     local function transfer(list)
         local ok, done, why = pcall(function()
-            return exports.w_centralbank:TransferMany(list, 'Character deleted: stash cash returned to the reserve')
+            return exports.w_lib:EconTransferMany(list, 'Character deleted: stash cash returned to the reserve')
         end)
         if ok and done == true then return true end
         return false, tostring(why or done or 'transfer_failed')
@@ -425,7 +426,7 @@ end)
 -- transaction: a stash of the id loaded again in between (staff opened 'policestash_<id>') would
 -- save its row back under the number, and a registration or a held state would outlive the
 -- character. The memory the purge drops is dropped once more, unsaved; the rows are w_core's.
-AddEventHandler('w_core:server:characterDeleted', function(citizenid)
+exports.w_lib:FwOnCharacterDeleted(function(citizenid)
     local cid = tostring(citizenid or '')
     if cid == '' then return end
     local loaded = {}
@@ -489,7 +490,7 @@ local function movedStash(inv, to, old, new)
     return nil
 end
 
-AddEventHandler('w_core:server:citizenIdChanged', function(old, new)
+exports.w_lib:FwOnCitizenIdChanged(function(old, new)
     old, new = tostring(old or ''), tostring(new or '')
     if old == '' or new == '' or old == new then return end
     local bags, stashes = {}, {}

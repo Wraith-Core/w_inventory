@@ -87,5 +87,7 @@ files {
     'modules/bridge/qbr/client.lua',
     'modules/bridge/qbr/server.lua',
     'modules/bridge/qbr/compat.lua',
+    'modules/bridge/wlib/client.lua',
+    'modules/bridge/wlib/server.lua',
     'data/*.lua',
 }

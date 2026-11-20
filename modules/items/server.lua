@@ -105,10 +105,13 @@ CreateThread(function()
         assert(success, 'Unable to load the native VORP items table')
         weapons = nativeVorpWeapons()
     elseif shared.framework == 'rsg' then
-        local core = exports['rsg-core']:GetCoreObject()
-        definitions, weapons = core.Shared.Items, core.Shared.Weapons
+        definitions = exports.w_lib:FwGetSharedItems() or {}
+        weapons = exports.w_lib:FwGetSharedWeapons() or {}
     elseif shared.framework == 'qbr' then
-        definitions = exports['qbr-core']:GetItems()
+        definitions = exports.w_lib:FwGetSharedItems() or {}
+    elseif shared.framework == 'wlib' then
+        definitions = exports.w_lib:FwGetSharedItems() or {}
+        weapons = exports.w_lib:FwGetSharedWeapons() or {}
     else
         error('Unsupported native inventory framework: ' .. tostring(shared.framework))
     end

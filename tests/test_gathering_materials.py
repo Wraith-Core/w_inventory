@@ -153,9 +153,15 @@ class GatheringMaterialCatalog(unittest.TestCase):
                 resolveItemName = string.lower, isStoryOnlyWeapon = function() return false end,
                 relocalizeItems = function() end, localizeItemData = function() end}
             lib = {load = function() return {} end, callback = {register = function(k, f) callbacks[k] = f end}}
-            exports = setmetatable({['rsg-core'] = {GetCoreObject = function()
-                return {Shared = {Items = {coal = {name = 'coal', type = 'item'}}, Weapons = {}}}
-            end}}, {__call = function(_, k, f) api[k] = f end})
+            exports = setmetatable({
+                ['rsg-core'] = {GetCoreObject = function()
+                    return {Shared = {Items = {coal = {name = 'coal', type = 'item'}}, Weapons = {}}}
+                end},
+                w_lib = {
+                    FwGetSharedItems = function() return {coal = {name = 'coal', type = 'item'}} end,
+                    FwGetSharedWeapons = function() return {} end,
+                },
+            }, {__call = function(_, k, f) api[k] = f end})
             function TriggerEvent() end
             function TriggerClientEvent(...) events[#events + 1] = {...} end
             function CreateThread(f) f() end

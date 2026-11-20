@@ -1235,8 +1235,8 @@ local restoreGeneration = 0
 -- and placing the ped, so the saved weapons wait for w_core's post-spawn signal. Not the
 -- isLoggedIn bag alone: w_hud's probe sets it at login. True at load = w_inventory restarted in the world.
 local worldReady = LocalPlayer.state.isLoggedIn == true
-RegisterNetEvent('WCore:Client:OnPlayerLoaded', function() worldReady = true end)
-RegisterNetEvent('WCore:Client:OnPlayerUnload', function() worldReady = false end)
+exports.w_lib:FwOnCharacterLoaded(function() worldReady = true end)
+exports.w_lib:FwOnCharacterUnloaded(function() worldReady = false end)
 
 local function isUsageFlag(value)
 	return value == true or value == 1 or value == '1'

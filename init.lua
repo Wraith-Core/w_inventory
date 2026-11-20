@@ -119,6 +119,7 @@ end
 -- A manual inventory:framework value remains available only as an emergency override.
 local frameworkAliases = {
     auto = 'auto',
+    wlib = 'wlib',
     vorp = 'vorp',
     vorpcore = 'vorp',
     vorp_core = 'vorp',
@@ -154,7 +155,8 @@ local function frameworkFromWLib()
         return exports.w_lib:FwName()
     end)
 
-    return ok and normalizeFramework(name) or nil
+    if not ok or type(name) ~= 'string' or name == '' or name == 'none' then return nil end
+    return normalizeFramework(name) or 'wlib'
 end
 
 local function runningFrameworks()
@@ -183,18 +185,20 @@ local function resolveFramework()
     local replicated = normalizeFramework(GetConvar('w_inventory:framework', ''))
 
     for _ = 1, 150 do
-        if configured ~= 'auto' then
+        if configured == 'wlib' then
+            return 'wlib', 'configured'
+        elseif configured ~= 'auto' then
             if resourceStarted(frameworkResources[configured]) then
                 return configured, 'configured'
             end
         elseif not IsDuplicityVersion() and replicated and replicated ~= 'auto'
-            and resourceStarted(frameworkResources[replicated]) then
+            and (replicated == 'wlib' or resourceStarted(frameworkResources[replicated])) then
             return replicated, 'server'
         else
             local fromLibrary = frameworkFromWLib()
             local running = runningFrameworks()
 
-            if fromLibrary and fromLibrary ~= 'auto' and resourceStarted(frameworkResources[fromLibrary]) then
+            if fromLibrary and fromLibrary ~= 'auto' and (fromLibrary == 'wlib' or resourceStarted(frameworkResources[fromLibrary])) then
                 return fromLibrary, 'w_lib'
             end
 

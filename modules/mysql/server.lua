@@ -113,6 +113,12 @@ Citizen.CreateThreadNow(function()
         -- VORP's horses are in the stables table and not horses (that is the RSG schema)
         vehicleTable = 'stables'
         vehicleColumn = 'id'
+    elseif shared.framework == 'wlib' then
+        -- Universal w_lib mode: player bags persist inside w_inventory itself (no framework DB coupling).
+        playerTable = 'w_inventory'
+        playerColumn = 'owner'
+        vehicleTable = 'stables'
+        vehicleColumn = 'id'
     end
 
     if not playerTable then
@@ -255,6 +261,9 @@ end
 
 function db.playerExists(identifier)
     awaitDatabase()
+    if shared.framework == 'wlib' then
+        return MySQL.scalar.await("SELECT 1 FROM w_inventory WHERE owner = ? AND name = 'player'", { tostring(identifier) }) ~= nil
+    end
     return MySQL.scalar.await(shared.framework == 'vorp'
         and 'SELECT charidentifier FROM characters WHERE charidentifier = ?'
         or 'SELECT citizenid FROM players WHERE citizenid = ?', { identifier }) ~= nil
@@ -263,6 +272,10 @@ end
 function db.loadPlayer(identifier)
     awaitDatabase()
     if nativeVorp then return nativeVorp.loadPlayer(identifier) end
+    if shared.framework == 'wlib' then
+        local raw = MySQL.scalar.await("SELECT data FROM w_inventory WHERE owner = ? AND name = 'player'", { tostring(identifier) })
+        return raw and json.decode(raw) or {}
+    end
     local inventory = MySQL.prepare.await(Query.SELECT_PLAYER, { identifier })
     if nativeRsg then return nativeRsg.decode(inventory) end
     return inventory and json.decode(inventory)
@@ -290,6 +303,9 @@ end
 function db.savePlayer(owner, inventory, liveItems, rowId, gatherRevision)
     awaitDatabase()
     if nativeVorp then return nativeVorp.savePlayer(owner, inventory, liveItems) end
+    if shared.framework == 'wlib' then
+        return successful(MySQL.prepare.await(Query.UPSERT_STASH, { inventory, tostring(owner), 'player' }))
+    end
     if nativeRsg then inventory = nativeRsg.encode(inventory) end
     rowId = tonumber(rowId)
     if gatherRevision ~= nil then
