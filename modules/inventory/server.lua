@@ -934,12 +934,16 @@ function Inventory.GetItem(inv, item, metadata, returnsCount)
 		local count = 0
 
 		if inv then
-			local ostime = os.time()
-			metadata = assertMetadata(metadata)
+			if shared.backend ~= 'wcore' and inv.type == 'player' and (item.name == 'money' or item.name == 'cash') and type(server.nativeCashBalance) == 'function' then
+				count = tonumber(server.nativeCashBalance(inv.id)) or 0
+			else
+				local ostime = os.time()
+				metadata = assertMetadata(metadata)
 
-			for _, v in pairs(inv.items) do
-				if v.name == item.name and (not metadata or table.contains(v.metadata, metadata)) and not Items.UpdateDurability(inv, v, item, nil, ostime) then
-                    count += v.count
+				for _, v in pairs(inv.items) do
+					if v.name == item.name and (not metadata or table.contains(v.metadata, metadata)) and not Items.UpdateDurability(inv, v, item, nil, ostime) then
+	                    count += v.count
+					end
 				end
 			end
 		end
@@ -3334,6 +3338,9 @@ function Inventory.GetItemCount(inv, itemName, metadata, strict)
 	local item = Items(itemName) --[[@as WServerItem?]]
 
 	if not inventory or not item then return 0 end
+	if shared.backend ~= 'wcore' and inventory.type == 'player' and (item.name == 'money' or item.name == 'cash') and type(server.nativeCashBalance) == 'function' then
+		return tonumber(server.nativeCashBalance(inventory.id)) or 0
+	end
 
 	metadata = assertMetadata(metadata)
 	local count = 0

@@ -52,8 +52,26 @@ return function(Inventory, Inventories, Items)
     end
     function Inventory.ReflectCash(inv)
         inv = Inventory(inv)
-        local id = inv and account(inv)
-        if not id then return false end
+        if not inv then return false end
+        local id = account(inv)
+        if not id then
+            if shared.backend ~= 'wcore' and inv.items then
+                local updates = {}
+                for index, row in pairs(inv.items) do
+                    if row.name == 'money' or row.name == 'cash' then
+                        inv.items[index] = nil
+                        updates[#updates + 1] = {item={slot=index}, inventory=inv.id}
+                    end
+                end
+                if #updates > 0 then
+                    inv.weight = Inventory.CalculateWeight(inv.items)
+                    if inv.changed ~= nil then inv.changed = true end
+                    inv:syncSlotsWithClients(updates, true)
+                end
+                return true
+            end
+            return false
+        end
         local value = exports.w_lib:EconGetBalance(id)
         if value == nil then return false end
         local updates, slot = {}, nil
@@ -85,8 +103,14 @@ return function(Inventory, Inventories, Items)
     function Inventory.ChangeCash(inv, amount)
         inv = Inventory(inv)
         amount = tonumber(amount)
-        local id = inv and account(inv)
-        if not id or not amount or amount ~= amount or amount == math.huge or amount == -math.huge then return false, 'economy_unavailable' end
+        if not inv or not amount or amount ~= amount or amount == math.huge or amount == -math.huge then return false, 'economy_unavailable' end
+        local id = account(inv)
+        if not id then
+            if shared.backend ~= 'wcore' and inv.type == 'player' and type(server.adjustNativeCash) == 'function' then
+                return server.adjustNativeCash(inv.id, amount)
+            end
+            return false, 'economy_unavailable'
+        end
         local ok, reason = exports.w_lib:EconAdjustAccount(id, amount, 'inventory-currency')
         if ok then Inventory.ReflectCash(inv) end
         return ok, reason

@@ -358,6 +358,23 @@ function server.nativeCashBalance(source)
     return player and moneyAmount(player, 'cash') or nil
 end
 
+function server.adjustNativeCash(source, delta)
+    local player = server.GetPlayerFromId(source)
+    local amount = tonumber(delta)
+    if not player or not amount or amount == 0 then return false, 'invalid_count' end
+    if amount > 0 then
+        local ok = player.Functions.AddMoney('cash', amount, 'inventory-currency')
+        pushCurrency(player)
+        return ok ~= false
+    else
+        local need = -amount
+        if moneyAmount(player, 'cash') < need then return false, 'not_enough_money' end
+        local ok = player.Functions.RemoveMoney('cash', need, 'inventory-currency')
+        pushCurrency(player)
+        return ok ~= false
+    end
+end
+
 function server.syncInventory(inv)
     Inventory.SyncBearerCash(inv)
     local accounts = Inventory.GetAccountItemCounts(inv)
@@ -396,15 +413,17 @@ function server.convertInventory(playerId, items)
     for slot, row in pairs(converted) do
         if row.name == 'money' or row.name == 'gold' then converted[slot] = nil end
     end
-    local cash = server.nativeCashBalance(tonumber(playerId))
-    if cash and cash > 0 then
-        local slot = 1
-        while converted[slot] do slot = slot + 1 end
-        local item = Items('money')
-        local row = { name = 'money', label = item.label, slot = slot, count = cash, metadata = {},
-            stack = true, close = item.close }
-        row.weight = Inventory.SlotWeight(item, row)
-        converted[slot] = row
+    if shared.backend == 'wcore' then
+        local cash = server.nativeCashBalance(tonumber(playerId))
+        if cash and cash > 0 then
+            local slot = 1
+            while converted[slot] do slot = slot + 1 end
+            local item = Items('money')
+            local row = { name = 'money', label = item.label, slot = slot, count = cash, metadata = {},
+                stack = true, close = item.close }
+            row.weight = Inventory.SlotWeight(item, row)
+            converted[slot] = row
+        end
     end
     local weight = 0
     for _, row in pairs(converted) do weight = weight + row.weight end

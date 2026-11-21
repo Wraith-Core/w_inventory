@@ -89,8 +89,7 @@ local function setupPlayer(source, character)
     end
 
 
-    -- Money is an item inside the bag, so we sync it with the character's balance
-    Inventory.SetItem(source, 'money', character.money or 0)
+    -- On VORP, money and gold are character wallet currencies shown in the UI header.
     TriggerClientEvent('w_inventory:updateCurrency', source, character.money or 0, character.gold or 0)
 end
 
@@ -165,9 +164,10 @@ AddStateBagChangeHandler('Character', nil, function(bagName, _, value)
     if not inventory then return end
 
     local money = tonumber(value.Money) or 0
-    local current = Inventory.GetItemCount(source, 'money')
-
     TriggerClientEvent('w_inventory:updateCurrency', source, money, tonumber(value.Gold) or 0)
+    if shared.backend ~= 'wcore' then return end
+
+    local current = Inventory.GetItemCount(source, 'money')
 
     -- The condition breaks the loop: syncInventory writes to the character so the event comes back to us
     if current == money then return end
@@ -255,7 +255,23 @@ function server.nativeCashBalance(source)
     return character and tonumber(character.money) or nil
 end
 
+function server.adjustNativeCash(source, delta)
+    local character = getCharacter(source)
+    local amount = tonumber(delta)
+    if not character or not amount or amount == 0 then return false, 'invalid_count' end
+    if amount > 0 then
+        character.addCurrency(0, amount)
+    else
+        local need = -amount
+        if (tonumber(character.money) or 0) < need then return false, 'not_enough_money' end
+        character.removeCurrency(0, need)
+    end
+    TriggerClientEvent('w_inventory:updateCurrency', source, tonumber(character.money) or 0, tonumber(character.gold) or 0)
+    return true
+end
+
 function server.syncInventory(inv)
+    if shared.backend ~= 'wcore' then return end
     local accounts = Inventory.GetAccountItemCounts(inv)
     if not accounts then return end
 

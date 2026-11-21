@@ -40,7 +40,7 @@ local function compatibleItems(items)
     local compatible = {}
 
     for slot, item in pairs(items or {}) do
-        if type(item) == 'table' and item.name then
+        if type(item) == 'table' and item.name and item.name ~= 'money' and item.name ~= 'gold' then
             local row = compatibilityItem(item)
             local definition = Items(item.name)
             row.slot = tonumber(item.slot) or tonumber(slot)
@@ -155,6 +155,7 @@ local function setCoreItems(player, items)
 end
 
 local function syncCashFromCore(player)
+    if shared.backend ~= 'wcore' then return true end
     local source = player.PlayerData.source
     local inventory = Inventory(source)
     if not inventory or moneySync[source] then return end
@@ -310,12 +311,35 @@ function server.setPlayerData(player)
     }
 end
 
+function server.nativeCashBalance(source)
+    local player = getPlayer(source)
+    return player and tonumber(player.Functions.GetMoney('cash')) or nil
+end
+
+function server.adjustNativeCash(source, delta)
+    local player = getPlayer(source)
+    local amount = tonumber(delta)
+    if not player or not amount or amount == 0 then return false, 'invalid_count' end
+    if amount > 0 then
+        local ok = player.Functions.AddMoney('cash', amount, 'inventory-currency')
+        pushCurrency(player)
+        return ok ~= false
+    else
+        local need = -amount
+        if (tonumber(player.Functions.GetMoney('cash')) or 0) < need then return false, 'not_enough_money' end
+        local ok = player.Functions.RemoveMoney('cash', need, 'inventory-currency')
+        pushCurrency(player)
+        return ok ~= false
+    end
+end
+
 ---@diagnostic disable-next-line: duplicate-set-field
 function server.syncInventory(inventory)
     local player = getPlayer(inventory.id)
     if not player then return end
 
     setCoreItems(player, inventory.items)
+    if shared.backend ~= 'wcore' then return end
 
     local accounts = Inventory.GetAccountItemCounts(inventory)
     local cash = accounts and accounts.money

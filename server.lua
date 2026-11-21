@@ -65,14 +65,16 @@ local function initializePlayerInventory(player, data)
         for _, row in pairs(data or {}) do
             if row.name ~= 'money' and row.name ~= 'gold' then nativeRows[#nativeRows + 1] = row end
         end
-        local occupied = {}
-        for _, row in ipairs(nativeRows) do occupied[tonumber(row.slot)] = true end
-        local slot = 1
-        while occupied[slot] do slot = slot + 1 end
-        local cash = server.nativeCashBalance(tonumber(player.source))
-        assert(cash ~= nil, 'Native character cash is not ready; inventory was not loaded')
-        if cash > 0 then
-            nativeRows[#nativeRows + 1] = { name = 'money', count = cash, slot = slot, metadata = {} }
+        if shared.backend == 'wcore' then
+            local occupied = {}
+            for _, row in ipairs(nativeRows) do occupied[tonumber(row.slot)] = true end
+            local slot = 1
+            while occupied[slot] do slot = slot + 1 end
+            local cash = server.nativeCashBalance(tonumber(player.source))
+            assert(cash ~= nil, 'Native character cash is not ready; inventory was not loaded')
+            if cash > 0 then
+                nativeRows[#nativeRows + 1] = { name = 'money', count = cash, slot = slot, metadata = {} }
+            end
         end
         data = nativeRows
     end
