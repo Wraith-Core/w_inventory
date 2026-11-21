@@ -4057,8 +4057,8 @@ ul {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.3rem;
-  padding: 0.42rem 0.55rem;
+  gap: 0.55rem;
+  padding: 0.5rem 0.6rem;
   font-size: 0.62rem;
   color: var(--wc-text-dim);
   font-family: var(--font-main);
@@ -4072,39 +4072,44 @@ ul {
 .inv-currency .inv-currency-icon {
   display: grid;
   place-items: center;
-  height: 1.1rem;
+  height: 1.7rem;
   flex: none;
   color: var(--wc-text-dim);
   background: none;
 }
 
 
-/* The money glyphs (utils/items.tsx): a $ in the figures' face, the gold bar drawn in currentColor */
+/* Authentic RDR2 cash stack & stacked gold bars icons (same textures as w_hud) */
 
 .cur-glyph {
   display: block;
   flex: none;
-  color: inherit;
+  filter: drop-shadow(0 max(1px, calc(1 * var(--ws-px))) calc(3 * var(--ws-px)) rgba(0, 0, 0, 0.85));
 }
 
 .cur-cash {
-  font-family: var(--font-numeral);
-  font-size: 1.05rem;
-  line-height: 1;
+  width: 2.15rem;
+  height: 1.45rem;
+  background-color: #6CC24A;
+  -webkit-mask: var(--tex-money_cash) center/contain no-repeat;
+  mask: var(--tex-money_cash) center/contain no-repeat;
 }
 
-svg.cur-gold {
-  width: 1.05rem;
-  height: 1.05rem;
+.cur-gold {
+  width: 1.7rem;
+  height: 1.7rem;
+  background-color: #E8B838;
+  -webkit-mask: var(--tex-money_gold) center/contain no-repeat;
+  mask: var(--tex-money_gold) center/contain no-repeat;
 }
 
 .inv-currency .inv-currency-val {
   font-family: var(--font-numeral);
   font-variant-numeric: lining-nums tabular-nums;
-  font-size: 1.1rem;
+  font-size: 1.65rem;
   font-weight: 400;
   line-height: 1;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   color: var(--wc-text);
 }
 
@@ -4280,7 +4285,7 @@ svg.cur-gold {
   box-shadow: inset 0 min(-1px, calc(-1 * var(--ws-px))) 0 var(--wc-line-strong);
   background: var(--w-ink-2);
   color: var(--wc-text);
-  font-size: 0.74rem;
+  font-size: 0.96rem;
   font-family: var(--font-main);
   font-variant-numeric: lining-nums tabular-nums;
   outline: none;
@@ -5951,12 +5956,13 @@ svg.cur-gold {
 }
 
 #right-inventory-panel .rp-currency-icon .cur-cash {
-  font-size: 0.8rem;
+  width: 1.35rem;
+  height: 0.95rem;
 }
 
-#right-inventory-panel .rp-currency-icon svg.cur-gold {
-  width: 0.95rem;
-  height: 0.95rem;
+#right-inventory-panel .rp-currency-icon .cur-gold {
+  width: 1.15rem;
+  height: 1.15rem;
 }
 
 #right-inventory-panel .rp-weight-bar {
@@ -7867,7 +7873,7 @@ svg.cur-gold {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-main);
-  font-size: 0.66rem;
+  font-size: 0.78rem;
   color: var(--wc-text);
 }
 

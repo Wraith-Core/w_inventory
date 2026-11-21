@@ -19,7 +19,6 @@ import Tooltip from './components/Tooltip';
 import InspectOverlay from './components/InspectOverlay';
 import CategoryBar from './components/CategoryBar';
 import WeightBar, { WeightProgress } from './components/WeightBar';
-import { Keys } from './components/Notebook';
 import ToastContainer from './components/Toast';
 import DragGhost from './components/DragGhost';
 import DropZone from './components/DropZone';
@@ -893,11 +892,6 @@ export default function App() {
             containerOpen={state.containerOpen}
           />
           <CategoryBar active={state.category} onChange={handleCategoryChange} grid={state.grid} />
-          <Keys keys={[
-            ['Esc', tr('ui_nb_key_close', 'close')],
-            ['1-6', tr('ui_nb_key_tabs', 'sections')],
-            [tr('ui_nb_key_rmb', 'Right click'), tr('ui_nb_key_options', 'options')],
-          ]} />
         </div>
 
         <DetailPanel

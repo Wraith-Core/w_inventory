@@ -4845,8 +4845,8 @@ const SVG_SATCHEL = /* @__PURE__ */ jsxs("svg", { viewBox: "0 0 24 24", fill: "c
   /* @__PURE__ */ jsx("path", { d: "M10.75 10.9h2.5c.36 0 .65.29.65.65v1.6c0 .36-.29.65-.65.65h-2.5a.65.65 0 0 1-.65-.65v-1.6c0-.36.29-.65.65-.65z" })
 ] });
 const SVG_X = /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "currentColor", children: /* @__PURE__ */ jsx("path", { d: "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" }) });
-const SVG_CASH = /* @__PURE__ */ jsx("span", { className: "cur-glyph cur-cash", "aria-hidden": "true", children: "$" });
-const SVG_GOLD = /* @__PURE__ */ jsx("svg", { className: "cur-glyph cur-gold", viewBox: "0 0 24 24", fill: "currentColor", "aria-hidden": "true", children: /* @__PURE__ */ jsx("path", { fillRule: "evenodd", d: "M7.1 6.5h9.8L21 17.5H3zM8.2 9.6l-.5 1.3h8.6l-.5-1.3z" }) });
+const SVG_CASH = /* @__PURE__ */ jsx("i", { className: "cur-glyph cur-cash", "aria-hidden": "true" });
+const SVG_GOLD = /* @__PURE__ */ jsx("i", { className: "cur-glyph cur-gold", "aria-hidden": "true" });
 const SVG_EYE = /* @__PURE__ */ jsx("svg", { viewBox: "0 0 24 24", fill: "currentColor", children: /* @__PURE__ */ jsx("path", { d: "M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" }) });
 const COLS = 5;
 const MIN_ROWS = 4;
@@ -8190,12 +8190,7 @@ function App() {
                 containerOpen: state.containerOpen
               }
             ),
-            /* @__PURE__ */ jsx(CategoryBar, { active: state.category, onChange: handleCategoryChange, grid: state.grid }),
-            /* @__PURE__ */ jsx(Keys, { keys: [
-              ["Esc", tr("ui_nb_key_close", "close")],
-              ["1-6", tr("ui_nb_key_tabs", "sections")],
-              [tr("ui_nb_key_rmb", "Right click"), tr("ui_nb_key_options", "options")]
-            ] })
+            /* @__PURE__ */ jsx(CategoryBar, { active: state.category, onChange: handleCategoryChange, grid: state.grid })
           ]
         }
       ),
@@ -8351,15 +8346,15 @@ try {
     @font-face { font-family: "Noto Sans Arabic"; src: url("${FONTS}Lalezar-400-arabic.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
     @font-face { font-family: "Tajawal"; font-weight: 400; src: url("${FONTS}Lalezar-400-arabic.woff2") format("woff2"); unicode-range: ${AR}; font-display: swap; }
     @font-face { font-family: "Tajawal"; font-weight: 700; src: url("${FONTS}Lalezar-400-arabic.woff2") format("woff2"); unicode-range: ${AR}; font-display: swap; }
-    @font-face { font-family: "EB Garamond"; font-style: normal; font-weight: 400 800; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "EB Garamond"; font-style: italic; font-weight: 400 800; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "Amiri"; font-weight: 400; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "Amiri"; font-weight: 700; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "Lalezar"; font-weight: 100 900; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "RDR Lino"; font-weight: 100 900; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "Noto Sans Arabic"; font-weight: 100 900; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "Tajawal"; font-weight: 400; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "Tajawal"; font-weight: 700; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
+    @font-face { font-family: "EB Garamond"; font-style: normal; font-weight: 400 800; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "EB Garamond"; font-style: italic; font-weight: 400 800; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "Amiri"; font-weight: 400; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "Amiri"; font-weight: 700; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "Lalezar"; font-weight: 100 900; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "RDR Lino"; font-weight: 100 900; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "Noto Sans Arabic"; font-weight: 100 900; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "Tajawal"; font-weight: 400; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "Tajawal"; font-weight: 700; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
   `;
   document.head.appendChild(style);
   const rs = document.documentElement.style;
@@ -8406,7 +8401,9 @@ try {
     "weapon_stats_bar_mask",
     "menu_bar",
     "swatch_bg_1a",
-    "counter_bg_1a"
+    "counter_bg_1a",
+    "money_cash",
+    "money_gold"
   ];
   UI.forEach((n) => rs.setProperty(`--tex-${n}`, tex(`tex/ui/${n}.png`)));
 })();

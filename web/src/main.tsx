@@ -33,15 +33,15 @@ try {
     @font-face { font-family: "Noto Sans Arabic"; src: url("${FONTS}Lalezar-400-arabic.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
     @font-face { font-family: "Tajawal"; font-weight: 400; src: url("${FONTS}Lalezar-400-arabic.woff2") format("woff2"); unicode-range: ${AR}; font-display: swap; }
     @font-face { font-family: "Tajawal"; font-weight: 700; src: url("${FONTS}Lalezar-400-arabic.woff2") format("woff2"); unicode-range: ${AR}; font-display: swap; }
-    @font-face { font-family: "EB Garamond"; font-style: normal; font-weight: 400 800; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "EB Garamond"; font-style: italic; font-weight: 400 800; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "Amiri"; font-weight: 400; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "Amiri"; font-weight: 700; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "Lalezar"; font-weight: 100 900; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "RDR Lino"; font-weight: 100 900; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "Noto Sans Arabic"; font-weight: 100 900; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "Tajawal"; font-weight: 400; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
-    @font-face { font-family: "Tajawal"; font-weight: 700; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; font-display: swap; }
+    @font-face { font-family: "EB Garamond"; font-style: normal; font-weight: 400 800; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "EB Garamond"; font-style: italic; font-weight: 400 800; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "Amiri"; font-weight: 400; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "Amiri"; font-weight: 700; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "Lalezar"; font-weight: 100 900; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "RDR Lino"; font-weight: 100 900; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "Noto Sans Arabic"; font-weight: 100 900; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "Tajawal"; font-weight: 400; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
+    @font-face { font-family: "Tajawal"; font-weight: 700; src: url("${FONTS}RDRCatalogueBold-Bold.woff2") format("woff2"); unicode-range: U+0030-0039; size-adjust: 118%; font-display: swap; }
   `;
   document.head.appendChild(style);
   const rs = document.documentElement.style;
@@ -68,7 +68,7 @@ try {
     'list_item_h_line_narrow', 'menu_header_1a', 'selection_box_bg_1a', 'selection_box_bg_1c',
     'toast_bg', 'help_text_bg', 'lock', 'menu_icon_rank', 'star', 'rating_star', 'cross', 'tick',
     'selection_arrow_left', 'selection_arrow_right', 'weapon_stats_bar', 'weapon_stats_bar_mask',
-    'menu_bar', 'swatch_bg_1a', 'counter_bg_1a',
+    'menu_bar', 'swatch_bg_1a', 'counter_bg_1a', 'money_cash', 'money_gold',
   ];
   UI.forEach((n) => rs.setProperty(`--tex-${n}`, tex(`tex/ui/${n}.png`)));
 })();
