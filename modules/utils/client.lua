@@ -230,9 +230,10 @@ function Utils.Place(opts)
 		canInteract = canInteract,
 	})
 
-	local marker = opts.marker
+	-- World circle/arrow marker disabled: walk-up prompts use w.prompt.at without a ground ring.
+	local marker = false
 
-	if marker ~= false then
+	if marker then
 		place.point = lib.points.new({
 			coords = opts.coords,
 			distance = opts.markerDistance or 16,

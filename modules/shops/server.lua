@@ -366,6 +366,12 @@ lib.callback.register('w_inventory:buyItem', function(source, data)
 					if not ok or (tonumber(balance) or 0) < deductedAmount then
 						return false, false, { type = 'error', key = 'cannot_afford_gold', args = { math.groupdigits(deductedAmount) } }
 					end
+				elseif paymentSource == 'cash' and GetResourceState('w_centralbank') ~= 'started' then
+					-- No central ledger: cash lives on the character (framework money), not as a bag item
+					local ok, balance = pcall(function() return exports.w_lib:FwGetMoney(source) end)
+					if not ok or (tonumber(balance) or 0) < price then
+						return false, false, { type = 'error', key = 'cannot_afford', args = { priceArg(currency, price) } }
+					end
 				else
 					local canAfford = canAffordItem(playerInv, currency, price)
 					if canAfford ~= true then
@@ -395,6 +401,15 @@ lib.callback.register('w_inventory:buyItem', function(source, data)
 						return exports.w_lib:FwRemoveCurrency(source, 1, deductedAmount)
 					end)
 					if not ok or removed ~= true then return false end
+				elseif paymentSource == 'cash' and GetResourceState('w_centralbank') ~= 'started' then
+					if price > 0 then
+						local ok, removed = pcall(function()
+							return exports.w_lib:FwRemoveCurrency(source, 0, price)
+						end)
+						if not ok or removed ~= true then
+							return false, false, { type = 'error', key = 'cannot_afford', args = { priceArg(currency, price) } }
+						end
+					end
 				else
 					Losses.reason('shop', Losses.actor(playerInv), 'shop')
 					if not Inventory.RemoveItem(playerInv, currency, price) then return false end

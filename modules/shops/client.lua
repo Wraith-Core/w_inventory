@@ -67,7 +67,7 @@ local function refreshShops()
 				-- the walk-up prompt: J opens the shop's page
 				local place = Utils.Place({
 					coords = coords,
-					marker = { r = 242, g = 242, b = 242 }, -- paper: world marks are white, never a hue
+					marker = false,
 					prompts = {
 						{
 							key = 'J',
