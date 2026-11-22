@@ -58,6 +58,11 @@ if GetConvarInt('w_inventory:defaultShops', 0) == 1 then
 			{ name = 'consumable_cigar',          price = 4 },
 			{ name = 'bandage',                   price = 5 },
 			{ name = 'lockpick',                  price = 15 },
+			{ name = 'pickaxe',                   price = 25 },
+			{ name = 'axe',                       price = 20 },
+			{ name = 'weapon_fishingrod',         price = 30 },
+			{ name = 'p_baitbread01x',            price = 1 },
+			{ name = 'p_baitworm01x',             price = 2 },
 		},
 		locations = {
 			vec3(-322.43, 803.79, 117.88),    -- Valentine
