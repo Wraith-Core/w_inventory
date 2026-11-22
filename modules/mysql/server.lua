@@ -132,43 +132,14 @@ Citizen.CreateThreadNow(function()
 
     Wait(0)
 
-    local success, result = pcall(MySQL.scalar.await, 'SELECT 1 FROM w_inventory')
-
-    if not success then
-		-- the collation is named: without it the table took the database's default (utf8_general_ci
-		-- here, 3-byte), unlike players.citizenid which `owner` holds
-		MySQL.query.await([[CREATE TABLE IF NOT EXISTS `w_inventory` (
-			`owner` varchar(60) DEFAULT NULL,
-			`name` varchar(100) NOT NULL,
-			`data` longtext DEFAULT NULL,
-			`lastupdated` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-			UNIQUE KEY `owner` (`owner`,`name`)
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci]])
-    else
-        -- Shouldn't be needed anymore; was used for some data conversion for v2.5.0 (back in March 2022)
-        -- result = MySQL.query.await("SELECT owner, name FROM w_inventory WHERE NOT owner = ''")
-
-        -- if result and next(result) then
-        -- 	local parameters = {}
-        -- 	local count = 0
-
-        -- 	for i = 1, #result do
-        -- 		local data = result[i]
-        -- 		local snip = data.name:sub(-#data.owner, #data.name)
-
-        -- 		if data.owner == snip then
-        -- 			local name = data.name:sub(0, #data.name - #snip)
-
-        -- 			count += 1
-        -- 			parameters[count] = { query = 'UPDATE w_inventory SET `name` = ? WHERE `owner` = ? AND `name` = ?', values = { name, data.owner, data.name } }
-        -- 		end
-        -- 	end
-
-        -- 	if #parameters > 0 then
-        -- 		MySQL.transaction(parameters)
-        -- 	end
-        -- end
-    end
+    -- Create the stash table directly with IF NOT EXISTS (avoids a failing probe query on a fresh database).
+    MySQL.query.await([[CREATE TABLE IF NOT EXISTS `w_inventory` (
+        `owner` varchar(60) DEFAULT NULL,
+        `name` varchar(100) NOT NULL,
+        `data` longtext DEFAULT NULL,
+        `lastupdated` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+        UNIQUE KEY `owner` (`owner`,`name`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci]])
 
     -- a table created before the CREATE above named its collation is utf8_general_ci (3-byte):
     -- brought to utf8mb4_general_ci like players, once
@@ -186,13 +157,16 @@ Citizen.CreateThreadNow(function()
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci]])
     end
 
-    -- The stables table may not exist at all (a server with no stables, say). The error here
-    -- used to kill this thread so the rest of the tables were never set up.
-    success, result = pcall(MySQL.query.await, ('SHOW COLUMNS FROM `%s`'):format(vehicleTable))
-
-    if not success then
-        result = nil
-        warn(('no `%s` table - horse storage disabled'):format(vehicleTable))
+    -- Check information_schema before inspecting the stables table so servers without a stables
+    -- resource do not log a failed SQL query or warning on boot.
+    local hasVehicleTable = MySQL.scalar.await(
+        'SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? LIMIT 1',
+        { vehicleTable }
+    )
+    local result = nil
+    if hasVehicleTable then
+        local okCols, cols = pcall(MySQL.query.await, ('SHOW COLUMNS FROM `%s`'):format(vehicleTable))
+        if okCols then result = cols end
     end
 
     if result then
