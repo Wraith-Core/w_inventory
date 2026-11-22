@@ -262,6 +262,7 @@
   "ui_ammo_preferred_hint": "Select a type, then Load rounds · Right-click to mark a favorite",
   "give_item": "Give item",
   "shop_police_armory": "Police Armory",
+  "shop_general_store": "General Store",
   "cmd_additem": "Gives an item to a player by citizen ID, online or offline",
   "cmd_arg_target_receive": "Citizen ID of the player to receive the item (#5 = server ID 5, me = yourself)",
   "cmd_arg_item": "The name of the item",
